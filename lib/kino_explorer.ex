@@ -1,18 +1,5 @@
-defmodule KinoExplorer do
-  @moduledoc """
-  Documentation for `KinoExplorer`.
-  """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> KinoExplorer.hello()
-      :world
-
-  """
-  def hello do
-    :world
+defimpl Kino.Render, for: Explorer.DataFrame do
+  def to_livebook(df) do
+    df |> Kino.Explorer.static() |> Kino.Render.to_livebook()
   end
 end
