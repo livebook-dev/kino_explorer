@@ -1,9 +1,12 @@
 defmodule Kino.Explorer do
   @moduledoc """
-  A widget for interactively viewing `Explorer.DataFrame`.
+  A kino for interactively viewing `Explorer.DataFrame`.
+
   ## Examples
+
       df = Explorer.Datasets.fossil_fuels()
       Kino.Explorer.new(df)
+
   """
 
   @behaviour Kino.Table
@@ -11,15 +14,10 @@ defmodule Kino.Explorer do
   @type t :: Kino.JS.Live.t()
 
   @doc """
-  Starts a widget process representing the given data frame.
+  Creates a new kino displaying given data frame.
   """
   @spec new(Explorer.DataFrame.t()) :: t()
   def new(df) do
-    Kino.Table.new(__MODULE__, {df})
-  end
-
-  @doc false
-  def static(%Explorer.DataFrame{} = df) do
     Kino.Table.new(__MODULE__, {df})
   end
 
@@ -28,7 +26,7 @@ defmodule Kino.Explorer do
     total_rows = Explorer.DataFrame.n_rows(df)
     dtypes = Explorer.DataFrame.dtypes(df)
     sample_data = df |> Explorer.DataFrame.head(1) |> Explorer.DataFrame.to_columns()
-    summaries = summary(df)
+    summaries = summaries(df)
 
     columns =
       Enum.map(dtypes, fn {name, dtype} ->
@@ -36,7 +34,7 @@ defmodule Kino.Explorer do
           key: name,
           label: to_string(name),
           type: type_of(dtype, sample_data[name]),
-          summary: summaries[String.to_atom(name)]
+          summary: summaries[name]
         }
       end)
 
@@ -62,14 +60,9 @@ defmodule Kino.Explorer do
 
     df = Explorer.DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
 
-    {cols, lists} = df |> Explorer.DataFrame.to_columns() |> Enum.unzip()
-    col_names = Enum.map(cols, &to_string/1)
+    {col_names, lists} = df |> Explorer.DataFrame.to_columns() |> Enum.unzip()
 
-    lists
-    |> Enum.zip()
-    |> Enum.map(fn row ->
-      Enum.zip(col_names, Tuple.to_list(row))
-    end)
+    Enum.zip_with(lists, fn row -> Enum.zip(col_names, row) end)
   end
 
   defp record_to_row(record) do
@@ -77,7 +70,7 @@ defmodule Kino.Explorer do
     %{fields: fields}
   end
 
-  defp summary(df) do
+  defp summaries(df) do
     describe = describe(df)
     df_series = Explorer.DataFrame.to_series(df)
 
@@ -85,14 +78,14 @@ defmodule Kino.Explorer do
         series = Map.get(df_series, column),
         summary_type = summary_type(series),
         nulls = Explorer.Series.nil_count(series) |> to_string(),
-        label = String.to_atom(column) do
+        into: %{} do
       if summary_type == :numeric do
         mean = Float.round(mean, 2) |> to_string()
-        {label, %{min: to_string(min), max: to_string(max), mean: mean, nulls: nulls}}
+        {column, %{min: to_string(min), max: to_string(max), mean: mean, nulls: nulls}}
       else
         %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
 
-        {label,
+        {column,
          %{nulls: nulls, top: top, top_freq: to_string(top_freq), unique: count_unique(series)}}
       end
     end
