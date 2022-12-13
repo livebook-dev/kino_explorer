@@ -1,0 +1,26 @@
+# Components
+
+```elixir
+Mix.install([
+  {:kino_explorer, "~> 0.1.0"}
+])
+```
+
+## Kinos
+
+### Explorer
+
+This integration automatically renders an `Explorer.DataFrame` as a data table:
+
+```elixir
+Explorer.Datasets.fossil_fuels()
+```
+
+### Kino.Explorer
+
+A widget for interactively viewing `Explorer.DataFrame`.
+
+```elixir
+df = Explorer.Datasets.fossil_fuels()
+Kino.Explorer.new(df)
+```

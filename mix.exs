@@ -1,17 +1,23 @@
 defmodule KinoExplorer.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @description "Explorer integration with Livebook"
+
   def project do
     [
       app: :kino_explorer,
-      version: "0.1.0",
+      version: @version,
+      description: @description,
+      name: "KinoExplorer",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: docs(),
+      package: package()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger],
@@ -19,11 +25,35 @@ defmodule KinoExplorer.MixProject do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:kino, "~> 0.8"},
+      {:explorer, "~> 0.5.0-dev", github: "elixir-nx/explorer"},
+      {:rustler, "~> 0.26.0", optional: true},
+      {:ex_doc, "~> 0.29", only: :dev, runtime: false}
+    ]
+  end
+
+  defp docs do
+    [
+      main: "components",
+      source_url: "https://github.com/livebook-dev/kino_explorer",
+      source_ref: "v#{@version}",
+      extras: ["guides/components.livemd"],
+      groups_for_modules: [
+        Kinos: [
+          Kino.Explorer
+        ]
+      ]
+    ]
+  end
+
+  def package do
+    [
+      licenses: ["Apache-2.0"],
+      links: %{
+        "GitHub" => "https://github.com/livebook-dev/kino_explorer"
+      }
     ]
   end
 end
