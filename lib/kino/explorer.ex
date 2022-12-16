@@ -46,24 +46,34 @@ defmodule Kino.Explorer do
 
   @impl true
   def get_data(rows_spec, state) do
-    records = get_records(state.df, rows_spec)
+    {records, total_rows, summaries} = get_records(state.df, rows_spec)
+    columns = Enum.map(state.columns, &%{&1 | summary: summaries[&1.key]})
     rows = Enum.map(records, &record_to_row/1)
-    {:ok, %{columns: state.columns, rows: rows, total_rows: state.total_rows}, state}
+    {:ok, %{columns: columns, rows: rows, total_rows: total_rows}, state}
   end
 
   defp get_records(df, rows_spec) do
     df =
-      if order_by = rows_spec[:order_by] do
-        Explorer.DataFrame.arrange_with(df, &[{rows_spec.order, &1[order_by]}])
-      else
-        df
-      end
+      df
+      |> order_by(rows_spec.order, rows_spec[:order_by])
+      |> filter_by(rows_spec.filter, rows_spec[:filter_by], rows_spec.filter_value)
 
+    total_rows = Explorer.DataFrame.n_rows(df)
+    summaries = if total_rows > 0, do: summaries(df)
     df = Explorer.DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
-
     {col_names, lists} = df |> Explorer.DataFrame.to_columns() |> Enum.unzip()
+    records = Enum.zip_with(lists, fn row -> Enum.zip(col_names, row) end)
+    {records, total_rows, summaries}
+  end
 
-    Enum.zip_with(lists, fn row -> Enum.zip(col_names, row) end)
+  defp order_by(df, order, order_by) do
+    if order_by, do: Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}]), else: df
+  end
+
+  defp filter_by(df, filter, filter_by, filter_value) do
+    if filter_by,
+      do: Explorer.DataFrame.filter_with(df, filter_by(filter, filter_by, filter_value)),
+      else: df
   end
 
   defp record_to_row(record) do
@@ -72,17 +82,17 @@ defmodule Kino.Explorer do
   end
 
   defp summaries(df) do
-    describe = describe(df)
     df_series = Explorer.DataFrame.to_series(df)
 
-    for {column, [mean, min, max]} <- describe,
-        series = Map.get(df_series, column),
+    for {column, series} <- df_series,
         summary_type = summary_type(series),
         nulls = Explorer.Series.nil_count(series) |> to_string(),
         into: %{} do
       if summary_type == :numeric do
-        mean = Float.round(mean, 2) |> to_string()
-        {column, %{min: to_string(min), max: to_string(max), mean: mean, nulls: nulls}}
+        mean = Explorer.Series.mean(series) |> Float.round(2) |> to_string()
+        min = Explorer.Series.min(series) |> to_string()
+        max = Explorer.Series.max(series) |> to_string()
+        {column, %{min: min, max: max, mean: mean, nulls: nulls}}
       else
         %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
 
@@ -90,18 +100,6 @@ defmodule Kino.Explorer do
          %{nulls: nulls, top: top, top_freq: to_string(top_freq), unique: count_unique(series)}}
       end
     end
-  end
-
-  defp describe(data) do
-    mean_idx = 1
-    min_idx = 3
-    max_idx = 7
-
-    data
-    |> Explorer.DataFrame.describe()
-    |> Explorer.DataFrame.slice([mean_idx, min_idx, max_idx])
-    |> Explorer.DataFrame.to_columns()
-    |> Map.delete("describe")
   end
 
   defp most_frequent(data) do
@@ -126,4 +124,14 @@ defmodule Kino.Explorer do
 
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
+
+  defp filter_by(:less, column, value), do: &Explorer.Series.less(&1[column], value)
+  defp filter_by(:less_eq, column, value), do: &Explorer.Series.less_equal(&1[column], value)
+  defp filter_by(:equal, column, value), do: &Explorer.Series.equal(&1[column], value)
+  defp filter_by(:not_equal, column, value), do: &Explorer.Series.not_equal(&1[column], value)
+
+  defp filter_by(:greater_eq, column, value),
+    do: &Explorer.Series.greater_equal(&1[column], value)
+
+  defp filter_by(:greater, column, value), do: &Explorer.Series.greater(&1[column], value)
 end

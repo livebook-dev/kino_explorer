@@ -17,7 +17,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting],
+             features: [:pagination, :sorting, :filtering],
              content: %{
                columns: [
                  %{key: "0", label: "id", type: "number"},
@@ -127,7 +127,7 @@ defmodule Kino.ExplorerTest do
                  %{
                    key: "0",
                    label: "id",
-                   summary: %{max: "3.0", mean: "2.0", min: "1.0", nulls: "1"},
+                   summary: %{max: "3", mean: "2.0", min: "1", nulls: "1"},
                    type: "number"
                  },
                  %{
@@ -141,7 +141,7 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
-  test "support types" do
+  test "supports types" do
     df =
       Explorer.DataFrame.new(
         a: ["a", "b"],
@@ -153,5 +153,27 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert get_in(data.content.columns, [Access.all(), :type]) == ["text", "number", "uri"]
+  end
+
+  test "supports filtering" do
+    widget = Kino.Explorer.new(people_df())
+
+    connect(widget)
+
+    push_event(widget, "filter_by", %{
+      "key" => "1",
+      "filter" => "equal",
+      "value" => "Amy Santiago"
+    })
+
+    assert_broadcast_event(widget, "update_content", %{
+      columns: [
+        %{key: "0", label: "id", type: "number"},
+        %{key: "1", label: "name", type: "text"}
+      ],
+      rows: [
+        %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
+      ]
+    })
   end
 end
