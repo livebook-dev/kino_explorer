@@ -70,10 +70,20 @@ defmodule Kino.Explorer do
     if order_by, do: Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}]), else: df
   end
 
-  defp filter_by(df, filter, filter_by, filter_value) do
-    if filter_by,
-      do: Explorer.DataFrame.filter_with(df, filter_by(filter, filter_by, filter_value)),
+  defp filter_by(df, filter, filter_by, value) do
+    type = Explorer.DataFrame.dtypes(df) |> Map.get(filter_by)
+    value = if type in [:date, :datetime], do: to_date(type, value), else: value
+
+    if filter_by && value,
+      do: Explorer.DataFrame.filter_with(df, filter_by(filter, filter_by, value)),
       else: df
+  end
+
+  defp to_date(type, value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, date, _} -> if type == :date, do: DateTime.to_date(date), else: date
+      _ -> nil
+    end
   end
 
   defp record_to_row(record) do
