@@ -138,6 +138,7 @@ defmodule Kino.Explorer do
   defp filter_by(:less, column, value), do: &Explorer.Series.less(&1[column], value)
   defp filter_by(:less_eq, column, value), do: &Explorer.Series.less_equal(&1[column], value)
   defp filter_by(:equal, column, value), do: &Explorer.Series.equal(&1[column], value)
+  defp filter_by(:contains, column, value), do:  &Explorer.Series.contains(&1[column], value)
   defp filter_by(:not_equal, column, value), do: &Explorer.Series.not_equal(&1[column], value)
 
   defp filter_by(:greater_eq, column, value),
