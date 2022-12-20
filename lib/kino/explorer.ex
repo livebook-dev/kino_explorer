@@ -70,12 +70,13 @@ defmodule Kino.Explorer do
     if order_by, do: Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}]), else: df
   end
 
-  defp filter_by(df, filter, filter_by, value) do
-    type = Explorer.DataFrame.dtypes(df) |> Map.get(filter_by)
+  defp filter_by(df, filter, column, value) do
+    type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
 
-    if filter_by && value,
-      do: Explorer.DataFrame.filter_with(df, filter_by(filter, filter_by, value)),
+    if column && value,
+      do:
+        Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value])),
       else: df
   end
 
@@ -134,15 +135,4 @@ defmodule Kino.Explorer do
 
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
-
-  defp filter_by(:less, column, value), do: &Explorer.Series.less(&1[column], value)
-  defp filter_by(:less_eq, column, value), do: &Explorer.Series.less_equal(&1[column], value)
-  defp filter_by(:equal, column, value), do: &Explorer.Series.equal(&1[column], value)
-  defp filter_by(:contains, column, value), do:  &Explorer.Series.contains(&1[column], value)
-  defp filter_by(:not_equal, column, value), do: &Explorer.Series.not_equal(&1[column], value)
-
-  defp filter_by(:greater_eq, column, value),
-    do: &Explorer.Series.greater_equal(&1[column], value)
-
-  defp filter_by(:greater, column, value), do: &Explorer.Series.greater(&1[column], value)
 end
