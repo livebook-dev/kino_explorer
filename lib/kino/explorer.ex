@@ -14,11 +14,20 @@ defmodule Kino.Explorer do
   @type t :: Kino.JS.Live.t()
 
   @doc """
-  Creates a new kino displaying given data frame.
+  Creates a new kino displaying a given data frame or series.
   """
-  @spec new(Explorer.DataFrame.t(), keyword()) :: t()
-  def new(df, opts \\ []) do
+  @spec new(Explorer.DataFrame.t() | Explorer.Series.t(), keyword()) :: t()
+  def new(data, opts \\ [])
+
+  def new(%Explorer.DataFrame{} = df, opts) do
     name = Keyword.get(opts, :name, "DataFrame")
+    Kino.Table.new(__MODULE__, {df, name})
+  end
+
+  def new(%Explorer.Series{} = s, opts) do
+    name = Keyword.get(opts, :name, "Series")
+    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+    df = Explorer.DataFrame.new([{column_name, s}])
     Kino.Table.new(__MODULE__, {df, name})
   end
 
