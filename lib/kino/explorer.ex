@@ -66,18 +66,18 @@ defmodule Kino.Explorer do
     {records, total_rows, summaries}
   end
 
+  defp order_by(df, _order, nil), do: df
+
   defp order_by(df, order, order_by) do
-    if order_by, do: Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}]), else: df
+    Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}])
   end
+
+  defp filter_by(df, _filter, nil, _value), do: df
 
   defp filter_by(df, filter, column, value) do
     type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
-
-    if column,
-      do:
-        Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value])),
-      else: df
+    Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value]))
   end
 
   defp to_date(type, value) do
