@@ -16,13 +16,14 @@ defmodule Kino.Explorer do
   @doc """
   Creates a new kino displaying given data frame.
   """
-  @spec new(Explorer.DataFrame.t()) :: t()
-  def new(df) do
-    Kino.Table.new(__MODULE__, {df})
+  @spec new(Explorer.DataFrame.t(), keyword()) :: t()
+  def new(df, opts \\ []) do
+    name = Keyword.get(opts, :name, "DataFrame")
+    Kino.Table.new(__MODULE__, {df, name})
   end
 
   @impl true
-  def init({df}) do
+  def init({df, name}) do
     total_rows = Explorer.DataFrame.n_rows(df)
     dtypes = Explorer.DataFrame.dtypes(df)
     sample_data = df |> Explorer.DataFrame.head(1) |> Explorer.DataFrame.to_columns()
@@ -38,7 +39,7 @@ defmodule Kino.Explorer do
         }
       end)
 
-    info = %{name: "DataFrame", features: [:pagination, :sorting]}
+    info = %{name: name, features: [:pagination, :sorting]}
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns}}
   end
