@@ -74,7 +74,7 @@ defmodule Kino.Explorer do
     type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
 
-    if column && value,
+    if column,
       do:
         Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value])),
       else: df
@@ -130,6 +130,7 @@ defmodule Kino.Explorer do
 
   defp type_of(dtype, _) when dtype in [:integer, :float], do: "number"
   defp type_of(dtype, _) when dtype in [:date, :datetime], do: "date"
+  defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(_, _), do: "text"
 
