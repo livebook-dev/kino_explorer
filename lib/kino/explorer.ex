@@ -56,7 +56,7 @@ defmodule Kino.Explorer do
     df =
       df
       |> order_by(rows_spec.order, rows_spec[:order_by])
-      |> filter_by(rows_spec.filter, rows_spec[:filter_by], rows_spec.filter_value)
+      |> filter_by(rows_spec[:filters])
 
     total_rows = Explorer.DataFrame.n_rows(df)
     summaries = if total_rows > 0, do: summaries(df)
@@ -72,9 +72,14 @@ defmodule Kino.Explorer do
     Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}])
   end
 
-  defp filter_by(df, _filter, nil, _value), do: df
+  defp filter_by(df, nil), do: df
 
-  defp filter_by(df, filter, column, value) do
+  defp filter_by(df, filters) do
+    Enum.reduce(filters, df, fn filter, filtered -> filter(filtered, filter) end)
+  end
+
+  defp filter(df, %{"filter" => filter, "column" => column, "value" => value}) do
+    filter = String.to_atom(filter)
     type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
     Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value]))
