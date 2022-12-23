@@ -127,13 +127,19 @@ defmodule Kino.ExplorerTest do
                  %{
                    key: "0",
                    label: "id",
-                   summary: %{max: "3", mean: "2.0", min: "1", nulls: "1"},
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["1", "3", "2.0", "1"]
+                   },
                    type: "number"
                  },
                  %{
                    key: "1",
                    label: "name",
-                   summary: %{nulls: "0", top: "Jake Peralta", top_freq: "2", unique: "3"},
+                   summary: %{
+                     keys: ["unique", "top", "top_freq", "nulls"],
+                     values: ["3", "Jake Peralta", "2", "0"]
+                   },
                    type: "text"
                  }
                ]
@@ -161,6 +167,7 @@ defmodule Kino.ExplorerTest do
     connect(widget)
 
     push_event(widget, "filter_by", %{
+      "column" => "name",
       "key" => "1",
       "filter" => "equal",
       "value" => "Amy Santiago"
@@ -173,6 +180,55 @@ defmodule Kino.ExplorerTest do
       ],
       rows: [
         %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
+      ]
+    })
+  end
+
+  test "supports cumulative filtering" do
+    df =
+      Explorer.DataFrame.new(%{
+        id: [3, 1, 2, 0],
+        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Amy Jake"]
+      })
+
+    widget = Kino.Explorer.new(df)
+
+    connect(widget)
+
+    push_event(widget, "filter_by", %{
+      "column" => "id",
+      "key" => "0",
+      "filter" => "less",
+      "value" => 3
+    })
+
+    assert_broadcast_event(widget, "update_content", %{
+      columns: [
+        %{key: "0", label: "id", type: "number"},
+        %{key: "1", label: "name", type: "text"}
+      ],
+      rows: [
+        %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
+        %{fields: %{"0" => "2", "1" => "Terry Jeffords"}},
+        %{fields: %{"0" => "0", "1" => "Amy Jake"}}
+      ]
+    })
+
+    push_event(widget, "filter_by", %{
+      "column" => "name",
+      "key" => "1",
+      "filter" => "contains",
+      "value" => "Jake"
+    })
+
+    assert_broadcast_event(widget, "update_content", %{
+      columns: [
+        %{key: "0", label: "id", type: "number"},
+        %{key: "1", label: "name", type: "text"}
+      ],
+      rows: [
+        %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
+        %{fields: %{"0" => "0", "1" => "Amy Jake"}}
       ]
     })
   end
