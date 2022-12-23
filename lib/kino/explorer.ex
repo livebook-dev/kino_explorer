@@ -108,12 +108,14 @@ defmodule Kino.Explorer do
         mean = Explorer.Series.mean(series) |> Float.round(2) |> to_string()
         min = Explorer.Series.min(series) |> to_string()
         max = Explorer.Series.max(series) |> to_string()
-        {column, %{min: min, max: max, mean: mean, nulls: nulls}}
+        {column, %{keys: ["min", "max", "mean", "nulls"], values: [min, max, mean, nulls]}}
       else
         %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
+        top_freq = to_string(top_freq)
+        unique = count_unique(series)
 
         {column,
-         %{nulls: nulls, top: top, top_freq: to_string(top_freq), unique: count_unique(series)}}
+         %{keys: ["unique", "top", "top_freq", "nulls"], values: [unique, top, top_freq, nulls]}}
       end
     end
   end
