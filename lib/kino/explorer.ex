@@ -80,7 +80,7 @@ defmodule Kino.Explorer do
 
   defp filter(df, %{"filter" => filter, "column" => column, "value" => value}) do
     filter = String.to_atom(filter)
-    type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
+    type = Explorer.DataFrame.dtypes(df) |> Map.fetch!(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
     Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value]))
   end
