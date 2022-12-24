@@ -48,31 +48,57 @@ defmodule Kino.Explorer do
         }
       end)
 
-    info = %{name: name, features: [:pagination, :sorting]}
+    info = %{name: name, features: [:pagination, :sorting, :filtering]}
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns}}
   end
 
   @impl true
   def get_data(rows_spec, state) do
-    records = get_records(state.df, rows_spec)
+    {records, total_rows, summaries} = get_records(state.df, rows_spec)
+    columns = Enum.map(state.columns, &%{&1 | summary: summaries[&1.key]})
     rows = Enum.map(records, &record_to_row/1)
-    {:ok, %{columns: state.columns, rows: rows, total_rows: state.total_rows}, state}
+    {:ok, %{columns: columns, rows: rows, total_rows: total_rows}, state}
   end
 
   defp get_records(df, rows_spec) do
     df =
-      if order_by = rows_spec[:order_by] do
-        Explorer.DataFrame.arrange_with(df, &[{rows_spec.order, &1[order_by]}])
-      else
-        df
-      end
+      df
+      |> order_by(rows_spec.order, rows_spec[:order_by])
+      |> filter_by(rows_spec[:filters])
 
+    total_rows = Explorer.DataFrame.n_rows(df)
+    summaries = if total_rows > 0, do: summaries(df)
     df = Explorer.DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
-
     {col_names, lists} = df |> Explorer.DataFrame.to_columns() |> Enum.unzip()
+    records = Enum.zip_with(lists, fn row -> Enum.zip(col_names, row) end)
+    {records, total_rows, summaries}
+  end
 
-    Enum.zip_with(lists, fn row -> Enum.zip(col_names, row) end)
+  defp order_by(df, _order, nil), do: df
+
+  defp order_by(df, order, order_by) do
+    Explorer.DataFrame.arrange_with(df, &[{order, &1[order_by]}])
+  end
+
+  defp filter_by(df, nil), do: df
+
+  defp filter_by(df, filters) do
+    Enum.reduce(filters, df, fn filter, filtered -> filter(filtered, filter) end)
+  end
+
+  defp filter(df, %{"filter" => filter, "column" => column, "value" => value}) do
+    filter = String.to_atom(filter)
+    type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
+    value = if type in [:date, :datetime], do: to_date(type, value), else: value
+    Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value]))
+  end
+
+  defp to_date(type, value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, date, _} -> if type == :date, do: DateTime.to_date(date), else: date
+      _ -> nil
+    end
   end
 
   defp record_to_row(record) do
@@ -81,36 +107,26 @@ defmodule Kino.Explorer do
   end
 
   defp summaries(df) do
-    describe = describe(df)
     df_series = Explorer.DataFrame.to_series(df)
 
-    for {column, [mean, min, max]} <- describe,
-        series = Map.get(df_series, column),
+    for {column, series} <- df_series,
         summary_type = summary_type(series),
         nulls = Explorer.Series.nil_count(series) |> to_string(),
         into: %{} do
       if summary_type == :numeric do
-        mean = Float.round(mean, 2) |> to_string()
-        {column, %{min: to_string(min), max: to_string(max), mean: mean, nulls: nulls}}
+        mean = Explorer.Series.mean(series) |> Float.round(2) |> to_string()
+        min = Explorer.Series.min(series) |> to_string()
+        max = Explorer.Series.max(series) |> to_string()
+        {column, %{keys: ["min", "max", "mean", "nulls"], values: [min, max, mean, nulls]}}
       else
         %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
+        top_freq = to_string(top_freq)
+        unique = count_unique(series)
 
         {column,
-         %{nulls: nulls, top: top, top_freq: to_string(top_freq), unique: count_unique(series)}}
+         %{keys: ["unique", "top", "top_freq", "nulls"], values: [unique, top, top_freq, nulls]}}
       end
     end
-  end
-
-  defp describe(data) do
-    mean_idx = 1
-    min_idx = 3
-    max_idx = 7
-
-    data
-    |> Explorer.DataFrame.describe()
-    |> Explorer.DataFrame.slice([mean_idx, min_idx, max_idx])
-    |> Explorer.DataFrame.to_columns()
-    |> Map.delete("describe")
   end
 
   defp most_frequent(data) do
@@ -130,6 +146,7 @@ defmodule Kino.Explorer do
 
   defp type_of(dtype, _) when dtype in [:integer, :float], do: "number"
   defp type_of(dtype, _) when dtype in [:date, :datetime], do: "date"
+  defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(_, _), do: "text"
 
