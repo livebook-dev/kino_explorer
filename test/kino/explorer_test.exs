@@ -60,7 +60,7 @@ defmodule Kino.ExplorerTest do
         %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
         %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
       ],
-      order: %{"direction" => :desc, "key" => "1"}
+      order: %{direction: :desc, key: "1"}
     })
   end
 

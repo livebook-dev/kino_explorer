@@ -77,7 +77,7 @@ defmodule Kino.Explorer do
 
   defp order_by(df, nil), do: df
 
-  defp order_by(df, %{"key" => column, "direction" => direction}) do
+  defp order_by(df, %{key: column, direction: direction}) do
     Explorer.DataFrame.arrange_with(df, &[{direction, &1[column]}])
   end
 
@@ -87,7 +87,7 @@ defmodule Kino.Explorer do
     Enum.reduce(filters, df, fn filter, filtered -> filter(filtered, filter) end)
   end
 
-  defp filter(df, %{"filter" => filter, "key" => column, "value" => value}) do
+  defp filter(df, %{filter: filter, key: column, value: value}) do
     filter = String.to_atom(filter)
     type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
