@@ -48,7 +48,7 @@ defmodule Kino.ExplorerTest do
 
     connect(widget)
 
-    push_event(widget, "order_by", %{"key" => "1", "order" => "desc"})
+    push_event(widget, "order_by", %{"key" => "1", "direction" => "desc"})
 
     assert_broadcast_event(widget, "update_content", %{
       columns: [
@@ -60,8 +60,7 @@ defmodule Kino.ExplorerTest do
         %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
         %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
       ],
-      order: :desc,
-      order_by: "1"
+      order: %{direction: :desc, key: "1"}
     })
   end
 
