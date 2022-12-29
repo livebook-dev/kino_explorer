@@ -33,11 +33,10 @@ defmodule Kino.ExplorerTest do
 
     assert %{
              content: %{
-               rows: [
-                 %{fields: %{"0" => "3", "1" => "Amy Santiago"}},
-                 %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
-                 %{fields: %{"0" => "2", "1" => "Terry Jeffords"}}
-               ],
+               data: %{
+                 "0" => ["3", "1", "2"],
+                 "1" => ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]
+               },
                total_rows: 3
              }
            } = data
@@ -55,11 +54,7 @@ defmodule Kino.ExplorerTest do
         %{key: "0", label: "id", type: "number"},
         %{key: "1", label: "name", type: "text"}
       ],
-      rows: [
-        %{fields: %{"0" => "2", "1" => "Terry Jeffords"}},
-        %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
-        %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
-      ],
+      data: %{"0" => ["2", "1", "3"], "1" => ["Terry Jeffords", "Jake Peralta", "Amy Santiago"]},
       order: %{direction: :desc, key: "1"}
     })
   end
@@ -74,7 +69,7 @@ defmodule Kino.ExplorerTest do
              content: %{
                page: 1,
                max_page: 3,
-               rows: [%{fields: %{"0" => "1"}} | _]
+               data: %{"0" => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
              }
            } = data
 
@@ -83,7 +78,7 @@ defmodule Kino.ExplorerTest do
     assert_broadcast_event(widget, "update_content", %{
       page: 2,
       max_page: 3,
-      rows: [%{fields: %{"0" => "11"}} | _]
+      data: %{"0" => ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]}
     })
   end
 
@@ -97,7 +92,7 @@ defmodule Kino.ExplorerTest do
              content: %{
                page: 1,
                max_page: 3,
-               rows: [%{fields: %{"0" => "1"}} | _]
+               data: %{"0" => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
              }
            } = data
 
@@ -106,7 +101,9 @@ defmodule Kino.ExplorerTest do
     assert_broadcast_event(widget, "update_content", %{
       page: 1,
       max_page: 2,
-      rows: [%{fields: %{"0" => "1"}} | _]
+      data: %{
+        "0" => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+      }
     })
   end
 
@@ -177,9 +174,7 @@ defmodule Kino.ExplorerTest do
         %{key: "0", label: "id", type: "number"},
         %{key: "1", label: "name", type: "text"}
       ],
-      rows: [
-        %{fields: %{"0" => "3", "1" => "Amy Santiago"}}
-      ]
+      data: %{"0" => ["3"], "1" => ["Amy Santiago"]}
     })
   end
 
@@ -206,11 +201,7 @@ defmodule Kino.ExplorerTest do
         %{key: "0", label: "id", type: "number"},
         %{key: "1", label: "name", type: "text"}
       ],
-      rows: [
-        %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
-        %{fields: %{"0" => "2", "1" => "Terry Jeffords"}},
-        %{fields: %{"0" => "0", "1" => "Amy Jake"}}
-      ]
+      data: %{"0" => ["1", "2", "0"], "1" => ["Jake Peralta", "Terry Jeffords", "Amy Jake"]}
     })
 
     push_event(widget, "filter_by", %{
@@ -225,10 +216,7 @@ defmodule Kino.ExplorerTest do
         %{key: "0", label: "id", type: "number"},
         %{key: "1", label: "name", type: "text"}
       ],
-      rows: [
-        %{fields: %{"0" => "1", "1" => "Jake Peralta"}},
-        %{fields: %{"0" => "0", "1" => "Amy Jake"}}
-      ]
+      data: %{"0" => ["1", "0"], "1" => ["Jake Peralta", "Amy Jake"]}
     })
   end
 end
