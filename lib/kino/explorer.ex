@@ -9,6 +9,9 @@ defmodule Kino.Explorer do
 
   """
 
+  alias Explorer.DataFrame
+  alias Explorer.Series
+
   @behaviour Kino.Table
 
   @type t :: Kino.JS.Live.t()
@@ -16,26 +19,26 @@ defmodule Kino.Explorer do
   @doc """
   Creates a new kino displaying a given data frame or series.
   """
-  @spec new(Explorer.DataFrame.t() | Explorer.Series.t(), keyword()) :: t()
+  @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
 
-  def new(%Explorer.DataFrame{} = df, opts) do
+  def new(%DataFrame{} = df, opts) do
     name = Keyword.get(opts, :name, "DataFrame")
     Kino.Table.new(__MODULE__, {df, name})
   end
 
-  def new(%Explorer.Series{} = s, opts) do
+  def new(%Series{} = s, opts) do
     name = Keyword.get(opts, :name, "Series")
     column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
-    df = Explorer.DataFrame.new([{column_name, s}])
+    df = DataFrame.new([{column_name, s}])
     Kino.Table.new(__MODULE__, {df, name})
   end
 
   @impl true
   def init({df, name}) do
-    total_rows = Explorer.DataFrame.n_rows(df)
-    dtypes = Explorer.DataFrame.dtypes(df)
-    sample_data = df |> Explorer.DataFrame.head(1) |> Explorer.DataFrame.to_columns()
+    total_rows = DataFrame.n_rows(df)
+    dtypes = DataFrame.dtypes(df)
+    sample_data = df |> DataFrame.head(1) |> DataFrame.to_columns()
     summaries = summaries(df)
 
     columns =
@@ -67,17 +70,17 @@ defmodule Kino.Explorer do
       |> order_by(rows_spec[:order])
       |> filter_by(rows_spec[:filters])
 
-    total_rows = Explorer.DataFrame.n_rows(df)
+    total_rows = DataFrame.n_rows(df)
     summaries = if total_rows > 0, do: summaries(df)
-    df = Explorer.DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
-    records = Explorer.DataFrame.to_columns(df)
+    df = DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
+    records = DataFrame.to_columns(df)
     {records, total_rows, summaries}
   end
 
   defp order_by(df, nil), do: df
 
   defp order_by(df, %{key: column, direction: direction}) do
-    Explorer.DataFrame.arrange_with(df, &[{direction, &1[column]}])
+    DataFrame.arrange_with(df, &[{direction, &1[column]}])
   end
 
   defp filter_by(df, []), do: df
@@ -88,9 +91,9 @@ defmodule Kino.Explorer do
 
   defp filter(df, %{filter: filter, key: column, value: value}) do
     filter = String.to_atom(filter)
-    type = Explorer.DataFrame.dtypes(df) |> Map.get(column)
+    type = DataFrame.dtypes(df) |> Map.get(column)
     value = if type in [:date, :datetime], do: to_date(type, value), else: value
-    Explorer.DataFrame.filter_with(df, &apply(Explorer.Series, filter, [&1[column], value]))
+    DataFrame.filter_with(df, &apply(Series, filter, [&1[column], value]))
   end
 
   defp to_date(type, value) do
@@ -105,16 +108,16 @@ defmodule Kino.Explorer do
   end
 
   defp summaries(df) do
-    df_series = Explorer.DataFrame.to_series(df)
+    df_series = DataFrame.to_series(df)
 
     for {column, series} <- df_series,
         summary_type = summary_type(series),
-        nulls = Explorer.Series.nil_count(series) |> to_string(),
+        nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
       if summary_type == :numeric do
-        mean = Explorer.Series.mean(series) |> Float.round(2) |> to_string()
-        min = Explorer.Series.min(series) |> to_string()
-        max = Explorer.Series.max(series) |> to_string()
+        mean = if mean = Series.mean(series), do: Float.round(mean, 2) |> to_string(), else: ""
+        min = Series.min(series) |> to_string()
+        max = Series.max(series) |> to_string()
         {column, %{keys: ["min", "max", "mean", "nulls"], values: [min, max, mean, nulls]}}
       else
         %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
@@ -129,17 +132,17 @@ defmodule Kino.Explorer do
 
   defp most_frequent(data) do
     data
-    |> Explorer.Series.frequencies()
-    |> Explorer.DataFrame.head(1)
-    |> Explorer.DataFrame.to_columns()
+    |> Series.frequencies()
+    |> DataFrame.head(1)
+    |> DataFrame.to_columns()
   end
 
   defp summary_type(data) do
-    if Explorer.Series.dtype(data) in [:float, :integer], do: :numeric, else: :categorical
+    if Series.dtype(data) in [:float, :integer], do: :numeric, else: :categorical
   end
 
   defp count_unique(data) do
-    data |> Explorer.Series.distinct() |> Explorer.Series.count() |> to_string()
+    data |> Series.distinct() |> Series.count() |> to_string()
   end
 
   defp type_of(dtype, _) when dtype in [:integer, :float], do: "number"
