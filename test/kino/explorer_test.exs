@@ -214,4 +214,18 @@ defmodule Kino.ExplorerTest do
       data: [["1", "0"], ["Jake Peralta", "Amy Jake"]]
     })
   end
+
+  test "correctly handles empty data frames" do
+    df = Explorer.DataFrame.new(%{id: []})
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             features: [:pagination, :sorting, :filtering],
+             content: %{
+               columns: [%{key: "0", label: "id", type: "number", summary: nil}],
+               data: [[]]
+             }
+           } = data
+  end
 end
