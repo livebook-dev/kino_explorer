@@ -58,7 +58,7 @@ defmodule Kino.Explorer do
     {records, total_rows, summaries} = get_records(state.df, rows_spec)
     columns = Enum.map(state.columns, &%{&1 | summary: summaries[&1.key]})
     data = records_to_data(columns, records)
-    {:ok, %{columns: columns, data: {:columnar, data}, total_rows: total_rows}, state}
+    {:ok, %{columns: columns, data: {:columns, data}, total_rows: total_rows}, state}
   end
 
   defp get_records(df, rows_spec) do
