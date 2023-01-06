@@ -120,8 +120,9 @@ defmodule Kino.Explorer do
         max = Series.max(series) |> to_string()
         {column, %{keys: ["min", "max", "mean", "nulls"], values: [min, max, mean, nulls]}}
       else
-        %{"counts" => [top_freq], "values" => [top]} = most_frequent(series)
-        top_freq = to_string(top_freq)
+        %{"counts" => top_freq, "values" => top} = most_frequent(series)
+        top_freq = top_freq |> List.first() |> to_string()
+        top = List.first(top) || ""
         unique = count_unique(series)
 
         {column,
