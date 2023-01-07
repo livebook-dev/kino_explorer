@@ -321,6 +321,11 @@ input::-webkit-inner-spin-button {
   justify-content: flex-end;
 }
 
+.add-operation {
+  display: flex;
+  gap: 8px;
+}
+
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   border: none;

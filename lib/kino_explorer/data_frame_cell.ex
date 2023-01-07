@@ -109,6 +109,17 @@ defmodule KinoExplorer.DataFrameCell do
     {:noreply, ctx}
   end
 
+  def handle_event("add_operation", %{"operation" => operation}, ctx) do
+    new_operation = String.to_atom(operation) |> default_operation()
+    updated_operation = ctx.assigns.operations[operation] ++ [new_operation]
+    updated_operations = %{ctx.assigns.operations | operation => updated_operation}
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "set_operations", %{operation => updated_operation})
+
+    {:noreply, ctx}
+  end
+
   defp updates_for_data_frame(_ctx, data_frame) do
     %{
       root_fields: %{"data_frame" => data_frame},
@@ -214,9 +225,17 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp default_operations() do
     %{
-      "filters" => [%{"filter" => "equal", "column" => nil, "value" => ""}],
-      "sorting" => [%{"order_by" => nil, "order" => "asc"}]
+      "filters" => [default_operation(:filters)],
+      "sorting" => [default_operation(:sorting)]
     }
+  end
+
+  defp default_operation(:filters) do
+    %{"filter" => "equal", "column" => nil, "value" => ""}
+  end
+
+  defp default_operation(:sorting) do
+    %{"order_by" => nil, "order" => "asc"}
   end
 
   defp dtypes(val, columns) do
