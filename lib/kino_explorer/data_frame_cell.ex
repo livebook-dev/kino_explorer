@@ -160,16 +160,20 @@ defmodule KinoExplorer.DataFrameCell do
   defp to_quoted(%{"data_frame" => df} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
 
-    sorting =
+    sorting_args =
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end) do
-        %{
-          field: :sorting,
-          name: :arrange_with,
-          module: attrs.explorer_alias,
-          args: build_sorting(sort.order, sort.order_by)
-        }
+        build_sorting(sort.order, sort.order_by)
       end
+
+    sorting = [
+      %{
+        field: :sorting,
+        name: :arrange_with,
+        module: attrs.explorer_alias,
+        args: Enum.reject(sorting_args, &(&1 == nil))
+      }
+    ]
 
     filters =
       for filter <- attrs.operations["filters"],
@@ -206,11 +210,19 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   defp apply_node(%{args: nil}, acc), do: acc
+  defp apply_node(%{args: []}, acc), do: acc
 
-  defp apply_node(%{field: :sorting, name: function, args: {order, column}}, acc) do
+  defp apply_node(%{field: :sorting, name: function, args: args}, acc) do
+    args =
+      Enum.map(args, fn {order, column} ->
+        quote do
+          {unquote(order), &1[unquote(column)]}
+        end
+      end)
+
     quote do
       unquote(acc)
-      |> Explorer.DataFrame.unquote(function)(&[{unquote(order), &1[unquote(column)]}])
+      |> Explorer.DataFrame.unquote(function)(&unquote(args))
     end
   end
 
