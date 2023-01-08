@@ -114,7 +114,15 @@ defmodule KinoExplorer.DataFrameCell do
     updated_operation = ctx.assigns.operations[operation] ++ [new_operation]
     updated_operations = %{ctx.assigns.operations | operation => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
+    broadcast_event(ctx, "set_operations", %{operation => updated_operation})
 
+    {:noreply, ctx}
+  end
+
+  def handle_event("remove_operation", %{"operation" => operation, "idx" => idx}, ctx) do
+    updated_operation = List.delete_at(ctx.assigns.operations[operation], idx)
+    updated_operations = %{ctx.assigns.operations | operation => updated_operation}
+    ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{operation => updated_operation})
 
     {:noreply, ctx}
@@ -162,7 +170,8 @@ defmodule KinoExplorer.DataFrameCell do
 
     sorting_args =
       for sort <- attrs.operations["sorting"],
-          sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end) do
+          sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
+          sort.order != nil && sort.order_by != nil do
         build_sorting(sort.order, sort.order_by)
       end
 
@@ -171,7 +180,7 @@ defmodule KinoExplorer.DataFrameCell do
         field: :sorting,
         name: :arrange_with,
         module: attrs.explorer_alias,
-        args: Enum.reject(sorting_args, &(&1 == nil))
+        args: sorting_args
       }
     ]
 
@@ -197,12 +206,10 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
-  defp build_sorting(nil, _), do: nil
-  defp build_sorting(_, nil), do: nil
   defp build_sorting(order, order_by), do: {order, order_by}
 
   defp build_filter([column, filter, value] = args) do
-    if Enum.all?(args, &(&1 != nil && &1 != "")), do: build_filter(column, filter, value)
+    if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value)
   end
 
   defp build_filter(column, filter, value) do
@@ -243,7 +250,7 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   defp default_operation(:filters) do
-    %{"filter" => "equal", "column" => nil, "value" => ""}
+    %{"filter" => "equal", "column" => nil, "value" => nil}
   end
 
   defp default_operation(:sorting) do
