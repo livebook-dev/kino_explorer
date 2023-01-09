@@ -200,6 +200,20 @@ input[type="number"] {
   background-color: var(--gray-100);
 }
 
+.button--icon {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px;
+  margin: 0;
+  place-items: center;
+  justify-content: center;
+  width: 60px;
+}
+
+.button--icon .active {
+  background-color: var(--gray-100);
+}
+
 .button-svg {
   transition-property: all;
   transition-duration: 200ms;

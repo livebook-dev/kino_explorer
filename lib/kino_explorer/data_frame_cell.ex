@@ -7,12 +7,15 @@ defmodule KinoExplorer.DataFrameCell do
 
   alias Explorer.DataFrame
 
-  @as_atom ["order"]
+  @as_atom ["order", "pivot_type"]
 
   @impl true
   def init(attrs, ctx) do
     root_fields = %{
-      "data_frame" => attrs["data_frame"]
+      "data_frame" => attrs["data_frame"],
+      "pivot_type" => attrs["pivot_type"] || "pivot_longer",
+      "names_from" => attrs["names_from"],
+      "values_from" => attrs["values_from"]
     }
 
     operations = attrs["operations"] || default_operations()
@@ -132,7 +135,12 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp updates_for_data_frame(_ctx, data_frame) do
     %{
-      root_fields: %{"data_frame" => data_frame},
+      root_fields: %{
+        "data_frame" => data_frame,
+        "pivot_type" => "pivot_longer",
+        "names_from" => "",
+        "values_from" => ""
+      },
       operations: default_operations()
     }
   end
@@ -141,6 +149,7 @@ defmodule KinoExplorer.DataFrameCell do
   defp parse_value(_field, value), do: value
 
   defp convert_field(field, nil), do: {String.to_atom(field), nil}
+  defp convert_field(field, ""), do: {String.to_atom(field), nil}
 
   defp convert_field(field, value) when field in @as_atom do
     {String.to_atom(field), String.to_atom(value)}
@@ -206,7 +215,16 @@ defmodule KinoExplorer.DataFrameCell do
         }
       end
 
-    nodes = groups ++ sorting ++ filters
+    pivot = [
+      %{
+        field: attrs.pivot_type,
+        name: attrs.pivot_type,
+        module: attrs.explorer_alias,
+        args: build_pivot(attrs, attrs.operations["pivot"])
+      }
+    ]
+
+    nodes = groups ++ sorting ++ filters ++ pivot
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2)
   end
@@ -227,14 +245,16 @@ defmodule KinoExplorer.DataFrameCell do
     {column, String.to_atom(filter), String.to_integer(value)}
   end
 
+  defp build_pivot(%{pivot_type: :pivot_longer}, pivot) do
+    Enum.map(pivot, & &1["pivot_by"]) |> Enum.reject(&(&1 == nil))
+  end
+
+  defp build_pivot(%{names_from: names, values_from: values}, _pivot) do
+    if names && values, do: [names, values]
+  end
+
   defp apply_node(%{args: nil}, acc), do: acc
   defp apply_node(%{args: []}, acc), do: acc
-
-  defp apply_node(%{field: :groups, name: function, args: args}, acc) do
-    quote do
-      unquote(acc) |> Explorer.DataFrame.unquote(function)(unquote(args))
-    end
-  end
 
   defp apply_node(%{field: :sorting, name: function, args: args}, acc) do
     args =
@@ -259,17 +279,31 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
+  defp apply_node(%{field: :pivot_wider, name: function, args: args}, acc) do
+    quote do
+      unquote(acc) |> Explorer.DataFrame.unquote(function)(unquote_splicing(args))
+    end
+  end
+
+  defp apply_node(%{field: _field, name: function, args: args}, acc) do
+    quote do
+      unquote(acc) |> Explorer.DataFrame.unquote(function)(unquote(args))
+    end
+  end
+
   defp default_operations() do
     %{
       "filters" => [default_operation(:filters)],
       "sorting" => [default_operation(:sorting)],
-      "groups" => [default_operation(:groups)]
+      "groups" => [default_operation(:groups)],
+      "pivot" => [default_operation(:pivot)]
     }
   end
 
   defp default_operation(:filters), do: %{"filter" => "equal", "column" => nil, "value" => nil}
   defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
   defp default_operation(:groups), do: %{"group_by" => nil}
+  defp default_operation(:pivot), do: %{"pivot_by" => nil}
 
   defp dtypes(val, columns) do
     dtypes = DataFrame.dtypes(val)
