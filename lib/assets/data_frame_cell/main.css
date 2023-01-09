@@ -38,6 +38,7 @@ pre {
 .row {
   display: flex;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .root {
@@ -102,11 +103,7 @@ input[type="number"] {
 .field {
   display: flex;
   flex-direction: column;
-  flex-basis: 25%;
-}
-
-.field:first-child {
-  margin-left: 4px;
+  min-width: 200px;
 }
 
 .root-field {
@@ -255,8 +252,6 @@ select option {
 
 .accordion-control {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   text-transform: uppercase;
   font-size: 0.875rem;
   padding: 0;
@@ -266,6 +261,11 @@ select option {
   flex-grow: 1;
   color: var(--gray-700);
   margin-bottom: 0px;
+}
+
+.accordion-buttons {
+  position: absolute;
+  right: 12px;
 }
 
 .button-svg {
@@ -285,7 +285,6 @@ select option {
 }
 
 .wrapper {
-  border-bottom: 1px solid var(--gray-200);
   margin-left: 14px;
   margin-right: 14px;
   margin-bottom: 6px;
@@ -305,8 +304,10 @@ select option {
 .add-operation {
   display: flex;
   gap: 8px;
+  margin-left: 4px;
+  padding-top: 6px;
 }
 
-.layers {
-  padding-top: 0px;
+.operations {
+  padding: 12px 0;
 }
