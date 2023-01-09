@@ -120,7 +120,9 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   def handle_event("remove_operation", %{"operation" => operation, "idx" => idx}, ctx) do
-    updated_operation = List.delete_at(ctx.assigns.operations[operation], idx)
+    updated_operation =
+      if idx, do: List.delete_at(ctx.assigns.operations[operation], idx), else: []
+
     updated_operations = %{ctx.assigns.operations | operation => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{operation => updated_operation})
