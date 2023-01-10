@@ -37,9 +37,7 @@ defmodule KinoExplorer.DataFrameCell do
     data_options =
       for {key, val} <- binding,
           is_struct(val, DataFrame),
-          columns = DataFrame.names(val),
-          types = dtypes(val, columns),
-          do: %{variable: Atom.to_string(key), columns: columns, types: types}
+          do: %{variable: Atom.to_string(key), columns: DataFrame.dtypes(val)}
 
     explorer_alias = explorer_alias(env)
     send(pid, {:scan_binding_result, data_options, explorer_alias})
