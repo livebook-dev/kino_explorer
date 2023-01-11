@@ -7,7 +7,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   alias Explorer.DataFrame
 
-  @as_atom ["order", "pivot_type"]
+  @as_atom ["order", "pivot_type", "type"]
 
   @impl true
   def init(attrs, ctx) do
@@ -209,7 +209,7 @@ defmodule KinoExplorer.DataFrameCell do
           field: :filter,
           name: :filter_with,
           module: attrs.explorer_alias,
-          args: build_filter([filter.column, filter.filter, filter.value])
+          args: build_filter([filter.column, filter.filter, filter.value, filter.type])
         }
       end
 
@@ -235,12 +235,13 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp build_sorting(order, order_by), do: {order, order_by}
 
-  defp build_filter([column, filter, value] = args) do
-    if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value)
+  defp build_filter([column, filter, value, type] = args) do
+    if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value, type)
   end
 
-  defp build_filter(column, filter, value) do
-    {column, String.to_atom(filter), String.to_integer(value)}
+  defp build_filter(column, filter, value, type) do
+    value = cast_filter_value(type, value)
+    {column, String.to_atom(filter), value}
   end
 
   defp build_pivot(%{pivot_type: :pivot_longer}, pivot) do
@@ -298,15 +299,16 @@ defmodule KinoExplorer.DataFrameCell do
     }
   end
 
-  defp default_operation(:filters), do: %{"filter" => "equal", "column" => nil, "value" => nil}
+  defp default_operation(:filters),
+    do: %{"filter" => "equal", "column" => nil, "value" => nil, "type" => "string"}
+
   defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
   defp default_operation(:groups), do: %{"group_by" => nil}
   defp default_operation(:pivot), do: %{"pivot_by" => nil}
 
-  defp dtypes(val, columns) do
-    dtypes = DataFrame.dtypes(val)
-    Enum.map(columns, &(Map.fetch!(dtypes, &1) |> Atom.to_string()))
-  end
+  defp cast_filter_value(:integer, value), do: String.to_integer(value)
+  defp cast_filter_value(:float, value), do: Float.parse(value) |> elem(0)
+  defp cast_filter_value(_, value), do: value
 
   defp explorer_alias(%Macro.Env{aliases: aliases}) do
     case List.keyfind(aliases, Explorer, 1) do
