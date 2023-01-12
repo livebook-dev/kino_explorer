@@ -170,15 +170,6 @@ defmodule KinoExplorer.DataFrameCell do
   defp to_quoted(%{"data_frame" => df} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
 
-    groups = [
-      %{
-        field: :groups,
-        name: :group_by,
-        module: attrs.explorer_alias,
-        args: Enum.map(attrs.operations["groups"], & &1["group_by"]) |> Enum.reject(&(&1 == nil))
-      }
-    ]
-
     sorting_args =
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
@@ -220,7 +211,7 @@ defmodule KinoExplorer.DataFrameCell do
       }
     ]
 
-    nodes = groups ++ sorting ++ filters ++ pivot
+    nodes = sorting ++ filters ++ pivot
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2)
   end
@@ -294,7 +285,6 @@ defmodule KinoExplorer.DataFrameCell do
     %{
       "filters" => [default_operation(:filters)],
       "sorting" => [default_operation(:sorting)],
-      "groups" => [default_operation(:groups)],
       "pivot_longer" => [default_operation(:pivot_longer)],
       "pivot_wider" => [default_operation(:pivot_wider)]
     }
@@ -304,7 +294,6 @@ defmodule KinoExplorer.DataFrameCell do
     do: %{"filter" => "equal", "column" => nil, "value" => nil, "type" => "string"}
 
   defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
-  defp default_operation(:groups), do: %{"group_by" => nil}
   defp default_operation(:pivot_longer), do: %{"pivot_by" => nil}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
 

@@ -15,7 +15,6 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @operations %{
     "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
-    "groups" => [%{"group_by" => nil}],
     "pivot_longer" => [%{"pivot_by" => nil}],
     "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
     "sorting" => [%{"order" => "asc", "order_by" => nil}]
@@ -54,22 +53,6 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       assert DataFrameCell.to_source(attrs) == """
              people\
-             """
-    end
-
-    test "source for a data frame with one group" do
-      attrs = build_attrs(%{"groups" => [%{"group_by" => "name"}]})
-
-      assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.group_by(["name"])\
-             """
-    end
-
-    test "source for a data frame with multiple groups" do
-      attrs = build_attrs(%{"groups" => [%{"group_by" => "name"}, %{"group_by" => "id"}]})
-
-      assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.group_by(["name", "id"])\
              """
     end
 
