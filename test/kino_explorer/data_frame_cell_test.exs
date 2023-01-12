@@ -9,13 +9,11 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @root %{
     "data_frame" => "people",
-    "pivot_type" => "pivot_longer",
     "explorer_alias" => Explorer
   }
 
   @operations %{
     "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
-    "pivot_longer" => [%{"pivot_by" => nil}],
     "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
     "sorting" => [%{"order" => "asc", "order_by" => nil}]
   }
@@ -104,22 +102,6 @@ defmodule KinoExplorer.DataFrameCellTest do
              people
              |> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["name"], "Ana"))
              |> Explorer.DataFrame.filter_with(&Explorer.Series.less(&1["id"], 2))\
-             """
-    end
-
-    test "source for a data frame with pivot longer" do
-      attrs = build_attrs(%{"pivot_longer" => [%{"pivot_by" => "name"}]})
-
-      assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.pivot_longer(["name"])\
-             """
-    end
-
-    test "source for a data frame with multiple pivot longer" do
-      attrs = build_attrs(%{"pivot_longer" => [%{"pivot_by" => "name"}, %{"pivot_by" => "id"}]})
-
-      assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.pivot_longer(["name", "id"])\
              """
     end
 
