@@ -227,7 +227,7 @@ input[type="number"] {
 .input-icon {
   border: 1px solid var(--gray-200);
   outline: none;
-  padding: 8px 12px 8px 42px;
+  padding: 8px 12px 8px 36px;
 }
 
 .input-icon:hover {
