@@ -13,9 +13,7 @@ defmodule KinoExplorer.DataFrameCell do
   def init(attrs, ctx) do
     root_fields = %{
       "data_frame" => attrs["data_frame"],
-      "pivot_type" => attrs["pivot_type"] || "pivot_longer",
-      "names_from" => attrs["names_from"],
-      "values_from" => attrs["values_from"]
+      "pivot_type" => attrs["pivot_type"] || "pivot_longer"
     }
 
     operations = attrs["operations"] || default_operations()
@@ -133,12 +131,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp updates_for_data_frame(_ctx, data_frame) do
     %{
-      root_fields: %{
-        "data_frame" => data_frame,
-        "pivot_type" => "pivot_longer",
-        "names_from" => "",
-        "values_from" => ""
-      },
+      root_fields: %{"data_frame" => data_frame, "pivot_type" => "pivot_longer"},
       operations: default_operations()
     }
   end
@@ -218,7 +211,12 @@ defmodule KinoExplorer.DataFrameCell do
         field: attrs.pivot_type,
         name: attrs.pivot_type,
         module: attrs.explorer_alias,
-        args: build_pivot(attrs, attrs.operations["pivot"])
+        args:
+          build_pivot(
+            attrs.pivot_type,
+            attrs.operations["pivot_longer"],
+            attrs.operations["pivot_wider"]
+          )
       }
     ]
 
@@ -244,13 +242,15 @@ defmodule KinoExplorer.DataFrameCell do
     {column, String.to_atom(filter), value}
   end
 
-  defp build_pivot(%{pivot_type: :pivot_longer}, pivot) do
+  defp build_pivot(:pivot_longer, pivot, _) do
     Enum.map(pivot, & &1["pivot_by"]) |> Enum.reject(&(&1 == nil))
   end
 
-  defp build_pivot(%{names_from: names, values_from: values}, _pivot) do
+  defp build_pivot(:pivot_wider, _, [%{"names_from" => names, "values_from" => values}]) do
     if names && values, do: [names, values]
   end
+
+  defp build_pivot(_, _, _), do: nil
 
   defp apply_node(%{args: nil}, acc), do: acc
   defp apply_node(%{args: []}, acc), do: acc
@@ -295,7 +295,8 @@ defmodule KinoExplorer.DataFrameCell do
       "filters" => [default_operation(:filters)],
       "sorting" => [default_operation(:sorting)],
       "groups" => [default_operation(:groups)],
-      "pivot" => [default_operation(:pivot)]
+      "pivot_longer" => [default_operation(:pivot_longer)],
+      "pivot_wider" => [default_operation(:pivot_wider)]
     }
   end
 
@@ -304,7 +305,8 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
   defp default_operation(:groups), do: %{"group_by" => nil}
-  defp default_operation(:pivot), do: %{"pivot_by" => nil}
+  defp default_operation(:pivot_longer), do: %{"pivot_by" => nil}
+  defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
 
   defp cast_filter_value(:integer, value), do: String.to_integer(value)
   defp cast_filter_value(:float, value), do: Float.parse(value) |> elem(0)

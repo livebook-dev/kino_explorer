@@ -9,16 +9,15 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @root %{
     "data_frame" => "people",
-    "names_from" => "",
     "pivot_type" => "pivot_longer",
-    "values_from" => "",
     "explorer_alias" => Explorer
   }
 
   @operations %{
     "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
     "groups" => [%{"group_by" => nil}],
-    "pivot" => [%{"pivot_by" => nil}],
+    "pivot_longer" => [%{"pivot_by" => nil}],
+    "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
     "sorting" => [%{"order" => "asc", "order_by" => nil}]
   }
 
@@ -126,7 +125,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source for a data frame with pivot longer" do
-      attrs = build_attrs(%{"pivot" => [%{"pivot_by" => "name"}]})
+      attrs = build_attrs(%{"pivot_longer" => [%{"pivot_by" => "name"}]})
 
       assert DataFrameCell.to_source(attrs) == """
              people |> Explorer.DataFrame.pivot_longer(["name"])\
@@ -134,7 +133,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source for a data frame with multiple pivot longer" do
-      attrs = build_attrs(%{"pivot" => [%{"pivot_by" => "name"}, %{"pivot_by" => "id"}]})
+      attrs = build_attrs(%{"pivot_longer" => [%{"pivot_by" => "name"}, %{"pivot_by" => "id"}]})
 
       assert DataFrameCell.to_source(attrs) == """
              people |> Explorer.DataFrame.pivot_longer(["name", "id"])\
@@ -142,16 +141,12 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source for a data frame with pivot wider" do
-      attrs =
-        build_attrs(%{
-          "data_frame" => "teams",
-          "pivot_type" => "pivot_wider",
-          "names_from" => "weekdays",
-          "values_from" => "hour"
-        }, %{})
+      root = %{"data_frame" => "teams", "pivot_type" => "pivot_wider"}
+      operations = %{"pivot_wider" => [%{"names_from" => "weekdays", "values_from" => "hour"}]}
+      attrs = build_attrs(root, operations)
 
       assert DataFrameCell.to_source(attrs) == """
-             teams |> Explorer.DataFrame.pivot_wider(\"weekdays\", \"hour\")\
+             teams |> Explorer.DataFrame.pivot_wider("weekdays", "hour")\
              """
     end
   end
