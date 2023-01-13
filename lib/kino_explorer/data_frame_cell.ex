@@ -7,7 +7,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   alias Explorer.DataFrame
 
-  @as_atom ["order", "pivot_type", "type"]
+  @as_atom ["order", "type"]
 
   @impl true
   def init(attrs, ctx) do
@@ -71,7 +71,6 @@ defmodule KinoExplorer.DataFrameCell do
 
   @impl true
   def handle_event("update_field", %{"field" => "data_frame", "value" => value}, ctx) do
-    IO.inspect(value)
     updated_fields = updates_for_data_frame(value)
     ctx = assign(ctx, updated_fields)
     broadcast_event(ctx, "update_data_frame", %{"fields" => updated_fields})
@@ -304,7 +303,23 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp cast_filter_value(:integer, value), do: String.to_integer(value)
   defp cast_filter_value(:float, value), do: Float.parse(value) |> elem(0)
+  defp cast_filter_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
   defp cast_filter_value(_, value), do: value
+
+  defp to_date(:date, value) do
+    case Date.from_iso8601(value) do
+      {:ok, date} -> date
+      _ -> nil
+    end
+  end
+
+  defp to_date(:datetime, value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, date, _} -> date
+      _ -> nil
+    end
+  end
+
 
   defp explorer_alias(%Macro.Env{aliases: aliases}) do
     case List.keyfind(aliases, Explorer, 1) do
