@@ -55,7 +55,7 @@ defmodule KinoExplorer.DataFrameCell do
 
     updated_fields =
       case {ctx.assigns.root_fields["data_frame"], data_options} do
-        {nil, [%{variable: data_frame} | _]} -> updates_for_data_frame(ctx, data_frame)
+        {nil, [%{variable: data_frame} | _]} -> updates_for_data_frame(data_frame)
         _ -> %{}
       end
 
@@ -72,7 +72,7 @@ defmodule KinoExplorer.DataFrameCell do
   @impl true
   def handle_event("update_field", %{"field" => "data_frame", "value" => value}, ctx) do
     IO.inspect(value)
-    updated_fields = updates_for_data_frame(ctx, value)
+    updated_fields = updates_for_data_frame(value)
     ctx = assign(ctx, updated_fields)
     broadcast_event(ctx, "update_data_frame", %{"fields" => updated_fields})
     {:noreply, ctx}
@@ -82,6 +82,22 @@ defmodule KinoExplorer.DataFrameCell do
     parsed_value = parse_value(field, value)
     ctx = update(ctx, :root_fields, &Map.put(&1, field, parsed_value))
     broadcast_event(ctx, "update_root", %{"fields" => %{field => parsed_value}})
+    {:noreply, ctx}
+  end
+
+  def handle_event("update_field", %{"operation" => "filters", "field" => "column"} = fields, ctx) do
+    {column, idx} = {fields["value"], fields["idx"]}
+    updated_filter = updates_for_filters(column, ctx)
+    updated_operation = List.replace_at(ctx.assigns.operations["filters"], idx, updated_filter)
+    updated_operations = %{ctx.assigns.operations | "filters" => updated_operation}
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "update_operation", %{
+      "operation" => "filters",
+      "idx" => idx,
+      "fields" => updated_filter
+    })
+
     {:noreply, ctx}
   end
 
@@ -125,11 +141,15 @@ defmodule KinoExplorer.DataFrameCell do
     {:noreply, ctx}
   end
 
-  defp updates_for_data_frame(_ctx, data_frame) do
-    %{
-      root_fields: %{"data_frame" => data_frame},
-      operations: default_operations()
-    }
+  defp updates_for_data_frame(data_frame) do
+    %{root_fields: %{"data_frame" => data_frame}, operations: default_operations()}
+  end
+
+  defp updates_for_filters(column, ctx) do
+    df = ctx.assigns.root_fields["data_frame"]
+    data = ctx.assigns.data_options
+    type = Enum.find_value(data, &(&1.variable == df && Map.fetch!(&1.columns, column)))
+    %{"filter" => "equal", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
   end
 
   defp parse_value(_field, ""), do: nil
