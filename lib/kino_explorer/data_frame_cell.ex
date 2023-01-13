@@ -3,11 +3,11 @@ defmodule KinoExplorer.DataFrameCell do
 
   use Kino.JS, assets_path: "lib/assets/data_frame_cell"
   use Kino.JS.Live
-  use Kino.SmartCell, name: "DataFrame"
+  use Kino.SmartCell, name: "Data Transform"
 
   alias Explorer.DataFrame
 
-  @as_atom ["order", "type"]
+  @as_atom ["direction", "type"]
 
   @impl true
   def init(attrs, ctx) do
@@ -20,8 +20,7 @@ defmodule KinoExplorer.DataFrameCell do
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
         series_alias: Explorer.Series,
-        data_options: [],
-        missing_dep: missing_dep()
+        data_options: []
       )
 
     {:ok, ctx, reevaluate_on_change: true}
@@ -43,8 +42,7 @@ defmodule KinoExplorer.DataFrameCell do
     payload = %{
       root_fields: ctx.assigns.root_fields,
       operations: ctx.assigns.operations,
-      data_options: ctx.assigns.data_options,
-      missing_dep: ctx.assigns.missing_dep
+      data_options: ctx.assigns.data_options
     }
 
     {:ok, payload, ctx}
@@ -195,8 +193,8 @@ defmodule KinoExplorer.DataFrameCell do
     sorting_args =
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
-          sort.order != nil && sort.order_by != nil do
-        build_sorting(sort.order, sort.order_by)
+          sort.direction != nil && sort.sort_by != nil do
+        build_sorting(sort.direction, sort.sort_by)
       end
 
     sorting = [
@@ -239,7 +237,7 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
-  defp build_sorting(order, order_by), do: {order, order_by}
+  defp build_sorting(direction, sort_by), do: {direction, sort_by}
 
   defp build_filter([column, filter, value, type] = args) do
     if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value, type)
@@ -261,9 +259,9 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp apply_node(%{field: :sorting, name: function, module: data_frame, args: args}, acc) do
     args =
-      Enum.map(args, fn {order, column} ->
+      Enum.map(args, fn {direction, column} ->
         quote do
-          {unquote(order), &1[unquote(column)]}
+          {unquote(direction), &1[unquote(column)]}
         end
       end)
 
@@ -308,7 +306,7 @@ defmodule KinoExplorer.DataFrameCell do
   defp default_operation(:filters),
     do: %{"filter" => "equal", "column" => nil, "value" => nil, "type" => "string"}
 
-  defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
+  defp default_operation(:sorting), do: %{"sort_by" => nil, "direction" => "asc"}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
 
   defp cast_filter_value(:boolean, value), do: String.to_atom(value)
@@ -342,12 +340,6 @@ defmodule KinoExplorer.DataFrameCell do
     case List.keyfind(aliases, Explorer.Series, 1) do
       {series_alias, _} -> series_alias
       nil -> Explorer.Series
-    end
-  end
-
-  defp missing_dep() do
-    unless Code.ensure_loaded?(Explorer) do
-      ~s/{:explorer, "~> 0.5.0"}/
     end
   end
 end

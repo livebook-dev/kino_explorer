@@ -16,7 +16,7 @@ defmodule KinoExplorer.DataFrameCellTest do
   @operations %{
     "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
     "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
-    "sorting" => [%{"order" => "asc", "order_by" => nil}]
+    "sorting" => [%{"direction" => "asc", "sort_by" => nil}]
   }
 
   test "returns no source when starting fresh with no data" do
@@ -56,7 +56,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source for a data frame with sorting" do
-      attrs = build_attrs(%{"sorting" => [%{"order" => "asc", "order_by" => "name"}]})
+      attrs = build_attrs(%{"sorting" => [%{"direction" => "asc", "sort_by" => "name"}]})
 
       assert DataFrameCell.to_source(attrs) == """
              people |> Explorer.DataFrame.arrange_with(&[asc: &1["name"]])\
@@ -67,8 +67,8 @@ defmodule KinoExplorer.DataFrameCellTest do
       attrs =
         build_attrs(%{
           "sorting" => [
-            %{"order" => "asc", "order_by" => "name"},
-            %{"order" => "desc", "order_by" => "id"}
+            %{"direction" => "asc", "sort_by" => "name"},
+            %{"direction" => "desc", "sort_by" => "id"}
           ]
         })
 
