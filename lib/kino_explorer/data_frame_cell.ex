@@ -301,6 +301,7 @@ defmodule KinoExplorer.DataFrameCell do
   defp default_operation(:sorting), do: %{"order_by" => nil, "order" => "asc"}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
 
+  defp cast_filter_value(:boolean, value), do: String.to_atom(value)
   defp cast_filter_value(:integer, value), do: String.to_integer(value)
   defp cast_filter_value(:float, value), do: Float.parse(value) |> elem(0)
   defp cast_filter_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
