@@ -9,7 +9,8 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @root %{
     "data_frame" => "people",
-    "explorer_alias" => Explorer
+    "data_frame_alias" => Explorer.DataFrame,
+    "series_alias" => Explorer.Series
   }
 
   @operations %{
@@ -112,6 +113,25 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       assert DataFrameCell.to_source(attrs) == """
              teams |> Explorer.DataFrame.pivot_wider("weekdays", "hour")\
+             """
+    end
+
+    test "source with alias" do
+      root = %{"data_frame_alias" => DF, "series_alias" => Series}
+
+      operations = %{
+        "filters" => [
+          %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataFrameCell.to_source(attrs) == """
+             people
+             |> DF.filter_with(&Series.equal(&1["name"], "Ana"))
+             |> DF.filter_with(&Series.less(&1["id"], 2))\
              """
     end
   end
