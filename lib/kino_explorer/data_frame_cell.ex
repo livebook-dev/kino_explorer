@@ -11,7 +11,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   @impl true
   def init(attrs, ctx) do
-    root_fields = %{"data_frame" => attrs["data_frame"]}
+    root_fields = %{"data_frame" => attrs["data_frame"], "export_to" => attrs["export_to"]}
     operations = attrs["operations"] || default_operations()
 
     ctx =
@@ -19,7 +19,6 @@ defmodule KinoExplorer.DataFrameCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        series_alias: Explorer.Series,
         data_options: []
       )
 
@@ -33,8 +32,8 @@ defmodule KinoExplorer.DataFrameCell do
           is_struct(val, DataFrame),
           do: %{variable: Atom.to_string(key), columns: DataFrame.dtypes(val)}
 
-    {data_frame_alias, series_alias} = {data_frame_alias(env), series_alias(env)}
-    send(pid, {:scan_binding_result, data_options, {data_frame_alias, series_alias}})
+    data_frame_alias = data_frame_alias(env)
+    send(pid, {:scan_binding_result, data_options, data_frame_alias})
   end
 
   @impl true
@@ -49,13 +48,8 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   @impl true
-  def handle_info({:scan_binding_result, data_options, {data_frame_alias, series_alias}}, ctx) do
-    ctx =
-      assign(ctx,
-        data_options: data_options,
-        data_frame_alias: data_frame_alias,
-        series_alias: series_alias
-      )
+  def handle_info({:scan_binding_result, data_options, data_frame_alias}, ctx) do
+    ctx = assign(ctx, data_options: data_options, data_frame_alias: data_frame_alias)
 
     updated_fields =
       case {ctx.assigns.root_fields["data_frame"], data_options} do
@@ -145,7 +139,10 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   defp updates_for_data_frame(data_frame) do
-    %{root_fields: %{"data_frame" => data_frame}, operations: default_operations()}
+    %{
+      root_fields: %{"data_frame" => data_frame, "export_to" => nil},
+      operations: default_operations()
+    }
   end
 
   defp updates_for_filters(column, ctx) do
@@ -172,7 +169,6 @@ defmodule KinoExplorer.DataFrameCell do
     ctx.assigns.root_fields
     |> Map.put("operations", ctx.assigns.operations)
     |> Map.put("data_frame_alias", ctx.assigns.data_frame_alias)
-    |> Map.put("series_alias", ctx.assigns.series_alias)
   end
 
   @impl true
@@ -187,7 +183,7 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
-  defp to_quoted(%{"data_frame" => df} = attrs) do
+  defp to_quoted(%{"data_frame" => df, "export_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
 
     sorting_args =
@@ -200,9 +196,9 @@ defmodule KinoExplorer.DataFrameCell do
     sorting = [
       %{
         field: :sorting,
-        name: :arrange_with,
+        name: :arrange,
         module: attrs.data_frame_alias,
-        args: sorting_args
+        args: build_sorting_args(sorting_args)
       }
     ]
 
@@ -211,8 +207,8 @@ defmodule KinoExplorer.DataFrameCell do
           filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end) do
         %{
           field: :filter,
-          name: :filter_with,
-          modules: {attrs.data_frame_alias, attrs.series_alias},
+          name: :filter,
+          module: attrs.data_frame_alias,
           args: build_filter([filter.column, filter.filter, filter.value, filter.type])
         }
       end
@@ -227,17 +223,31 @@ defmodule KinoExplorer.DataFrameCell do
     ]
 
     nodes = sorting ++ filters ++ pivot
-    root = build_root(df)
+    root = build_root(df, variable)
     Enum.reduce(nodes, root, &apply_node/2)
   end
 
-  defp build_root(df) do
+  defp build_root(df, nil) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
     end
   end
 
+  defp build_root(df, variable) do
+    quote do
+      unquote({String.to_atom(variable), [], nil}) = unquote(Macro.var(String.to_atom(df), nil))
+    end
+  end
+
   defp build_sorting(direction, sort_by), do: {direction, sort_by}
+
+  defp build_sorting_args(args) do
+    Enum.map(args, fn {direction, column} ->
+      quote do
+        {unquote(direction), unquote(quoted_column(column))}
+      end
+    end)
+  end
 
   defp build_filter([column, filter, value, type] = args) do
     if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value, type)
@@ -245,7 +255,9 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp build_filter(column, filter, value, type) do
     value = cast_filter_value(type, value)
-    {column, String.to_atom(filter), value}
+    filter = String.to_atom(filter)
+    column = quoted_column(column)
+    {filter, [], [column, value]}
   end
 
   defp build_pivot([%{"names_from" => names, "values_from" => values}]) do
@@ -256,32 +268,6 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp apply_node(%{args: nil}, acc), do: acc
   defp apply_node(%{args: []}, acc), do: acc
-
-  defp apply_node(%{field: :sorting, name: function, module: data_frame, args: args}, acc) do
-    args =
-      Enum.map(args, fn {direction, column} ->
-        quote do
-          {unquote(direction), &1[unquote(column)]}
-        end
-      end)
-
-    quote do
-      unquote(acc)
-      |> unquote(data_frame).unquote(function)(&unquote(args))
-    end
-  end
-
-  defp apply_node(%{field: :filter, name: function} = operation, acc) do
-    {data_frame, series} = operation.modules
-    {column, filter, value} = operation.args
-
-    quote do
-      unquote(acc)
-      |> unquote(data_frame).unquote(function)(
-        &unquote(series).unquote(filter)(&1[unquote(column)], unquote(value))
-      )
-    end
-  end
 
   defp apply_node(%{field: :pivot_wider, name: function, module: data_frame, args: args}, acc) do
     quote do
@@ -295,6 +281,18 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
+  defp quoted_column(string) do
+    var = String.to_atom(string)
+
+    if Macro.classify_atom(var) == :identifier do
+      {String.to_atom(string), [], nil}
+    else
+      quote do
+        col(unquote(string))
+      end
+    end
+  end
+
   defp default_operations() do
     %{
       "filters" => [default_operation(:filters)],
@@ -304,7 +302,7 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   defp default_operation(:filters),
-    do: %{"filter" => "equal", "column" => nil, "value" => nil, "type" => "string"}
+    do: %{"filter" => "==", "column" => nil, "value" => nil, "type" => "string"}
 
   defp default_operation(:sorting), do: %{"sort_by" => nil, "direction" => "asc"}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
@@ -333,13 +331,6 @@ defmodule KinoExplorer.DataFrameCell do
     case List.keyfind(aliases, Explorer.DataFrame, 1) do
       {data_frame_alias, _} -> data_frame_alias
       nil -> Explorer.DataFrame
-    end
-  end
-
-  defp series_alias(%Macro.Env{aliases: aliases}) do
-    case List.keyfind(aliases, Explorer.Series, 1) do
-      {series_alias, _} -> series_alias
-      nil -> Explorer.Series
     end
   end
 end

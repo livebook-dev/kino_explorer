@@ -9,8 +9,8 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @root %{
     "data_frame" => "people",
-    "data_frame_alias" => Explorer.DataFrame,
-    "series_alias" => Explorer.Series
+    "export_to" => nil,
+    "data_frame_alias" => Explorer.DataFrame
   }
 
   @operations %{
@@ -59,7 +59,7 @@ defmodule KinoExplorer.DataFrameCellTest do
       attrs = build_attrs(%{"sorting" => [%{"direction" => "asc", "sort_by" => "name"}]})
 
       assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.arrange_with(&[asc: &1["name"]])\
+             people |> Explorer.DataFrame.arrange(asc: name)\
              """
     end
 
@@ -73,7 +73,7 @@ defmodule KinoExplorer.DataFrameCellTest do
         })
 
       assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.arrange_with(&[asc: &1["name"], desc: &1["id"]])\
+             people |> Explorer.DataFrame.arrange(asc: name, desc: id)\
              """
     end
 
@@ -81,12 +81,12 @@ defmodule KinoExplorer.DataFrameCellTest do
       attrs =
         build_attrs(%{
           "filters" => [
-            %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"}
+            %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"}
           ]
         })
 
       assert DataFrameCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["name"], "Ana"))\
+             people |> Explorer.DataFrame.filter(name == "Ana")\
              """
     end
 
@@ -94,15 +94,13 @@ defmodule KinoExplorer.DataFrameCellTest do
       attrs =
         build_attrs(%{
           "filters" => [
-            %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
-            %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
+            %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
+            %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
           ]
         })
 
       assert DataFrameCell.to_source(attrs) == """
-             people
-             |> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["name"], "Ana"))
-             |> Explorer.DataFrame.filter_with(&Explorer.Series.less(&1["id"], 2))\
+             people |> Explorer.DataFrame.filter(name == "Ana") |> Explorer.DataFrame.filter(id < 2)\
              """
     end
 
@@ -121,17 +119,15 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       operations = %{
         "filters" => [
-          %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
-          %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
+          %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
         ]
       }
 
       attrs = build_attrs(root, operations)
 
       assert DataFrameCell.to_source(attrs) == """
-             people
-             |> DF.filter_with(&Series.equal(&1["name"], "Ana"))
-             |> DF.filter_with(&Series.less(&1["id"], 2))\
+             people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
              """
     end
   end
