@@ -149,7 +149,7 @@ defmodule KinoExplorer.DataFrameCell do
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
     type = Enum.find_value(data, &(&1.variable == df && Map.fetch!(&1.columns, column)))
-    %{"filter" => "equal", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
+    %{"filter" => "==", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
   end
 
   defp parse_value(_field, ""), do: nil
@@ -190,15 +190,16 @@ defmodule KinoExplorer.DataFrameCell do
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
           sort.direction != nil && sort.sort_by != nil do
-        build_sorting(sort.direction, sort.sort_by)
+        {sort.direction, quoted_column(sort.sort_by)}
       end
+      |> then(fn args -> if args != [], do: [args] end)
 
     sorting = [
       %{
         field: :sorting,
         name: :arrange,
         module: attrs.data_frame_alias,
-        args: build_sorting_args(sorting_args)
+        args: sorting_args
       }
     ]
 
@@ -223,30 +224,22 @@ defmodule KinoExplorer.DataFrameCell do
     ]
 
     nodes = sorting ++ filters ++ pivot
-    root = build_root(df, variable)
-    Enum.reduce(nodes, root, &apply_node/2)
+    root = build_root(df)
+    Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end
 
-  defp build_root(df, nil) do
+  defp build_root(df) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
     end
   end
 
-  defp build_root(df, variable) do
+  defp build_var(acc, nil), do: acc
+
+  defp build_var(acc, var) do
     quote do
-      unquote({String.to_atom(variable), [], nil}) = unquote(Macro.var(String.to_atom(df), nil))
+      unquote({String.to_atom(var), [], nil}) = unquote(acc)
     end
-  end
-
-  defp build_sorting(direction, sort_by), do: {direction, sort_by}
-
-  defp build_sorting_args(args) do
-    Enum.map(args, fn {direction, column} ->
-      quote do
-        {unquote(direction), unquote(quoted_column(column))}
-      end
-    end)
   end
 
   defp build_filter([column, filter, value, type] = args) do
@@ -254,10 +247,7 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   defp build_filter(column, filter, value, type) do
-    value = cast_filter_value(type, value)
-    filter = String.to_atom(filter)
-    column = quoted_column(column)
-    {filter, [], [column, value]}
+    [{String.to_atom(filter), [], [quoted_column(column), cast_filter_value(type, value)]}]
   end
 
   defp build_pivot([%{"names_from" => names, "values_from" => values}]) do
@@ -267,17 +257,10 @@ defmodule KinoExplorer.DataFrameCell do
   defp build_pivot(_), do: nil
 
   defp apply_node(%{args: nil}, acc), do: acc
-  defp apply_node(%{args: []}, acc), do: acc
-
-  defp apply_node(%{field: :pivot_wider, name: function, module: data_frame, args: args}, acc) do
-    quote do
-      unquote(acc) |> unquote(data_frame).unquote(function)(unquote_splicing(args))
-    end
-  end
 
   defp apply_node(%{field: _field, name: function, module: data_frame, args: args}, acc) do
     quote do
-      unquote(acc) |> unquote(data_frame).unquote(function)(unquote(args))
+      unquote(acc) |> unquote(data_frame).unquote(function)(unquote_splicing(args))
     end
   end
 

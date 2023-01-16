@@ -14,7 +14,7 @@ defmodule KinoExplorer.DataFrameCellTest do
   }
 
   @operations %{
-    "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
+    "filters" => [%{"column" => nil, "filter" => "==", "type" => "string", "value" => nil}],
     "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
     "sorting" => [%{"direction" => "asc", "sort_by" => nil}]
   }
@@ -104,8 +104,33 @@ defmodule KinoExplorer.DataFrameCellTest do
              """
     end
 
+    test "sour for a data frame with columns with spaces" do
+      root = %{"data_frame" => "df", "export_to" => "new_df"}
+
+      operations = %{
+        "sorting" => [
+          %{"direction" => "asc", "sort_by" => "full name"},
+          %{"direction" => "desc", "sort_by" => "id"}
+        ],
+        "filters" => [
+          %{"column" => "full name", "filter" => "==", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataFrameCell.to_source(attrs) == """
+             new_df =
+               df
+               |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)
+               |> Explorer.DataFrame.filter(col("full name") == "Ana")
+               |> Explorer.DataFrame.filter(id < 2)\
+             """
+    end
+
     test "source for a data frame with pivot wider" do
-      root = %{"data_frame" => "teams", "pivot_type" => "pivot_wider"}
+      root = %{"data_frame" => "teams"}
       operations = %{"pivot_wider" => [%{"names_from" => "weekdays", "values_from" => "hour"}]}
       attrs = build_attrs(root, operations)
 
@@ -115,7 +140,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source with alias" do
-      root = %{"data_frame_alias" => DF, "series_alias" => Series}
+      root = %{"data_frame_alias" => DF}
 
       operations = %{
         "filters" => [
@@ -128,6 +153,31 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       assert DataFrameCell.to_source(attrs) == """
              people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
+             """
+    end
+
+    test "source with export to var and no operations" do
+      attrs = build_attrs(%{"export_to" => "exported_df"}, %{})
+
+      assert DataFrameCell.to_source(attrs) == """
+             exported_df = people\
+             """
+    end
+
+    test "source with export to var" do
+      root = %{"data_frame_alias" => DF, "export_to" => "exported_df"}
+
+      operations = %{
+        "filters" => [
+          %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataFrameCell.to_source(attrs) == """
+             exported_df = people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
              """
     end
   end
