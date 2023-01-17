@@ -19,7 +19,8 @@ defmodule KinoExplorer.DataFrameCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        data_options: []
+        data_options: [],
+        missing_require: nil
       )
 
     {:ok, ctx, reevaluate_on_change: true}
@@ -33,7 +34,8 @@ defmodule KinoExplorer.DataFrameCell do
           do: %{variable: Atom.to_string(key), columns: DataFrame.dtypes(val)}
 
     data_frame_alias = data_frame_alias(env)
-    send(pid, {:scan_binding_result, data_options, data_frame_alias})
+    missing_require = missing_require(env)
+    send(pid, {:scan_binding_result, data_options, data_frame_alias, missing_require})
   end
 
   @impl true
@@ -41,15 +43,21 @@ defmodule KinoExplorer.DataFrameCell do
     payload = %{
       root_fields: ctx.assigns.root_fields,
       operations: ctx.assigns.operations,
-      data_options: ctx.assigns.data_options
+      data_options: ctx.assigns.data_options,
+      missing_require: ctx.assigns.missing_require
     }
 
     {:ok, payload, ctx}
   end
 
   @impl true
-  def handle_info({:scan_binding_result, data_options, data_frame_alias}, ctx) do
-    ctx = assign(ctx, data_options: data_options, data_frame_alias: data_frame_alias)
+  def handle_info({:scan_binding_result, data_options, data_frame_alias, missing_require}, ctx) do
+    ctx =
+      assign(ctx,
+        data_options: data_options,
+        data_frame_alias: data_frame_alias,
+        missing_require: missing_require
+      )
 
     updated_fields =
       case {ctx.assigns.root_fields["data_frame"], data_options} do
@@ -61,7 +69,8 @@ defmodule KinoExplorer.DataFrameCell do
 
     broadcast_event(ctx, "set_available_data", %{
       "data_options" => data_options,
-      "fields" => updated_fields
+      "fields" => updated_fields,
+      "require" => missing_require
     })
 
     {:noreply, ctx}
@@ -315,5 +324,9 @@ defmodule KinoExplorer.DataFrameCell do
       {data_frame_alias, _} -> data_frame_alias
       nil -> Explorer.DataFrame
     end
+  end
+
+  defp missing_require(%Macro.Env{requires: requires}) do
+    if Explorer.DataFrame not in requires, do: "require Explorer.DataFrame"
   end
 end
