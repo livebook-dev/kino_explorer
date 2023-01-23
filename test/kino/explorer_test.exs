@@ -17,7 +17,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting, :filtering],
+             features: [:pagination, :sorting],
              content: %{
                columns: [
                  %{key: "0", label: "id", type: "number"},
@@ -152,83 +152,6 @@ defmodule Kino.ExplorerTest do
     assert get_in(data.content.columns, [Access.all(), :type]) == ["text", "number", "uri"]
   end
 
-  test "supports filtering" do
-    widget = Kino.Explorer.new(people_df())
-
-    connect(widget)
-
-    push_event(widget, "filter_by", %{
-      "column" => "name",
-      "key" => "1",
-      "filter" => "equal",
-      "value" => "Amy Santiago"
-    })
-
-    assert_broadcast_event(widget, "update_content", %{
-      columns: [
-        %{key: "0", label: "id", type: "number"},
-        %{key: "1", label: "name", type: "text"}
-      ],
-      data: [["3"], ["Amy Santiago"]]
-    })
-  end
-
-  test "supports cumulative filtering" do
-    df =
-      Explorer.DataFrame.new(%{
-        id: [3, 1, 2, 0],
-        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Amy Jake"]
-      })
-
-    widget = Kino.Explorer.new(df)
-
-    connect(widget)
-
-    push_event(widget, "filter_by", %{
-      "column" => "id",
-      "key" => "0",
-      "filter" => "less",
-      "value" => 3
-    })
-
-    assert_broadcast_event(widget, "update_content", %{
-      columns: [
-        %{key: "0", label: "id", type: "number"},
-        %{key: "1", label: "name", type: "text"}
-      ],
-      data: [["1", "2", "0"], ["Jake Peralta", "Terry Jeffords", "Amy Jake"]]
-    })
-
-    push_event(widget, "filter_by", %{
-      "column" => "name",
-      "key" => "1",
-      "filter" => "contains",
-      "value" => "Jake"
-    })
-
-    assert_broadcast_event(widget, "update_content", %{
-      columns: [
-        %{key: "0", label: "id", type: "number"},
-        %{key: "1", label: "name", type: "text"}
-      ],
-      data: [["1", "0"], ["Jake Peralta", "Amy Jake"]]
-    })
-  end
-
-  test "correctly handles empty data frames" do
-    df = Explorer.DataFrame.new(%{id: []})
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
-
-    assert %{
-             features: [:pagination, :sorting, :filtering],
-             content: %{
-               columns: [%{key: "0", label: "id", type: "number", summary: nil}],
-               data: [[]]
-             }
-           } = data
-  end
-
   test "correctly handles empty data frames with string columns" do
     df =
       Explorer.Datasets.iris()
@@ -238,7 +161,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting, :filtering],
+             features: [:pagination, :sorting],
              content: %{
                columns: [
                  %{key: "0", label: "petal_length", summary: nil, type: "number"},

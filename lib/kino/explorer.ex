@@ -51,7 +51,7 @@ defmodule Kino.Explorer do
         }
       end)
 
-    info = %{name: name, features: [:pagination, :sorting, :filtering]}
+    info = %{name: name, features: [:pagination, :sorting]}
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns}}
   end
