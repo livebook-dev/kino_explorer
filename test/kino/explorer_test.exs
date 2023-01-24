@@ -164,10 +164,10 @@ defmodule Kino.ExplorerTest do
              features: [:pagination, :sorting],
              content: %{
                columns: [
-                 %{key: "0", label: "petal_length", summary: nil, type: "number"},
-                 %{key: "1", label: "petal_width", summary: nil, type: "number"},
-                 %{key: "2", label: "sepal_length", summary: nil, type: "number"},
-                 %{key: "3", label: "sepal_width", summary: nil, type: "number"},
+                 %{key: "0", label: "sepal_length", summary: nil, type: "number"},
+                 %{key: "1", label: "sepal_width", summary: nil, type: "number"},
+                 %{key: "2", label: "petal_length", summary: nil, type: "number"},
+                 %{key: "3", label: "petal_width", summary: nil, type: "number"},
                  %{key: "4", label: "species", summary: nil, type: "text"}
                ],
                data: [[], [], [], [], []]
