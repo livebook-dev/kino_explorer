@@ -104,7 +104,7 @@ defmodule KinoExplorer.DataFrameCellTest do
              """
     end
 
-    test "sour for a data frame with columns with spaces" do
+    test "source for a data frame with columns with spaces" do
       root = %{"data_frame" => "df", "export_to" => "new_df"}
 
       operations = %{
