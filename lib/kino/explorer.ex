@@ -65,11 +65,7 @@ defmodule Kino.Explorer do
   end
 
   defp get_records(df, rows_spec) do
-    df =
-      df
-      |> order_by(rows_spec[:order])
-      |> filter_by(rows_spec[:filters])
-
+    df = order_by(df, rows_spec[:order])
     total_rows = DataFrame.n_rows(df)
     summaries = if total_rows > 0, do: summaries(df)
     df = DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
@@ -81,26 +77,6 @@ defmodule Kino.Explorer do
 
   defp order_by(df, %{key: column, direction: direction}) do
     DataFrame.arrange_with(df, &[{direction, &1[column]}])
-  end
-
-  defp filter_by(df, []), do: df
-
-  defp filter_by(df, filters) do
-    Enum.reduce(filters, df, fn filter, filtered -> filter(filtered, filter) end)
-  end
-
-  defp filter(df, %{filter: filter, key: column, value: value}) do
-    filter = String.to_atom(filter)
-    type = DataFrame.dtypes(df) |> Map.get(column)
-    value = if type in [:date, :datetime], do: to_date(type, value), else: value
-    DataFrame.filter_with(df, &apply(Series, filter, [&1[column], value]))
-  end
-
-  defp to_date(type, value) do
-    case DateTime.from_iso8601(value) do
-      {:ok, date, _} -> if type == :date, do: DateTime.to_date(date), else: date
-      _ -> nil
-    end
   end
 
   defp records_to_data(columns, records) do
