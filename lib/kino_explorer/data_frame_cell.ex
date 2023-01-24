@@ -11,7 +11,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   @impl true
   def init(attrs, ctx) do
-    root_fields = %{"data_frame" => attrs["data_frame"], "export_to" => attrs["export_to"]}
+    root_fields = %{"data_frame" => attrs["data_frame"], "assign_to" => attrs["assign_to"]}
     operations = attrs["operations"] || default_operations()
 
     ctx =
@@ -149,7 +149,7 @@ defmodule KinoExplorer.DataFrameCell do
 
   defp updates_for_data_frame(data_frame) do
     %{
-      root_fields: %{"data_frame" => data_frame, "export_to" => nil},
+      root_fields: %{"data_frame" => data_frame, "assign_to" => nil},
       operations: default_operations()
     }
   end
@@ -192,7 +192,7 @@ defmodule KinoExplorer.DataFrameCell do
     end
   end
 
-  defp to_quoted(%{"data_frame" => df, "export_to" => variable} = attrs) do
+  defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
 
     sorting_args =
@@ -232,7 +232,7 @@ defmodule KinoExplorer.DataFrameCell do
       }
     ]
 
-    nodes = sorting ++ filters ++ pivot
+    nodes = filters ++ pivot ++ sorting
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end

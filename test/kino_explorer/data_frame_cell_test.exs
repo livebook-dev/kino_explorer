@@ -9,7 +9,7 @@ defmodule KinoExplorer.DataFrameCellTest do
 
   @root %{
     "data_frame" => "people",
-    "export_to" => nil,
+    "assign_to" => nil,
     "data_frame_alias" => Explorer.DataFrame
   }
 
@@ -105,7 +105,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source for a data frame with columns with spaces" do
-      root = %{"data_frame" => "df", "export_to" => "new_df"}
+      root = %{"data_frame" => "df", "assign_to" => "new_df"}
 
       operations = %{
         "sorting" => [
@@ -123,9 +123,9 @@ defmodule KinoExplorer.DataFrameCellTest do
       assert DataFrameCell.to_source(attrs) == """
              new_df =
                df
-               |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)
                |> Explorer.DataFrame.filter(col("full name") == "Ana")
-               |> Explorer.DataFrame.filter(id < 2)\
+               |> Explorer.DataFrame.filter(id < 2)
+               |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)\
              """
     end
 
@@ -157,7 +157,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source with export to var and no operations" do
-      attrs = build_attrs(%{"export_to" => "exported_df"}, %{})
+      attrs = build_attrs(%{"assign_to" => "exported_df"}, %{})
 
       assert DataFrameCell.to_source(attrs) == """
              exported_df = people\
@@ -165,7 +165,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     end
 
     test "source with export to var" do
-      root = %{"data_frame_alias" => DF, "export_to" => "exported_df"}
+      root = %{"data_frame_alias" => DF, "assign_to" => "exported_df"}
 
       operations = %{
         "filters" => [
