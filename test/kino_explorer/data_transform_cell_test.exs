@@ -1,9 +1,9 @@
-defmodule KinoExplorer.DataFrameCellTest do
+defmodule KinoExplorer.DataTransformCellTest do
   use ExUnit.Case, async: true
 
   import Kino.Test
 
-  alias KinoExplorer.DataFrameCell
+  alias KinoExplorer.DataTransformCell
 
   setup :configure_livebook_bridge
 
@@ -20,20 +20,20 @@ defmodule KinoExplorer.DataFrameCellTest do
   }
 
   test "returns no source when starting fresh with no data" do
-    {_kino, source} = start_smart_cell!(DataFrameCell, %{})
+    {_kino, source} = start_smart_cell!(DataTransformCell, %{})
 
     assert source == ""
   end
 
   test "finds Explorer DataFrames in binding and sends the data options to the client" do
-    {kino, _source} = start_smart_cell!(DataFrameCell, %{})
+    {kino, _source} = start_smart_cell!(DataTransformCell, %{})
 
     teams = teams_df()
     people = people_df()
     invalid_data = %{self() => [1, 2], :y => [1, 2]}
 
     env = Code.env_for_eval([])
-    DataFrameCell.scan_binding(kino.pid, binding(), env)
+    DataTransformCell.scan_binding(kino.pid, binding(), env)
 
     data_options = [
       %{columns: %{"id" => :integer, "name" => :string}, variable: "people"},
@@ -50,7 +50,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     test "source for a data frame without operations" do
       attrs = build_attrs(%{})
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people\
              """
     end
@@ -58,7 +58,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     test "source for a data frame with sorting" do
       attrs = build_attrs(%{"sorting" => [%{"direction" => "asc", "sort_by" => "name"}]})
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people |> Explorer.DataFrame.arrange(asc: name)\
              """
     end
@@ -72,7 +72,7 @@ defmodule KinoExplorer.DataFrameCellTest do
           ]
         })
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people |> Explorer.DataFrame.arrange(asc: name, desc: id)\
              """
     end
@@ -85,7 +85,7 @@ defmodule KinoExplorer.DataFrameCellTest do
           ]
         })
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people |> Explorer.DataFrame.filter(name == "Ana")\
              """
     end
@@ -99,7 +99,7 @@ defmodule KinoExplorer.DataFrameCellTest do
           ]
         })
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people |> Explorer.DataFrame.filter(name == "Ana") |> Explorer.DataFrame.filter(id < 2)\
              """
     end
@@ -120,7 +120,7 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       attrs = build_attrs(root, operations)
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              new_df =
                df
                |> Explorer.DataFrame.filter(col("full name") == "Ana")
@@ -134,7 +134,7 @@ defmodule KinoExplorer.DataFrameCellTest do
       operations = %{"pivot_wider" => [%{"names_from" => "weekdays", "values_from" => "hour"}]}
       attrs = build_attrs(root, operations)
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              teams |> Explorer.DataFrame.pivot_wider("weekdays", "hour")\
              """
     end
@@ -151,7 +151,7 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       attrs = build_attrs(root, operations)
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
              """
     end
@@ -159,7 +159,7 @@ defmodule KinoExplorer.DataFrameCellTest do
     test "source with export to var and no operations" do
       attrs = build_attrs(%{"assign_to" => "exported_df"}, %{})
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              exported_df = people\
              """
     end
@@ -176,7 +176,7 @@ defmodule KinoExplorer.DataFrameCellTest do
 
       attrs = build_attrs(root, operations)
 
-      assert DataFrameCell.to_source(attrs) == """
+      assert DataTransformCell.to_source(attrs) == """
              exported_df = people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
              """
     end

@@ -1,7 +1,7 @@
-defmodule KinoExplorer.DataFrameCell do
+defmodule KinoExplorer.DataTransformCell do
   @moduledoc false
 
-  use Kino.JS, assets_path: "lib/assets/data_frame_cell"
+  use Kino.JS, assets_path: "lib/assets/data_transform_cell"
   use Kino.JS.Live
   use Kino.SmartCell, name: "Data transform"
 
