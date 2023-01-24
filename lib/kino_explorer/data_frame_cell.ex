@@ -198,7 +198,7 @@ defmodule KinoExplorer.DataFrameCell do
     sorting_args =
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
-          sort.direction != nil && sort.sort_by != nil do
+          sort.direction != nil and sort.sort_by != nil do
         {sort.direction, quoted_column(sort.sort_by)}
       end
       |> then(fn args -> if args != [], do: [args] end)
