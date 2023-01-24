@@ -127,7 +127,7 @@ defmodule KinoExplorer.DataFrameCell do
   end
 
   def handle_event("add_operation", %{"operation" => operation}, ctx) do
-    new_operation = String.to_atom(operation) |> default_operation()
+    new_operation = operation |> String.to_existing_atom() |> default_operation()
     updated_operation = ctx.assigns.operations[operation] ++ [new_operation]
     updated_operations = %{ctx.assigns.operations | operation => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
