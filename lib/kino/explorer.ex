@@ -42,14 +42,14 @@ defmodule Kino.Explorer do
     summaries = summaries(df)
 
     columns =
-      Enum.map(dtypes, fn {name, dtype} ->
+      for name <- df.names, dtype = Map.fetch!(dtypes, name) do
         %{
           key: name,
           label: to_string(name),
           type: type_of(dtype, sample_data[name]),
           summary: summaries[name]
         }
-      end)
+      end
 
     info = %{name: name, features: [:pagination, :sorting]}
 
