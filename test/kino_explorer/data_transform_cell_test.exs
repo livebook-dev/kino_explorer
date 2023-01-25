@@ -14,7 +14,7 @@ defmodule KinoExplorer.DataTransformCellTest do
   }
 
   @operations %{
-    "filters" => [%{"column" => nil, "filter" => "==", "type" => "string", "value" => nil}],
+    "filters" => [%{"column" => nil, "filter" => "equal", "type" => "string", "value" => nil}],
     "pivot_wider" => [%{"names_from" => nil, "values_from" => nil}],
     "sorting" => [%{"direction" => "asc", "sort_by" => nil}]
   }
@@ -81,7 +81,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs =
         build_attrs(%{
           "filters" => [
-            %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"}
+            %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"}
           ]
         })
 
@@ -94,8 +94,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs =
         build_attrs(%{
           "filters" => [
-            %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
-            %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+            %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+            %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
           ]
         })
 
@@ -113,8 +113,8 @@ defmodule KinoExplorer.DataTransformCellTest do
           %{"direction" => "desc", "sort_by" => "id"}
         ],
         "filters" => [
-          %{"column" => "full name", "filter" => "==", "type" => "string", "value" => "Ana"},
-          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+          %{"column" => "full name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
         ]
       }
 
@@ -144,8 +144,8 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       operations = %{
         "filters" => [
-          %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
-          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+          %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
         ]
       }
 
@@ -169,8 +169,8 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       operations = %{
         "filters" => [
-          %{"column" => "name", "filter" => "==", "type" => "string", "value" => "Ana"},
-          %{"column" => "id", "filter" => "<", "type" => "integer", "value" => "2"}
+          %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+          %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "2"}
         ]
       }
 
