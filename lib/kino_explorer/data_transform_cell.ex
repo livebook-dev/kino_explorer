@@ -8,6 +8,17 @@ defmodule KinoExplorer.DataTransformCell do
   alias Explorer.DataFrame
 
   @as_atom ["direction", "type"]
+  @filters %{
+    "less" => "<",
+    "less equal" => "<=",
+    "equal" => "==",
+    "not equal" => "!=",
+    "greater equal" => ">=",
+    "greater" => ">",
+    "contains" => "contains",
+    "true" => "true",
+    "false" => "false"
+  }
 
   @impl true
   def init(attrs, ctx) do
@@ -158,7 +169,7 @@ defmodule KinoExplorer.DataTransformCell do
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
     type = Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
-    %{"filter" => "==", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
+    %{"filter" => "equal", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
   end
 
   defp parse_value(_field, ""), do: nil
@@ -166,6 +177,10 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp convert_field(field, nil), do: {String.to_atom(field), nil}
   defp convert_field(field, ""), do: {String.to_atom(field), nil}
+
+  defp convert_field("filter", value) do
+    {String.to_atom("filter"), Map.fetch!(@filters, value)}
+  end
 
   defp convert_field(field, value) when field in @as_atom do
     {String.to_atom(field), String.to_atom(value)}
