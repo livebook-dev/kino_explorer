@@ -157,7 +157,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp updates_for_filters(column, ctx) do
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
-    type = Enum.find_value(data, &(&1.variable == df && Map.fetch!(&1.columns, column)))
+    type = Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
     %{"filter" => "==", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
   end
 
@@ -294,7 +294,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp default_operation(:filters),
-    do: %{"filter" => "==", "column" => nil, "value" => nil, "type" => "string"}
+    do: %{"filter" => nil, "column" => nil, "value" => nil, "type" => "string"}
 
   defp default_operation(:sorting), do: %{"sort_by" => nil, "direction" => "asc"}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
