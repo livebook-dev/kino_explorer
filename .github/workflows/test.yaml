@@ -23,7 +23,7 @@ jobs:
           otp-version: ${{matrix.pair.otp}}
           elixir-version: ${{matrix.pair.elixir}}
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           override: true
@@ -37,7 +37,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mix-
       - run: mix deps.get
-
       - run: mix format --check-formatted
         if: ${{ matrix.lint }}
 
