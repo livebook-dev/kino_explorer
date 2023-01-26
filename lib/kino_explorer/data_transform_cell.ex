@@ -267,11 +267,12 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp build_filter([column, filter, value, type] = args) do
-    if Enum.all?(args, &(&1 != nil)), do: build_filter(column, filter, value, type)
-  end
-
-  defp build_filter(column, filter, value, type) do
-    [{String.to_atom(filter), [], [quoted_column(column), cast_filter_value(type, value)]}]
+    with true <- Enum.all?(args, &(&1 != nil)),
+         {:ok, filter_value} <- cast_filter_value(type, value) do
+      [{String.to_atom(filter), [], [quoted_column(column), filter_value]}]
+    else
+      _ -> nil
+    end
   end
 
   defp build_pivot([%{"names_from" => names, "values_from" => values}]) do
@@ -314,22 +315,35 @@ defmodule KinoExplorer.DataTransformCell do
   defp default_operation(:sorting), do: %{"sort_by" => nil, "direction" => "asc"}
   defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
 
-  defp cast_filter_value(:boolean, value), do: String.to_atom(value)
-  defp cast_filter_value(:integer, value), do: String.to_integer(value)
-  defp cast_filter_value(:float, value), do: Float.parse(value) |> elem(0)
+  defp cast_filter_value(:boolean, value), do: {:ok, String.to_atom(value)}
+
+  defp cast_filter_value(:integer, value) do
+    case Integer.parse(value) do
+      {value, _} -> {:ok, value}
+      _ -> nil
+    end
+  end
+
+  defp cast_filter_value(:float, value) do
+    case Float.parse(value) do
+      {value, _} -> {:ok, value}
+      _ -> nil
+    end
+  end
+
   defp cast_filter_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
-  defp cast_filter_value(_, value), do: value
+  defp cast_filter_value(_, value), do: {:ok, value}
 
   defp to_date(:date, value) do
     case Date.from_iso8601(value) do
-      {:ok, date} -> date
+      {:ok, date} -> {:ok, date}
       _ -> nil
     end
   end
 
   defp to_date(:datetime, value) do
     case DateTime.from_iso8601(value) do
-      {:ok, date, _} -> date
+      {:ok, date, _} -> {:ok, date}
       _ -> nil
     end
   end
