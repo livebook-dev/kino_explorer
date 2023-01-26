@@ -247,7 +247,7 @@ defmodule KinoExplorer.DataTransformCell do
       }
     ]
 
-    nodes = filters ++ pivot ++ sorting
+    nodes = filters ++ sorting ++ pivot
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end
