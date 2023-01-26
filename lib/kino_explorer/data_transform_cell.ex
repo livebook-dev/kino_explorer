@@ -106,13 +106,9 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event(
-        "update_field",
-        %{"operation_type" => "filters", "field" => "column"} = fields,
-        ctx
-      ) do
-    {column, idx} = {fields["value"], fields["idx"]}
-    updated_filter = updates_for_filters(column, ctx)
+  def handle_event("update_field", %{"operation_type" => "filters"} = fields, ctx) do
+    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
+    updated_filter = updates_for_filters(field, value, idx, ctx)
     updated_operation = List.replace_at(ctx.assigns.operations["filters"], idx, updated_filter)
     updated_operations = %{ctx.assigns.operations | "filters" => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
@@ -173,11 +169,35 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp updates_for_filters(column, ctx) do
+  defp updates_for_filters(field, value, idx, ctx) do
+    current_filter = get_in(ctx.assigns.operations["filters"], [Access.at(idx)])
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
-    type = Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
-    %{"filter" => "equal", "column" => column, "value" => nil, "type" => Atom.to_string(type)}
+    column = if field == "column", do: value, else: current_filter["column"]
+    filter = current_filter["filter"] || "equal"
+
+    type =
+      Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
+      |> Atom.to_string()
+
+    message = if field == "value", do: validation_message(:filter, type, value)
+
+    case field do
+      "column" ->
+        %{"filter" => "equal", "column" => column, "value" => nil, "type" => type}
+
+      "value" ->
+        %{
+          "filter" => filter,
+          "column" => column,
+          "value" => value,
+          "type" => type,
+          "message" => message
+        }
+
+      "filter" ->
+        %{"filter" => value, "column" => column, "value" => nil, "type" => type}
+    end
   end
 
   defp parse_value(_field, ""), do: nil
@@ -353,6 +373,15 @@ defmodule KinoExplorer.DataTransformCell do
     case DateTime.from_iso8601(value) do
       {:ok, date, _} -> {:ok, date}
       _ -> nil
+    end
+  end
+
+  defp validation_message(:filter, type, value) do
+    type = String.to_atom(type)
+
+    case cast_filter_value(type, value) do
+      {:ok, _} -> nil
+      _ -> "invalid value"
     end
   end
 

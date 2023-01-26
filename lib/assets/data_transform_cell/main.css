@@ -82,6 +82,11 @@ input[type="number"] {
   font-weight: 500;
 }
 
+.validation-message {
+  margin-left: 60px;
+  color: var(--red--300);
+}
+
 .required {
   border: 1px solid var(--red--300);
 }
