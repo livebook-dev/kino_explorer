@@ -95,14 +95,22 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event("update_field", %{"operation" => nil, "field" => field, "value" => value}, ctx) do
+  def handle_event(
+        "update_field",
+        %{"operation_type" => nil, "field" => field, "value" => value},
+        ctx
+      ) do
     parsed_value = parse_value(field, value)
     ctx = update(ctx, :root_fields, &Map.put(&1, field, parsed_value))
     broadcast_event(ctx, "update_root", %{"fields" => %{field => parsed_value}})
     {:noreply, ctx}
   end
 
-  def handle_event("update_field", %{"operation" => "filters", "field" => "column"} = fields, ctx) do
+  def handle_event(
+        "update_field",
+        %{"operation_type" => "filters", "field" => "column"} = fields,
+        ctx
+      ) do
     {column, idx} = {fields["value"], fields["idx"]}
     updated_filter = updates_for_filters(column, ctx)
     updated_operation = List.replace_at(ctx.assigns.operations["filters"], idx, updated_filter)
@@ -110,7 +118,7 @@ defmodule KinoExplorer.DataTransformCell do
     ctx = assign(ctx, operations: updated_operations)
 
     broadcast_event(ctx, "update_operation", %{
-      "operation" => "filters",
+      "operation_type" => "filters",
       "idx" => idx,
       "fields" => updated_filter
     })
@@ -118,18 +126,18 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event("update_field", %{"operation" => operation} = fields, ctx) do
+  def handle_event("update_field", %{"operation_type" => operation_type} = fields, ctx) do
     {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
     parsed_value = parse_value(field, value)
 
     updated_operation =
-      put_in(ctx.assigns.operations[operation], [Access.at(idx), field], parsed_value)
+      put_in(ctx.assigns.operations[operation_type], [Access.at(idx), field], parsed_value)
 
-    updated_operations = %{ctx.assigns.operations | operation => updated_operation}
+    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
 
     broadcast_event(ctx, "update_operation", %{
-      "operation" => operation,
+      "operation_type" => operation_type,
       "idx" => idx,
       "fields" => %{field => parsed_value}
     })
@@ -137,23 +145,23 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event("add_operation", %{"operation" => operation}, ctx) do
-    new_operation = operation |> String.to_existing_atom() |> default_operation()
-    updated_operation = ctx.assigns.operations[operation] ++ [new_operation]
-    updated_operations = %{ctx.assigns.operations | operation => updated_operation}
+  def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
+    new_operation = operation_type |> String.to_existing_atom() |> default_operation()
+    updated_operation = ctx.assigns.operations[operation_type] ++ [new_operation]
+    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "set_operations", %{operation => updated_operation})
+    broadcast_event(ctx, "set_operations", %{operation_type => updated_operation})
 
     {:noreply, ctx}
   end
 
-  def handle_event("remove_operation", %{"operation" => operation, "idx" => idx}, ctx) do
+  def handle_event("remove_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
     updated_operation =
-      if idx, do: List.delete_at(ctx.assigns.operations[operation], idx), else: []
+      if idx, do: List.delete_at(ctx.assigns.operations[operation_type], idx), else: []
 
-    updated_operations = %{ctx.assigns.operations | operation => updated_operation}
+    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "set_operations", %{operation => updated_operation})
+    broadcast_event(ctx, "set_operations", %{operation_type => updated_operation})
 
     {:noreply, ctx}
   end
