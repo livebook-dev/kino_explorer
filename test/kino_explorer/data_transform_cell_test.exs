@@ -104,6 +104,20 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "do not generate code for invalid filters" do
+      attrs =
+        build_attrs(%{
+          "filters" => [
+            %{"column" => "name", "filter" => "equal", "type" => "string", "value" => "Ana"},
+            %{"column" => "id", "filter" => "less", "type" => "integer", "value" => "Ana"}
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(name == "Ana")\
+             """
+    end
+
     test "source for a data frame with columns with spaces" do
       root = %{"data_frame" => "df", "assign_to" => "new_df"}
 
