@@ -95,11 +95,8 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event(
-        "update_field",
-        %{"operation_type" => nil, "field" => field, "value" => value},
-        ctx
-      ) do
+  def handle_event("update_field", %{"operation_type" => nil} = fields, ctx) do
+    {field, value} = {fields["field"], fields["value"]}
     parsed_value = parse_value(field, value)
     ctx = update(ctx, :root_fields, &Map.put(&1, field, parsed_value))
     broadcast_event(ctx, "update_root", %{"fields" => %{field => parsed_value}})
@@ -184,7 +181,13 @@ defmodule KinoExplorer.DataTransformCell do
 
     case field do
       "column" ->
-        %{"filter" => "equal", "column" => column, "value" => nil, "type" => type}
+        %{
+          "filter" => "equal",
+          "column" => column,
+          "value" => nil,
+          "type" => type,
+          "message" => message
+        }
 
       "value" ->
         %{
@@ -196,7 +199,13 @@ defmodule KinoExplorer.DataTransformCell do
         }
 
       "filter" ->
-        %{"filter" => value, "column" => column, "value" => nil, "type" => type}
+        %{
+          "filter" => value,
+          "column" => column,
+          "value" => nil,
+          "type" => type,
+          "message" => message
+        }
     end
   end
 
