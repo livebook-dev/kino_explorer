@@ -388,7 +388,7 @@ defmodule KinoExplorer.DataTransformCell do
 
     case cast_filter_value(type, value) do
       {:ok, _} -> nil
-      _ -> "invalid value"
+      _ -> "not #{type}"
     end
   end
 
