@@ -15,9 +15,7 @@ defmodule KinoExplorer.DataTransformCell do
     "not equal" => "!=",
     "greater equal" => ">=",
     "greater" => ">",
-    "contains" => "contains",
-    "true" => "true",
-    "false" => "false"
+    "contains" => "contains"
   }
 
   @impl true
