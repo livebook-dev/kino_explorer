@@ -15,12 +15,19 @@
   --gray-900: #0d1829;
 
   --blue-100: #ecf0ff;
+  --blue-200: #d8e0ff;
+  --blue-600: #3e64ff;
+
+  --green-100: #e9f4e9;
+  --green-200: #d2e7D1;
+  --green-600: #1d891a;
 
   --yellow-100: #fff7ec;
+  --yellow-200: #ffeed9;
   --yellow-600: #ffa83f;
 
-  --red--300: #F1A3A6;
-  --red--500: #E2474D;
+  --red-300: #F1A3A6;
+  --red-500: #E2474D;
 }
 
 p,
@@ -95,7 +102,7 @@ input[type="number"] {
 }
 
 .required {
-  border: 1px solid var(--red--300);
+  border: 1px solid var(--red-300);
 }
 
 .input:disabled {
@@ -155,7 +162,7 @@ input[type="number"] {
 }
 
 .inline-field .required {
-  border-bottom: 1px solid var(--red--300);
+  border-bottom: 1px solid var(--red-300);
   border-radius: 0;
 }
 
@@ -332,7 +339,6 @@ select option {
 
 .accordion-control {
   display: flex;
-  text-transform: uppercase;
   font-size: 0.875rem;
   padding: 0;
   padding-right: 0.25rem;
@@ -345,7 +351,7 @@ select option {
 
 .accordion-buttons {
   position: absolute;
-  right: 12px;
+  right: 24px;
 }
 
 .button-svg {
@@ -388,8 +394,73 @@ select option {
   padding-top: 6px;
 }
 
+.content {
+  margin-top: -4px;
+}
+
 .operations {
-  padding: 12px 0;
+  padding-bottom: 12px;
+  border-left: solid 3px var(--gray-200);
+  margin: 0 12px;
+}
+
+.operations-wrapper:before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--gray-600);
+  border: 3px solid var(--gray-100);
+  position: absolute;
+  left: 6px;
+}
+
+.operations-wrapper.filter:before {
+  background-color: var(--blue-600);
+  border: 3px solid var(--blue-100);
+}
+
+.operations-wrapper.sort:before {
+  background-color: var(--green-600);
+  border: 3px solid var(--green-100);
+}
+
+.operations-wrapper.pivot:before {
+  background-color: var(--yellow-600);
+  border: 3px solid var(--yellow-100);
+}
+
+.operations.filter {
+  border-left: solid 3px var(--blue-600);
+}
+
+.operations.sort {
+  border-left: solid 3px var(--green-600);
+}
+
+.operations.pivot {
+  border-left: solid 3px var(--yellow-600);
+  padding-bottom: 0;
+}
+
+.operations-wrapper {
+  padding: 12px;
+  margin: 0;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.operations-wrapper.filter {
+  background-color: var(--blue-100);
+}
+
+.operations-wrapper.sort {
+  background-color: var(--green-100);
+}
+
+.operations-wrapper.pivot {
+  background-color: var(--yellow-100);
 }
 
 .tooltip {
