@@ -352,6 +352,7 @@ select option {
 .accordion-buttons {
   position: absolute;
   right: 24px;
+  margin-top: -6px;
 }
 
 .button-svg {
@@ -394,6 +395,26 @@ select option {
   padding-top: 6px;
 }
 
+.data-frame-title {
+  margin: 0 12px;
+  padding: 6px 12px 12px;
+  border-left: solid 3px var(--gray-300);
+  color: var(--gray-500);
+  font-size: 0.875rem;
+}
+
+.data-frame-title:before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--gray-400);
+  position: absolute;
+  left: 9px;
+  margin-top: 3px;
+}
+
 .content {
   margin-top: -4px;
 }
@@ -410,25 +431,21 @@ select option {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: var(--gray-600);
-  border: 3px solid var(--gray-100);
   position: absolute;
-  left: 6px;
+  left: 9px;
+  margin-top: 3px;
 }
 
 .operations-wrapper.filter:before {
   background-color: var(--blue-600);
-  border: 3px solid var(--blue-100);
 }
 
 .operations-wrapper.sort:before {
   background-color: var(--green-600);
-  border: 3px solid var(--green-100);
 }
 
 .operations-wrapper.pivot:before {
   background-color: var(--yellow-600);
-  border: 3px solid var(--yellow-100);
 }
 
 .operations.filter {
@@ -441,11 +458,10 @@ select option {
 
 .operations.pivot {
   border-left: solid 3px var(--yellow-600);
-  padding-bottom: 0;
 }
 
 .operations-wrapper {
-  padding: 12px;
+  padding: 9px 12px 12px;
   margin: 0;
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
