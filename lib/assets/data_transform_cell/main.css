@@ -463,6 +463,7 @@ select option {
 .operations-wrapper {
   padding: 9px 12px 12px;
   margin: 0;
+  margin-bottom: 12px;
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
 }
@@ -477,6 +478,11 @@ select option {
 
 .operations-wrapper.pivot {
   background-color: var(--yellow-100);
+}
+
+.operations:last-of-type {
+  padding-bottom: 0;
+  margin-bottom: 12px;
 }
 
 .tooltip {
