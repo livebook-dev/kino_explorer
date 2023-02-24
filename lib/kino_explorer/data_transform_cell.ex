@@ -170,6 +170,7 @@ defmodule KinoExplorer.DataTransformCell do
     data = ctx.assigns.data_options
     column = if field == "column", do: value, else: current_filter["column"]
     filter = current_filter["filter"] || "equal"
+    active = current_filter["active"]
 
     type =
       Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
@@ -184,7 +185,8 @@ defmodule KinoExplorer.DataTransformCell do
           "column" => column,
           "value" => nil,
           "type" => type,
-          "message" => message
+          "message" => message,
+          "active" => active
         }
 
       "value" ->
@@ -193,7 +195,8 @@ defmodule KinoExplorer.DataTransformCell do
           "column" => column,
           "value" => value,
           "type" => type,
-          "message" => message
+          "message" => message,
+          "active" => active
         }
 
       "filter" ->
@@ -202,7 +205,18 @@ defmodule KinoExplorer.DataTransformCell do
           "column" => column,
           "value" => nil,
           "type" => type,
-          "message" => message
+          "message" => message,
+          "active" => active
+        }
+
+      "active" ->
+        %{
+          "filter" => filter,
+          "column" => column,
+          "value" => current_filter["value"],
+          "type" => type,
+          "message" => message,
+          "active" => value
         }
     end
   end
@@ -248,6 +262,7 @@ defmodule KinoExplorer.DataTransformCell do
     sorting_args =
       for sort <- attrs.operations["sorting"],
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
+          sort.active,
           sort.direction != nil and sort.sort_by != nil do
         {sort.direction, quoted_column(sort.sort_by)}
       end
@@ -264,7 +279,8 @@ defmodule KinoExplorer.DataTransformCell do
 
     filters =
       for filter <- attrs.operations["filters"],
-          filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end) do
+          filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end),
+          filter.active do
         %{
           field: :filter,
           name: :filter,
@@ -310,7 +326,7 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp build_pivot([%{"names_from" => names, "values_from" => values}]) do
+  defp build_pivot([%{"names_from" => names, "values_from" => values, "active" => true}]) do
     if names && values, do: [names, values]
   end
 
@@ -344,11 +360,17 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp default_operation(:filters),
-    do: %{"filter" => nil, "column" => nil, "value" => nil, "type" => "string"}
+  defp default_operation(:filters) do
+    %{"filter" => nil, "column" => nil, "value" => nil, "type" => "string", "active" => true}
+  end
 
-  defp default_operation(:sorting), do: %{"sort_by" => nil, "direction" => "asc"}
-  defp default_operation(:pivot_wider), do: %{"names_from" => nil, "values_from" => nil}
+  defp default_operation(:sorting) do
+    %{"sort_by" => nil, "direction" => "asc", "active" => true}
+  end
+
+  defp default_operation(:pivot_wider) do
+    %{"names_from" => nil, "values_from" => nil, "active" => true}
+  end
 
   defp cast_filter_value(:boolean, value), do: {:ok, String.to_atom(value)}
 

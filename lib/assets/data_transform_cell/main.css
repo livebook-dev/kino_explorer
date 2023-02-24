@@ -201,8 +201,6 @@ input[type="number"] {
   margin: 0;
   padding: 5px 10px;
   background: transparent;
-  position: relative;
-  left: 10px;
 }
 
 .button--sm:hover {
@@ -236,6 +234,10 @@ input[type="number"] {
   transition-property: all;
   transition-duration: 200ms;
   color: var(--gray-600);
+}
+
+.icon-only {
+  padding-right: 0;
 }
 
 .hidden-checkbox-input {
@@ -341,18 +343,18 @@ select option {
   display: flex;
   font-size: 0.875rem;
   padding: 0;
-  padding-right: 0.25rem;
   padding-top: 0.25rem;
   width: auto;
   flex-grow: 1;
   color: var(--gray-700);
   margin-bottom: 0px;
+  justify-content: space-between;
 }
 
 .accordion-buttons {
-  position: absolute;
-  right: 24px;
-  margin-top: -6px;
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
 }
 
 .button-svg {
@@ -390,8 +392,8 @@ select option {
 
 .add-operation {
   display: flex;
-  gap: 8px;
-  margin-left: 4px;
+  gap: 16px;
+  margin-left: 16px;
   padding-top: 6px;
 }
 
@@ -552,4 +554,67 @@ select option {
   border-left: none;
   border-top-color: transparent;
   border-bottom-color: transparent;
+}
+
+/* Switch SM */
+
+.switch-button {
+  display: inline-block;
+  position: relative;
+  width: 28px;
+  height: 14px;
+  user-select: none;
+}
+
+.switch-button[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.switch-button-checkbox {
+  outline: none;
+  appearance: none;
+  position: absolute;
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border-radius: 9999px;
+  background-color: white;
+  border: 2.5px solid var(--gray-300);
+  cursor: pointer;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.switch-button-bg {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: var(--gray-300);
+  cursor: pointer;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.switch-button-checkbox:checked {
+  background: white;
+  border-color: var(--blue-600);
+  transform: translateX(100%);
+}
+
+.switch-button-checkbox:checked + .switch-button-bg {
+  background-color: var(--blue-600);
+}
+
+.switch-button-checkbox:disabled {
+  background: white;
+  border-color: var(--blue-100);
+}
+
+.switch-button-checkbox:disabled + .switch-button-bg {
+  background-color: var(--blue-100);
 }
