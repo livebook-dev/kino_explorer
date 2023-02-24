@@ -339,7 +339,7 @@ select option {
   color: black;
 }
 
-.accordion-control {
+.card {
   display: flex;
   font-size: 0.875rem;
   padding: 0;
@@ -351,7 +351,7 @@ select option {
   justify-content: space-between;
 }
 
-.accordion-buttons {
+.card-buttons {
   display: flex;
   align-items: center;
   margin-top: 6px;
@@ -383,11 +383,6 @@ select option {
 .wrapper:last-child {
   border: none;
   margin-bottom: 0px;
-}
-
-.wrapper--closed {
-  padding-bottom: 6px;
-  margin-top: 0px;
 }
 
 .add-operation {
