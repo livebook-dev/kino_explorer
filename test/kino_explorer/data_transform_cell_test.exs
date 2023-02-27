@@ -13,18 +13,28 @@ defmodule KinoExplorer.DataTransformCellTest do
     "data_frame_alias" => Explorer.DataFrame
   }
 
-  @operations %{
-    "filters" => [
+  @base_operations %{
+    operations: [
       %{
         "column" => nil,
         "filter" => "equal",
         "type" => "string",
         "value" => nil,
-        "active" => true
+        "active" => true,
+        "operation_type" => "filters"
       }
     ],
-    "pivot_wider" => [%{"names_from" => nil, "values_from" => nil, "active" => true}],
-    "sorting" => [%{"direction" => "asc", "sort_by" => nil, "active" => true}]
+    sorting: [
+      %{"direction" => "asc", "sort_by" => nil, "active" => true, "operation_type" => "sorting"}
+    ],
+    pivot_wider: [
+      %{
+        "names_from" => nil,
+        "values_from" => nil,
+        "active" => true,
+        "operation_type" => "pivot_wider"
+      }
+    ]
   }
 
   test "returns no source when starting fresh with no data" do
@@ -66,7 +76,14 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with sorting" do
       attrs =
         build_attrs(%{
-          "sorting" => [%{"direction" => "asc", "sort_by" => "name", "active" => true}]
+          sorting: [
+            %{
+              "direction" => "asc",
+              "sort_by" => "name",
+              "active" => true,
+              "operation_type" => "sorting"
+            }
+          ]
         })
 
       assert DataTransformCell.to_source(attrs) == """
@@ -77,9 +94,19 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with multiple sorting" do
       attrs =
         build_attrs(%{
-          "sorting" => [
-            %{"direction" => "asc", "sort_by" => "name", "active" => true},
-            %{"direction" => "desc", "sort_by" => "id", "active" => true}
+          sorting: [
+            %{
+              "direction" => "asc",
+              "sort_by" => "name",
+              "active" => true,
+              "operation_type" => "sorting"
+            },
+            %{
+              "direction" => "desc",
+              "sort_by" => "id",
+              "active" => true,
+              "operation_type" => "sorting"
+            }
           ]
         })
 
@@ -91,13 +118,14 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with filtering" do
       attrs =
         build_attrs(%{
-          "filters" => [
+          operations: [
             %{
               "column" => "name",
               "filter" => "equal",
               "type" => "string",
               "value" => "Ana",
-              "active" => true
+              "active" => true,
+              "operation_type" => "filters"
             }
           ]
         })
@@ -110,20 +138,22 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with multiple filtering" do
       attrs =
         build_attrs(%{
-          "filters" => [
+          operations: [
             %{
               "column" => "name",
               "filter" => "equal",
               "type" => "string",
               "value" => "Ana",
-              "active" => true
+              "active" => true,
+              "operation_type" => "filters"
             },
             %{
               "column" => "id",
               "filter" => "less",
               "type" => "integer",
               "value" => "2",
-              "active" => true
+              "active" => true,
+              "operation_type" => "filters"
             }
           ]
         })
@@ -136,20 +166,22 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "do not generate code for invalid filters" do
       attrs =
         build_attrs(%{
-          "filters" => [
+          operations: [
             %{
               "column" => "name",
               "filter" => "equal",
               "type" => "string",
               "value" => "Ana",
-              "active" => true
+              "active" => true,
+              "operation_type" => "filters"
             },
             %{
               "column" => "id",
               "filter" => "less",
               "type" => "integer",
               "value" => "Ana",
-              "active" => true
+              "active" => true,
+              "operation_type" => "filters"
             }
           ]
         })
@@ -163,24 +195,36 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame" => "df", "assign_to" => "new_df"}
 
       operations = %{
-        "sorting" => [
-          %{"direction" => "asc", "sort_by" => "full name", "active" => true},
-          %{"direction" => "desc", "sort_by" => "id", "active" => true}
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          },
+          %{
+            "direction" => "desc",
+            "sort_by" => "id",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
         ],
-        "filters" => [
+        operations: [
           %{
             "column" => "full name",
             "filter" => "equal",
             "type" => "string",
             "value" => "Ana",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           },
           %{
             "column" => "id",
             "filter" => "less",
             "type" => "integer",
             "value" => "2",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           }
         ]
       }
@@ -200,8 +244,13 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame" => "teams"}
 
       operations = %{
-        "pivot_wider" => [
-          %{"names_from" => "weekdays", "values_from" => "hour", "active" => true}
+        pivot_wider: [
+          %{
+            "names_from" => "weekdays",
+            "values_from" => "hour",
+            "active" => true,
+            "operation_type" => "pivot_wider"
+          }
         ]
       }
 
@@ -216,20 +265,22 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame_alias" => DF}
 
       operations = %{
-        "filters" => [
+        operations: [
           %{
             "column" => "name",
             "filter" => "equal",
             "type" => "string",
             "value" => "Ana",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           },
           %{
             "column" => "id",
             "filter" => "less",
             "type" => "integer",
             "value" => "2",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           }
         ]
       }
@@ -253,20 +304,22 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame_alias" => DF, "assign_to" => "exported_df"}
 
       operations = %{
-        "filters" => [
+        operations: [
           %{
             "column" => "name",
             "filter" => "equal",
             "type" => "string",
             "value" => "Ana",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           },
           %{
             "column" => "id",
             "filter" => "less",
             "type" => "integer",
             "value" => "2",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           }
         ]
       }
@@ -282,24 +335,36 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame_alias" => DF, "assign_to" => "exported_df"}
 
       operations = %{
-        "sorting" => [
-          %{"direction" => "asc", "sort_by" => "full name", "active" => true},
-          %{"direction" => "desc", "sort_by" => "id", "active" => false}
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          },
+          %{
+            "direction" => "desc",
+            "sort_by" => "id",
+            "active" => false,
+            "operation_type" => "sorting"
+          }
         ],
-        "filters" => [
+        operations: [
           %{
             "column" => "name",
             "filter" => "equal",
             "type" => "string",
             "value" => "Ana",
-            "active" => true
+            "active" => true,
+            "operation_type" => "filters"
           },
           %{
             "column" => "id",
             "filter" => "less",
             "type" => "integer",
             "value" => "2",
-            "active" => false
+            "active" => false,
+            "operation_type" => "filters"
           }
         ]
       }
@@ -340,7 +405,11 @@ defmodule KinoExplorer.DataTransformCellTest do
 
   defp build_attrs(root_attrs \\ %{}, operations_attrs) do
     root_attrs = Map.merge(@root, root_attrs)
-    operations_attrs = Map.merge(@operations, operations_attrs)
-    Map.put(root_attrs, "operations", operations_attrs)
+    operations_attrs = Map.merge(@base_operations, operations_attrs)
+
+    operations =
+      operations_attrs.operations ++ operations_attrs.sorting ++ operations_attrs.pivot_wider
+
+    Map.put(root_attrs, "operations", operations)
   end
 end

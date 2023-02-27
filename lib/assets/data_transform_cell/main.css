@@ -433,27 +433,27 @@ select option {
   margin-top: 3px;
 }
 
-.operations-wrapper.filter:before {
+.operations-wrapper.filters:before {
   background-color: var(--blue-600);
 }
 
-.operations-wrapper.sort:before {
+.operations-wrapper.sorting:before {
   background-color: var(--green-600);
 }
 
-.operations-wrapper.pivot:before {
+.operations-wrapper.pivot_wider:before {
   background-color: var(--yellow-600);
 }
 
-.operations.filter {
+.operations.filters {
   border-left: solid 3px var(--blue-600);
 }
 
-.operations.sort {
+.operations.sorting {
   border-left: solid 3px var(--green-600);
 }
 
-.operations.pivot {
+.operations.pivot_wider {
   border-left: solid 3px var(--yellow-600);
 }
 
@@ -465,15 +465,15 @@ select option {
   border-bottom-right-radius: 0.5rem;
 }
 
-.operations-wrapper.filter {
+.operations-wrapper.filters {
   background-color: var(--blue-100);
 }
 
-.operations-wrapper.sort {
+.operations-wrapper.sorting {
   background-color: var(--green-100);
 }
 
-.operations-wrapper.pivot {
+.operations-wrapper.pivot_wider {
   background-color: var(--yellow-100);
 }
 
@@ -601,19 +601,19 @@ select option {
   transform: translateX(100%);
 }
 
-.switch-button-checkbox.filter:checked {
+.switch-button-checkbox.filters:checked {
   background: white;
   border-color: var(--blue-600);
   transform: translateX(100%);
 }
 
-.switch-button-checkbox.sort:checked {
+.switch-button-checkbox.sorting:checked {
   background: white;
   border-color: var(--green-600);
   transform: translateX(100%);
 }
 
-.switch-button-checkbox.pivot:checked {
+.switch-button-checkbox.pivot_wider:checked {
   background: white;
   border-color: var(--yellow-600);
   transform: translateX(100%);
@@ -623,15 +623,15 @@ select option {
   background-color: var(--blue-600);
 }
 
-.switch-button-checkbox.filter:checked + .switch-button-bg {
+.switch-button-checkbox.filters:checked + .switch-button-bg {
   background-color: var(--blue-600);
 }
 
-.switch-button-checkbox.sort:checked + .switch-button-bg {
+.switch-button-checkbox.sorting:checked + .switch-button-bg {
   background-color: var(--green-600);
 }
 
-.switch-button-checkbox.pivot:checked + .switch-button-bg {
+.switch-button-checkbox.pivot_wider:checked + .switch-button-bg {
   background-color: var(--yellow-600);
 }
 
@@ -640,17 +640,17 @@ select option {
   border-color: var(--blue-100);
 }
 
-.switch-button-checkbox.filter:disabled {
+.switch-button-checkbox.filters:disabled {
   background: white;
   border-color: var(--blue-100);
 }
 
-.switch-button-checkbox.sort:disabled {
+.switch-button-checkbox.sorting:disabled {
   background: white;
   border-color: var(--green-100);
 }
 
-.switch-button-checkbox.pivot:disabled {
+.switch-button-checkbox.pivot_wider:disabled {
   background: white;
   border-color: var(--yellow-100);
 }
@@ -659,14 +659,14 @@ select option {
   background-color: var(--blue-100);
 }
 
-.switch-button-checkbox.filter:disabled + .switch-button-bg {
+.switch-button-checkbox.filters:disabled + .switch-button-bg {
   background-color: var(--blue-200);
 }
 
-.switch-button-checkbox.sort:disabled + .switch-button-bg {
+.switch-button-checkbox.sorting:disabled + .switch-button-bg {
   background-color: var(--green-200);
 }
 
-.switch-button-checkbox.pivot:disabled + .switch-button-bg {
+.switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
   background-color: var(--yellow-200);
 }
