@@ -125,14 +125,16 @@ defmodule KinoExplorer.DataTransformCell do
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
 
-    has_pivot_wider =
-      Enum.any?(ctx.assigns.operations, &(&1["operation_type"] == "pivot_wider"))
+    operations = ctx.assigns.operations
+    pivot_wider = Enum.filter(operations, &(&1["operation_type"] == "pivot_wider"))
+    sorting = Enum.filter(operations, &(&1["operation_type"] == "sorting"))
+    other = Enum.filter(operations, &(&1["operation_type"] not in @fixed_operations))
 
     updated_operations =
-      if operation_type != "pivot_wider" and has_pivot_wider do
-        List.insert_at(ctx.assigns.operations, -2, new_operation)
-      else
-        ctx.assigns.operations ++ [new_operation]
+      case operation_type do
+        "pivot_wider" -> operations ++ [new_operation]
+        "sorting" -> other ++ sorting ++ [new_operation] ++ pivot_wider
+        _ -> other ++ [new_operation] ++ sorting ++ pivot_wider
       end
 
     ctx = assign(ctx, operations: updated_operations)
@@ -254,9 +256,9 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
-    sorting = Enum.filter(attrs.operations, & &1["operation_type"] == "sorting")
-    pivot_wider_args = Enum.filter(attrs.operations, & &1["operation_type"] == "pivot_wider")
-    operations = Enum.filter(attrs.operations, & &1["operation_type"] not in @fixed_operations)
+    sorting = Enum.filter(attrs.operations, &(&1["operation_type"] == "sorting"))
+    pivot_wider_args = Enum.filter(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
+    operations = Enum.filter(attrs.operations, &(&1["operation_type"] not in @fixed_operations))
 
     sorting_args =
       for sort <- sorting,
@@ -278,8 +280,8 @@ defmodule KinoExplorer.DataTransformCell do
 
     operations =
       for operation <- operations,
-      operation = Map.new(operation, fn {k, v} -> convert_field(k, v) end),
-      operation.active do
+          operation = Map.new(operation, fn {k, v} -> convert_field(k, v) end),
+          operation.active do
         build_operation(operation) |> Map.merge(%{module: attrs.data_frame_alias})
       end
 
