@@ -7,7 +7,8 @@ defmodule KinoExplorer.DataTransformCell do
 
   alias Explorer.DataFrame
 
-  @as_atom ["direction", "type"]
+  @fixed_operations ["sorting", "pivot_wider"]
+  @as_atom ["direction", "type", "operation_type"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -104,55 +105,46 @@ defmodule KinoExplorer.DataTransformCell do
   def handle_event("update_field", %{"operation_type" => "filters"} = fields, ctx) do
     {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
     updated_filter = updates_for_filters(field, value, idx, ctx)
-    updated_operation = List.replace_at(ctx.assigns.operations["filters"], idx, updated_filter)
-    updated_operations = %{ctx.assigns.operations | "filters" => updated_operation}
+    updated_operations = List.replace_at(ctx.assigns.operations, idx, updated_filter)
     ctx = assign(ctx, operations: updated_operations)
-
-    broadcast_event(ctx, "update_operation", %{
-      "operation_type" => "filters",
-      "idx" => idx,
-      "fields" => updated_filter
-    })
-
+    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => updated_filter})
     {:noreply, ctx}
   end
 
-  def handle_event("update_field", %{"operation_type" => operation_type} = fields, ctx) do
+  def handle_event("update_field", fields, ctx) do
     {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
     parsed_value = parse_value(field, value)
-
-    updated_operation =
-      put_in(ctx.assigns.operations[operation_type], [Access.at(idx), field], parsed_value)
-
-    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
+    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], parsed_value)
     ctx = assign(ctx, operations: updated_operations)
 
-    broadcast_event(ctx, "update_operation", %{
-      "operation_type" => operation_type,
-      "idx" => idx,
-      "fields" => %{field => parsed_value}
-    })
+    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => %{field => parsed_value}})
 
     {:noreply, ctx}
   end
 
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-    updated_operation = ctx.assigns.operations[operation_type] ++ [new_operation]
-    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
+
+    has_pivot_wider =
+      Enum.any?(ctx.assigns.operations, &(&1["operation_type"] == "pivot_wider"))
+
+    updated_operations =
+      if operation_type != "pivot_wider" and has_pivot_wider do
+        List.insert_at(ctx.assigns.operations, -2, new_operation)
+      else
+        ctx.assigns.operations ++ [new_operation]
+      end
+
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "set_operations", %{operation_type => updated_operation})
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
     {:noreply, ctx}
   end
 
-  def handle_event("remove_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
-    updated_operation =
-      if idx, do: List.delete_at(ctx.assigns.operations[operation_type], idx), else: []
-
-    updated_operations = %{ctx.assigns.operations | operation_type => updated_operation}
+  def handle_event("remove_operation", %{"idx" => idx}, ctx) do
+    updated_operations = if idx, do: List.delete_at(ctx.assigns.operations, idx), else: []
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "set_operations", %{operation_type => updated_operation})
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
     {:noreply, ctx}
   end
@@ -165,7 +157,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp updates_for_filters(field, value, idx, ctx) do
-    current_filter = get_in(ctx.assigns.operations["filters"], [Access.at(idx)])
+    current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
     column = if field == "column", do: value, else: current_filter["column"]
@@ -186,7 +178,8 @@ defmodule KinoExplorer.DataTransformCell do
           "value" => nil,
           "type" => type,
           "message" => message,
-          "active" => active
+          "active" => active,
+          "operation_type" => "filters"
         }
 
       "value" ->
@@ -196,7 +189,8 @@ defmodule KinoExplorer.DataTransformCell do
           "value" => value,
           "type" => type,
           "message" => message,
-          "active" => active
+          "active" => active,
+          "operation_type" => "filters"
         }
 
       "filter" ->
@@ -206,7 +200,8 @@ defmodule KinoExplorer.DataTransformCell do
           "value" => nil,
           "type" => type,
           "message" => message,
-          "active" => active
+          "active" => active,
+          "operation_type" => "filters"
         }
 
       "active" ->
@@ -216,7 +211,8 @@ defmodule KinoExplorer.DataTransformCell do
           "value" => current_filter["value"],
           "type" => type,
           "message" => message,
-          "active" => value
+          "active" => value,
+          "operation_type" => "filters"
         }
     end
   end
@@ -258,9 +254,12 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
+    sorting = Enum.filter(attrs.operations, & &1["operation_type"] == "sorting")
+    pivot_wider_args = Enum.filter(attrs.operations, & &1["operation_type"] == "pivot_wider")
+    operations = Enum.filter(attrs.operations, & &1["operation_type"] not in @fixed_operations)
 
     sorting_args =
-      for sort <- attrs.operations["sorting"],
+      for sort <- sorting,
           sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
           sort.active,
           sort.direction != nil and sort.sort_by != nil do
@@ -277,28 +276,23 @@ defmodule KinoExplorer.DataTransformCell do
       }
     ]
 
-    filters =
-      for filter <- attrs.operations["filters"],
-          filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end),
-          filter.active do
-        %{
-          field: :filter,
-          name: :filter,
-          module: attrs.data_frame_alias,
-          args: build_filter([filter.column, filter.filter, filter.value, filter.type])
-        }
+    operations =
+      for operation <- operations,
+      operation = Map.new(operation, fn {k, v} -> convert_field(k, v) end),
+      operation.active do
+        build_operation(operation) |> Map.merge(%{module: attrs.data_frame_alias})
       end
 
-    pivot = [
+    pivot_wider = [
       %{
         field: :pivot_wider,
         name: :pivot_wider,
         module: attrs.data_frame_alias,
-        args: build_pivot(attrs.operations["pivot_wider"])
+        args: build_pivot(pivot_wider_args)
       }
     ]
 
-    nodes = filters ++ sorting ++ pivot
+    nodes = operations ++ sorting ++ pivot_wider
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end
@@ -315,6 +309,14 @@ defmodule KinoExplorer.DataTransformCell do
     quote do
       unquote({String.to_atom(var), [], nil}) = unquote(acc)
     end
+  end
+
+  defp build_operation(%{operation_type: :filters} = filter) do
+    %{
+      field: :filter,
+      name: :filter,
+      args: build_filter([filter.column, filter.filter, filter.value, filter.type])
+    }
   end
 
   defp build_filter([column, filter, value, type] = args) do
@@ -353,23 +355,31 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp default_operations() do
-    %{
-      "filters" => [default_operation(:filters)],
-      "sorting" => [default_operation(:sorting)],
-      "pivot_wider" => [default_operation(:pivot_wider)]
-    }
+    [default_operation(:filters), default_operation(:sorting), default_operation(:pivot_wider)]
   end
 
   defp default_operation(:filters) do
-    %{"filter" => nil, "column" => nil, "value" => nil, "type" => "string", "active" => true}
+    %{
+      "filter" => nil,
+      "column" => nil,
+      "value" => nil,
+      "type" => "string",
+      "active" => true,
+      "operation_type" => "filters"
+    }
   end
 
   defp default_operation(:sorting) do
-    %{"sort_by" => nil, "direction" => "asc", "active" => true}
+    %{"sort_by" => nil, "direction" => "asc", "active" => true, "operation_type" => "sorting"}
   end
 
   defp default_operation(:pivot_wider) do
-    %{"names_from" => nil, "values_from" => nil, "active" => true}
+    %{
+      "names_from" => nil,
+      "values_from" => nil,
+      "active" => true,
+      "operation_type" => "pivot_wider"
+    }
   end
 
   defp cast_filter_value(:boolean, value), do: {:ok, String.to_atom(value)}
