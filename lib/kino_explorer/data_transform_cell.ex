@@ -7,8 +7,8 @@ defmodule KinoExplorer.DataTransformCell do
 
   alias Explorer.DataFrame
 
-  @fixed_operations ["sorting", "pivot_wider"]
-  @as_atom ["direction", "type", "operation_type"]
+  @fixed_operations ["fill_missing", "sorting", "pivot_wider"]
+  @as_atom ["direction", "type", "operation_type", "strategy"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -126,15 +126,17 @@ defmodule KinoExplorer.DataTransformCell do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
 
     operations = ctx.assigns.operations
+    fill_missing = Enum.filter(operations, &(&1["operation_type"] == "fill_missing"))
     pivot_wider = Enum.filter(operations, &(&1["operation_type"] == "pivot_wider"))
     sorting = Enum.filter(operations, &(&1["operation_type"] == "sorting"))
-    other = Enum.filter(operations, &(&1["operation_type"] not in @fixed_operations))
+    unordered = Enum.filter(operations, &(&1["operation_type"] not in @fixed_operations))
 
     updated_operations =
       case operation_type do
+        "fill_missing" -> fill_missing ++ [new_operation] ++ unordered ++ sorting ++ pivot_wider
         "pivot_wider" -> operations ++ [new_operation]
-        "sorting" -> other ++ sorting ++ [new_operation] ++ pivot_wider
-        _ -> other ++ [new_operation] ++ sorting ++ pivot_wider
+        "sorting" -> fill_missing ++ unordered ++ sorting ++ [new_operation] ++ pivot_wider
+        _ -> fill_missing ++ unordered ++ [new_operation] ++ sorting ++ pivot_wider
       end
 
     ctx = assign(ctx, operations: updated_operations)
@@ -256,9 +258,28 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
+    fill_missing = Enum.filter(attrs.operations, &(&1["operation_type"] == "fill_missing"))
     sorting = Enum.filter(attrs.operations, &(&1["operation_type"] == "sorting"))
     pivot_wider_args = Enum.filter(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
     operations = Enum.filter(attrs.operations, &(&1["operation_type"] not in @fixed_operations))
+
+    fill_missing_args =
+      for fill <- fill_missing,
+          fill = Map.new(fill, fn {k, v} -> convert_field(k, v) end),
+          fill.active,
+          fill.column do
+        build_fill_missing(fill)
+      end
+      |> then(fn args -> if args != [], do: [args] end)
+
+    fill_missing = [
+      %{
+        field: :fill_missing,
+        name: :mutate,
+        module: attrs.data_frame_alias,
+        args: fill_missing_args
+      }
+    ]
 
     sorting_args =
       for sort <- sorting,
@@ -294,7 +315,7 @@ defmodule KinoExplorer.DataTransformCell do
       }
     ]
 
-    nodes = operations ++ sorting ++ pivot_wider
+    nodes = fill_missing ++ operations ++ sorting ++ pivot_wider
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end
@@ -330,6 +351,17 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
+  defp build_fill_missing(%{strategy: :scalar, scalar: nil}), do: nil
+
+  defp build_fill_missing(%{column: column, strategy: strategy, scalar: scalar}) do
+    value = if strategy == :scalar, do: scalar, else: strategy
+
+    {String.to_atom(column),
+     quote do
+       fill_missing(unquote(quoted_column(column)), unquote(value))
+     end}
+  end
+
   defp build_pivot([%{"names_from" => names, "values_from" => values, "active" => true}]) do
     if names && values, do: [names, values]
   end
@@ -357,7 +389,12 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp default_operations() do
-    [default_operation(:filters), default_operation(:sorting), default_operation(:pivot_wider)]
+    [
+      default_operation(:fill_missing),
+      default_operation(:filters),
+      default_operation(:sorting),
+      default_operation(:pivot_wider)
+    ]
   end
 
   defp default_operation(:filters) do
@@ -368,6 +405,16 @@ defmodule KinoExplorer.DataTransformCell do
       "type" => "string",
       "active" => true,
       "operation_type" => "filters"
+    }
+  end
+
+  defp default_operation(:fill_missing) do
+    %{
+      "column" => nil,
+      "strategy" => "forward",
+      "scalar" => nil,
+      "active" => true,
+      "operation_type" => "fill_missing"
     }
   end
 
