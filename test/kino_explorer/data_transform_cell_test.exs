@@ -14,6 +14,16 @@ defmodule KinoExplorer.DataTransformCellTest do
   }
 
   @base_operations %{
+    fill_missing: [
+      %{
+        "column" => nil,
+        "strategy" => "forward",
+        "scalar" => nil,
+        "type" => "string",
+        "active" => true,
+        "operation_type" => "fill_missing"
+      }
+    ],
     operations: [
       %{
         "column" => nil,
@@ -188,6 +198,83 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people |> Explorer.DataFrame.filter(name == "Ana")\
+             """
+    end
+
+    test "source for a data frame with fill_missing" do
+      attrs =
+        build_attrs(%{
+          fill_missing: [
+            %{
+              "column" => "name",
+              "strategy" => "forward",
+              "scalar" => nil,
+              "type" => "string",
+              "active" => true,
+              "operation_type" => "fill_missing"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.mutate(name: fill_missing(name, :forward))\
+             """
+    end
+
+    test "source for a data frame with multiple fill_missing" do
+      attrs =
+        build_attrs(%{
+          fill_missing: [
+            %{
+              "column" => "name",
+              "strategy" => "forward",
+              "scalar" => nil,
+              "type" => "string",
+              "active" => true,
+              "operation_type" => "fill_missing"
+            },
+            %{
+              "column" => "id",
+              "strategy" => "scalar",
+              "scalar" => "4",
+              "type" => "integer",
+              "active" => true,
+              "operation_type" => "fill_missing"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.mutate(name: fill_missing(name, :forward), id: fill_missing(id, 4))\
+             """
+    end
+
+    test "do not generate code for invalid fill_missing" do
+      attrs =
+        build_attrs(%{
+          fill_missing: [
+            %{
+              "column" => "name",
+              "strategy" => "scalar",
+              "scalar" => "Ana",
+              "type" => "string",
+              "active" => true,
+              "operation_type" => "fill_missing"
+            },
+            %{
+              "column" => "id",
+              "strategy" => "scalar",
+              "scalar" => "invalid",
+              "type" => "integer",
+              "active" => true,
+              "operation_type" => "fill_missing"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.mutate(name: fill_missing(name, "Ana"))\
              """
     end
 
@@ -405,10 +492,11 @@ defmodule KinoExplorer.DataTransformCellTest do
 
   defp build_attrs(root_attrs \\ %{}, operations_attrs) do
     root_attrs = Map.merge(@root, root_attrs)
-    operations_attrs = Map.merge(@base_operations, operations_attrs)
+    operations = Map.merge(@base_operations, operations_attrs)
 
     operations =
-      operations_attrs.operations ++ operations_attrs.sorting ++ operations_attrs.pivot_wider
+      operations.fill_missing ++
+        operations.operations ++ operations.sorting ++ operations.pivot_wider
 
     Map.put(root_attrs, "operations", operations)
   end

@@ -438,8 +438,8 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp cast_typed_value(:boolean, "true"), do: {:ok, :true}
-  defp cast_typed_value(:boolean, "false"), do: {:ok, :false}
+  defp cast_typed_value(:boolean, "true"), do: {:ok, true}
+  defp cast_typed_value(:boolean, "false"), do: {:ok, false}
   defp cast_typed_value(:boolean, _), do: nil
 
   defp cast_typed_value(:integer, value) do
