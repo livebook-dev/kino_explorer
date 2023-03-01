@@ -167,92 +167,54 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
     current_fill = get_in(ctx.assigns.operations, [Access.at(idx)])
-    df = ctx.assigns.root_fields["data_frame"]
-    data = ctx.assigns.data_options
     column = if field == "column", do: value, else: current_fill["column"]
-
-    type =
-      Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
-      |> Atom.to_string()
-
+    type = column_type(column, ctx)
+    default_scalar = if type == "boolean", do: "true"
     message = if field == "scalar", do: validation_message(:fill_missing, type, value)
 
-    case field do
-      "column" ->
-        %{
-          "column" => column,
-          "strategy" => "forward",
-          "scalar" => nil,
-          "type" => type,
-          "active" => current_fill["active"],
-          "operation_type" => "fill_missing",
-          "message" => message
-        }
-
-      _ ->
-        Map.merge(current_fill, %{field => value, "message" => message})
+    if field == "column" do
+      %{
+        "column" => column,
+        "strategy" => "forward",
+        "scalar" => default_scalar,
+        "type" => type,
+        "active" => current_fill["active"],
+        "operation_type" => "fill_missing",
+        "message" => message
+      }
+    else
+      Map.merge(current_fill, %{field => value, "message" => message})
     end
   end
 
   defp updates_for_grouped_fields(:filters, field, value, idx, ctx) do
     current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
-    df = ctx.assigns.root_fields["data_frame"]
-    data = ctx.assigns.data_options
     column = if field == "column", do: value, else: current_filter["column"]
-    filter = current_filter["filter"] || "equal"
-    active = current_filter["active"]
-
-    type =
-      Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
-      |> Atom.to_string()
-
+    type = column_type(column, ctx)
+    default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
 
-    case field do
-      "column" ->
-        %{
-          "filter" => "equal",
-          "column" => column,
-          "value" => nil,
-          "type" => type,
-          "message" => message,
-          "active" => active,
-          "operation_type" => "filters"
-        }
-
-      "value" ->
-        %{
-          "filter" => filter,
-          "column" => column,
-          "value" => value,
-          "type" => type,
-          "message" => message,
-          "active" => active,
-          "operation_type" => "filters"
-        }
-
-      "filter" ->
-        %{
-          "filter" => value,
-          "column" => column,
-          "value" => nil,
-          "type" => type,
-          "message" => message,
-          "active" => active,
-          "operation_type" => "filters"
-        }
-
-      "active" ->
-        %{
-          "filter" => filter,
-          "column" => column,
-          "value" => current_filter["value"],
-          "type" => type,
-          "message" => message,
-          "active" => value,
-          "operation_type" => "filters"
-        }
+    if field == "column" do
+      %{
+        "filter" => "equal",
+        "column" => column,
+        "value" => default_value,
+        "type" => type,
+        "message" => message,
+        "active" => current_filter["active"],
+        "operation_type" => "filters"
+      }
+    else
+      Map.merge(current_filter, %{field => value, "message" => message})
     end
+  end
+
+  defp column_type(column, ctx) do
+    df = ctx.assigns.root_fields["data_frame"]
+    data = ctx.assigns.data_options
+
+    Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
+    |> Atom.to_string()
   end
 
   defp parse_value(_field, ""), do: nil
@@ -386,17 +348,24 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp build_fill_missing(%{strategy: :scalar, scalar: nil}), do: nil
+  defp build_fill_missing(%{column: column, strategy: :scalar, scalar: scalar, type: type}) do
+    with true <- scalar != nil,
+         {:ok, scalar} <- cast_typed_value(type, scalar) do
+      build_fill_missing(column, scalar)
+    else
+      _ -> nil
+    end
+  end
 
-  defp build_fill_missing(%{column: column, strategy: strategy, scalar: scalar, type: type}) do
-    value = if strategy == :scalar, do: cast_typed_value(type, scalar), else: strategy
+  defp build_fill_missing(%{column: column, strategy: strategy}) do
+    build_fill_missing(column, strategy)
+  end
 
-    if value,
-      do:
-        {String.to_atom(column),
-         quote do
-           fill_missing(unquote(quoted_column(column)), unquote(value))
-         end}
+  defp build_fill_missing(column, value) do
+    {String.to_atom(column),
+     quote do
+       fill_missing(unquote(quoted_column(column)), unquote(value))
+     end}
   end
 
   defp build_pivot([%{"names_from" => names, "values_from" => values, "active" => true}]) do
@@ -469,7 +438,9 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp cast_typed_value(:boolean, value), do: {:ok, String.to_atom(value)}
+  defp cast_typed_value(:boolean, "true"), do: {:ok, :true}
+  defp cast_typed_value(:boolean, "false"), do: {:ok, :false}
+  defp cast_typed_value(:boolean, _), do: nil
 
   defp cast_typed_value(:integer, value) do
     case Integer.parse(value) do
