@@ -92,9 +92,10 @@ input[type="number"] {
 
 .validation-wrapper {
   width: 24px;
+  height: 0;
   position: relative;
   left: 85%;
-  bottom: 25%;
+  bottom: 55%;
 }
 
 .validation-message {

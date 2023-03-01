@@ -8,6 +8,8 @@ defmodule KinoExplorer.DataTransformCell do
   alias Explorer.DataFrame
 
   @fixed_operations ["fill_missing", "sorting", "pivot_wider"]
+  @grouped_fields_operations ["filters", "fill_missing"]
+  @validation_by_type [:filters, :fill_missing]
   @as_atom ["direction", "type", "operation_type", "strategy"]
   @filters %{
     "less" => "<",
@@ -102,12 +104,15 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event("update_field", %{"operation_type" => "filters"} = fields, ctx) do
-    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
-    updated_filter = updates_for_filters(field, value, idx, ctx)
-    updated_operations = List.replace_at(ctx.assigns.operations, idx, updated_filter)
+  def handle_event("update_field", %{"operation_type" => operation_type} = fields, ctx)
+      when operation_type in @grouped_fields_operations do
+    {field, value, idx, operation_type} =
+      {fields["field"], fields["value"], fields["idx"], String.to_atom(operation_type)}
+
+    updated_operation = updates_for_grouped_fields(operation_type, field, value, idx, ctx)
+    updated_operations = List.replace_at(ctx.assigns.operations, idx, updated_operation)
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => updated_filter})
+    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => updated_operation})
     {:noreply, ctx}
   end
 
@@ -160,7 +165,36 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp updates_for_filters(field, value, idx, ctx) do
+  defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
+    current_fill = get_in(ctx.assigns.operations, [Access.at(idx)])
+    df = ctx.assigns.root_fields["data_frame"]
+    data = ctx.assigns.data_options
+    column = if field == "column", do: value, else: current_fill["column"]
+
+    type =
+      Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
+      |> Atom.to_string()
+
+    message = if field == "scalar", do: validation_message(:fill_missing, type, value)
+
+    case field do
+      "column" ->
+        %{
+          "column" => column,
+          "strategy" => "forward",
+          "scalar" => nil,
+          "type" => type,
+          "active" => current_fill["active"],
+          "operation_type" => "fill_missing",
+          "message" => message
+        }
+
+      _ ->
+        Map.merge(current_fill, %{field => value, "message" => message})
+    end
+  end
+
+  defp updates_for_grouped_fields(:filters, field, value, idx, ctx) do
     current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
     df = ctx.assigns.root_fields["data_frame"]
     data = ctx.assigns.data_options
@@ -172,7 +206,7 @@ defmodule KinoExplorer.DataTransformCell do
       Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
       |> Atom.to_string()
 
-    message = if field == "value", do: validation_message(:filter, type, value)
+    message = if field == "value", do: validation_message(:filters, type, value)
 
     case field do
       "column" ->
@@ -270,6 +304,7 @@ defmodule KinoExplorer.DataTransformCell do
           fill.column do
         build_fill_missing(fill)
       end
+      |> Enum.reject(&(&1 == nil))
       |> then(fn args -> if args != [], do: [args] end)
 
     fill_missing = [
@@ -344,7 +379,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
-         {:ok, filter_value} <- cast_filter_value(type, value) do
+         {:ok, filter_value} <- cast_typed_value(type, value) do
       [{String.to_atom(filter), [], [quoted_column(column), filter_value]}]
     else
       _ -> nil
@@ -353,13 +388,15 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp build_fill_missing(%{strategy: :scalar, scalar: nil}), do: nil
 
-  defp build_fill_missing(%{column: column, strategy: strategy, scalar: scalar}) do
-    value = if strategy == :scalar, do: scalar, else: strategy
+  defp build_fill_missing(%{column: column, strategy: strategy, scalar: scalar, type: type}) do
+    value = if strategy == :scalar, do: cast_typed_value(type, scalar), else: strategy
 
-    {String.to_atom(column),
-     quote do
-       fill_missing(unquote(quoted_column(column)), unquote(value))
-     end}
+    if value,
+      do:
+        {String.to_atom(column),
+         quote do
+           fill_missing(unquote(quoted_column(column)), unquote(value))
+         end}
   end
 
   defp build_pivot([%{"names_from" => names, "values_from" => values, "active" => true}]) do
@@ -413,6 +450,7 @@ defmodule KinoExplorer.DataTransformCell do
       "column" => nil,
       "strategy" => "forward",
       "scalar" => nil,
+      "type" => "string",
       "active" => true,
       "operation_type" => "fill_missing"
     }
@@ -431,24 +469,24 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp cast_filter_value(:boolean, value), do: {:ok, String.to_atom(value)}
+  defp cast_typed_value(:boolean, value), do: {:ok, String.to_atom(value)}
 
-  defp cast_filter_value(:integer, value) do
+  defp cast_typed_value(:integer, value) do
     case Integer.parse(value) do
       {value, _} -> {:ok, value}
       _ -> nil
     end
   end
 
-  defp cast_filter_value(:float, value) do
+  defp cast_typed_value(:float, value) do
     case Float.parse(value) do
       {value, _} -> {:ok, value}
       _ -> nil
     end
   end
 
-  defp cast_filter_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
-  defp cast_filter_value(_, value), do: {:ok, value}
+  defp cast_typed_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
+  defp cast_typed_value(_, value), do: {:ok, value}
 
   defp to_date(:date, value) do
     case Date.from_iso8601(value) do
@@ -464,10 +502,10 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp validation_message(:filter, type, value) do
+  defp validation_message(operation, type, value) when operation in @validation_by_type do
     type = String.to_atom(type)
 
-    case cast_filter_value(type, value) do
+    case cast_typed_value(type, value) do
       {:ok, _} -> nil
       _ -> "invalid value for type #{type}"
     end
