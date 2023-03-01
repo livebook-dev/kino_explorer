@@ -26,6 +26,10 @@
   --yellow-200: #ffeed9;
   --yellow-600: #ffa83f;
 
+  --light-pink-100: #fff3f6;
+  --light-pink-200: #ffe6eb;
+  --light-pink-600: #ffc2d1;
+
   --red-300: #F1A3A6;
   --red-500: #E2474D;
 }
@@ -439,7 +443,7 @@ select option {
 }
 
 .operations-wrapper.fill_missing:before {
-  background-color: var(--gray-600);
+  background-color: var(--light-pink-600);
 }
 
 .operations-wrapper.sorting:before {
@@ -455,7 +459,7 @@ select option {
 }
 
 .operations.fill_missing {
-  border-left: solid 3px var(--gray-600);
+  border-left: solid 3px var(--light-pink-600);
 }
 
 .operations.sorting {
@@ -479,7 +483,7 @@ select option {
 }
 
 .operations-wrapper.fill_missing {
-  background-color: var(--gray-100);
+  background-color: var(--light-pink-100);
 }
 
 .operations-wrapper.sorting {
@@ -622,7 +626,7 @@ select option {
 
 .switch-button-checkbox.fill_missing:checked {
   background: white;
-  border-color: var(--gray-600);
+  border-color: var(--light-pink-600);
   transform: translateX(100%);
 }
 
@@ -647,7 +651,7 @@ select option {
 }
 
 .switch-button-checkbox.fill_missing:checked + .switch-button-bg {
-  background-color: var(--gray-600);
+  background-color: var(--light-pink-600);
 }
 
 .switch-button-checkbox.sorting:checked + .switch-button-bg {
@@ -670,7 +674,7 @@ select option {
 
 .switch-button-checkbox.fill_missing:disabled {
   background: white;
-  border-color: var(--gray-100);
+  border-color: var(--light-pink-100);
 }
 
 .switch-button-checkbox.sorting:disabled {
@@ -692,7 +696,7 @@ select option {
 }
 
 .switch-button-checkbox.fill_missing:disabled + .switch-button-bg {
-  background-color: var(--gray-200);
+  background-color: var(--light-pink-200);
 }
 
 .switch-button-checkbox.sorting:disabled + .switch-button-bg {
