@@ -26,6 +26,10 @@
   --yellow-200: #ffeed9;
   --yellow-600: #ffa83f;
 
+  --light-pink-100: #fff3f6;
+  --light-pink-200: #ffe6eb;
+  --light-pink-600: #ffc2d1;
+
   --red-300: #F1A3A6;
   --red-500: #E2474D;
 }
@@ -92,9 +96,10 @@ input[type="number"] {
 
 .validation-wrapper {
   width: 24px;
+  height: 0;
   position: relative;
   left: 85%;
-  bottom: 25%;
+  bottom: 55%;
 }
 
 .validation-message {
@@ -437,6 +442,10 @@ select option {
   background-color: var(--blue-600);
 }
 
+.operations-wrapper.fill_missing:before {
+  background-color: var(--light-pink-600);
+}
+
 .operations-wrapper.sorting:before {
   background-color: var(--green-600);
 }
@@ -447,6 +456,10 @@ select option {
 
 .operations.filters {
   border-left: solid 3px var(--blue-600);
+}
+
+.operations.fill_missing {
+  border-left: solid 3px var(--light-pink-600);
 }
 
 .operations.sorting {
@@ -467,6 +480,10 @@ select option {
 
 .operations-wrapper.filters {
   background-color: var(--blue-100);
+}
+
+.operations-wrapper.fill_missing {
+  background-color: var(--light-pink-100);
 }
 
 .operations-wrapper.sorting {
@@ -607,6 +624,12 @@ select option {
   transform: translateX(100%);
 }
 
+.switch-button-checkbox.fill_missing:checked {
+  background: white;
+  border-color: var(--light-pink-600);
+  transform: translateX(100%);
+}
+
 .switch-button-checkbox.sorting:checked {
   background: white;
   border-color: var(--green-600);
@@ -627,6 +650,10 @@ select option {
   background-color: var(--blue-600);
 }
 
+.switch-button-checkbox.fill_missing:checked + .switch-button-bg {
+  background-color: var(--light-pink-600);
+}
+
 .switch-button-checkbox.sorting:checked + .switch-button-bg {
   background-color: var(--green-600);
 }
@@ -645,6 +672,11 @@ select option {
   border-color: var(--blue-100);
 }
 
+.switch-button-checkbox.fill_missing:disabled {
+  background: white;
+  border-color: var(--light-pink-100);
+}
+
 .switch-button-checkbox.sorting:disabled {
   background: white;
   border-color: var(--green-100);
@@ -661,6 +693,10 @@ select option {
 
 .switch-button-checkbox.filters:disabled + .switch-button-bg {
   background-color: var(--blue-200);
+}
+
+.switch-button-checkbox.fill_missing:disabled + .switch-button-bg {
+  background-color: var(--light-pink-200);
 }
 
 .switch-button-checkbox.sorting:disabled + .switch-button-bg {
