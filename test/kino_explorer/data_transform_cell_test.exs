@@ -169,7 +169,7 @@ defmodule KinoExplorer.DataTransformCellTest do
         })
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.filter([name == "Ana", id < 2])\
+             people |> Explorer.DataFrame.filter(name == "Ana" and id < 2)\
              """
     end
 
@@ -321,7 +321,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              new_df =
                df
-               |> Explorer.DataFrame.filter([col("full name") == "Ana", id < 2])
+               |> Explorer.DataFrame.filter(col("full name") == "Ana" and id < 2)
                |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)\
              """
     end
@@ -374,7 +374,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> DF.filter([name == "Ana", id < 2])\
+             people |> DF.filter(name == "Ana" and id < 2)\
              """
     end
 
@@ -413,7 +413,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             exported_df = people |> DF.filter([name == "Ana", id < 2])\
+             exported_df = people |> DF.filter(name == "Ana" and id < 2)\
              """
     end
 

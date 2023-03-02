@@ -286,8 +286,7 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.reject(&(&1 == nil))
       |> case do
         [] -> nil
-        [args] -> [args]
-        args -> [args]
+        args -> Enum.reduce(args, &{:and, [], [&2, &1]}) |> then(&[&1])
       end
 
     filters = [
