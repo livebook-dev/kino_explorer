@@ -24,7 +24,7 @@ defmodule KinoExplorer.DataTransformCellTest do
         "operation_type" => "fill_missing"
       }
     ],
-    operations: [
+    filters: [
       %{
         "column" => nil,
         "filter" => "equal",
@@ -128,7 +128,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with filtering" do
       attrs =
         build_attrs(%{
-          operations: [
+          filters: [
             %{
               "column" => "name",
               "filter" => "equal",
@@ -148,7 +148,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     test "source for a data frame with multiple filtering" do
       attrs =
         build_attrs(%{
-          operations: [
+          filters: [
             %{
               "column" => "name",
               "filter" => "equal",
@@ -169,14 +169,14 @@ defmodule KinoExplorer.DataTransformCellTest do
         })
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> Explorer.DataFrame.filter(name == "Ana") |> Explorer.DataFrame.filter(id < 2)\
+             people |> Explorer.DataFrame.filter(name == "Ana" and id < 2)\
              """
     end
 
     test "do not generate code for invalid filters" do
       attrs =
         build_attrs(%{
-          operations: [
+          filters: [
             %{
               "column" => "name",
               "filter" => "equal",
@@ -296,7 +296,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "operation_type" => "sorting"
           }
         ],
-        operations: [
+        filters: [
           %{
             "column" => "full name",
             "filter" => "equal",
@@ -321,8 +321,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              new_df =
                df
-               |> Explorer.DataFrame.filter(col("full name") == "Ana")
-               |> Explorer.DataFrame.filter(id < 2)
+               |> Explorer.DataFrame.filter(col("full name") == "Ana" and id < 2)
                |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)\
              """
     end
@@ -352,7 +351,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame_alias" => DF}
 
       operations = %{
-        operations: [
+        filters: [
           %{
             "column" => "name",
             "filter" => "equal",
@@ -375,7 +374,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
+             people |> DF.filter(name == "Ana" and id < 2)\
              """
     end
 
@@ -391,7 +390,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{"data_frame_alias" => DF, "assign_to" => "exported_df"}
 
       operations = %{
-        operations: [
+        filters: [
           %{
             "column" => "name",
             "filter" => "equal",
@@ -414,7 +413,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             exported_df = people |> DF.filter(name == "Ana") |> DF.filter(id < 2)\
+             exported_df = people |> DF.filter(name == "Ana" and id < 2)\
              """
     end
 
@@ -436,7 +435,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "operation_type" => "sorting"
           }
         ],
-        operations: [
+        filters: [
           %{
             "column" => "name",
             "filter" => "equal",
@@ -496,7 +495,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
     operations =
       operations.fill_missing ++
-        operations.operations ++ operations.sorting ++ operations.pivot_wider
+        operations.filters ++ operations.sorting ++ operations.pivot_wider
 
     Map.put(root_attrs, "operations", operations)
   end

@@ -7,7 +7,6 @@ defmodule KinoExplorer.DataTransformCell do
 
   alias Explorer.DataFrame
 
-  @fixed_operations ["fill_missing", "sorting", "pivot_wider"]
   @grouped_fields_operations ["filters", "fill_missing"]
   @validation_by_type [:filters, :fill_missing]
   @as_atom ["direction", "type", "operation_type", "strategy"]
@@ -132,16 +131,16 @@ defmodule KinoExplorer.DataTransformCell do
 
     operations = ctx.assigns.operations
     fill_missing = Enum.filter(operations, &(&1["operation_type"] == "fill_missing"))
+    filters = Enum.filter(operations, &(&1["operation_type"] == "filters"))
     pivot_wider = Enum.filter(operations, &(&1["operation_type"] == "pivot_wider"))
     sorting = Enum.filter(operations, &(&1["operation_type"] == "sorting"))
-    unordered = Enum.filter(operations, &(&1["operation_type"] not in @fixed_operations))
 
     updated_operations =
       case operation_type do
-        "fill_missing" -> fill_missing ++ [new_operation] ++ unordered ++ sorting ++ pivot_wider
+        "fill_missing" -> fill_missing ++ [new_operation] ++ filters ++ sorting ++ pivot_wider
+        "filters" -> fill_missing ++ filters ++ [new_operation] ++ sorting ++ pivot_wider
+        "sorting" -> fill_missing ++ filters ++ sorting ++ [new_operation] ++ pivot_wider
         "pivot_wider" -> operations ++ [new_operation]
-        "sorting" -> fill_missing ++ unordered ++ sorting ++ [new_operation] ++ pivot_wider
-        _ -> fill_missing ++ unordered ++ [new_operation] ++ sorting ++ pivot_wider
       end
 
     ctx = assign(ctx, operations: updated_operations)
@@ -255,9 +254,9 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
     fill_missing = Enum.filter(attrs.operations, &(&1["operation_type"] == "fill_missing"))
+    filters = Enum.filter(attrs.operations, &(&1["operation_type"] == "filters"))
     sorting = Enum.filter(attrs.operations, &(&1["operation_type"] == "sorting"))
     pivot_wider_args = Enum.filter(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
-    operations = Enum.filter(attrs.operations, &(&1["operation_type"] not in @fixed_operations))
 
     fill_missing_args =
       for fill <- fill_missing,
@@ -275,6 +274,27 @@ defmodule KinoExplorer.DataTransformCell do
         name: :mutate,
         module: attrs.data_frame_alias,
         args: fill_missing_args
+      }
+    ]
+
+    filters_args =
+      for filter <- filters,
+          filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end),
+          filter.active do
+        build_filter([filter.column, filter.filter, filter.value, filter.type])
+      end
+      |> Enum.reject(&(&1 == nil))
+      |> case do
+        [] -> nil
+        args -> Enum.reduce(args, &{:and, [], [&2, &1]}) |> then(&[&1])
+      end
+
+    filters = [
+      %{
+        field: :filter,
+        name: :filter,
+        module: attrs.data_frame_alias,
+        args: filters_args
       }
     ]
 
@@ -296,13 +316,6 @@ defmodule KinoExplorer.DataTransformCell do
       }
     ]
 
-    operations =
-      for operation <- operations,
-          operation = Map.new(operation, fn {k, v} -> convert_field(k, v) end),
-          operation.active do
-        build_operation(operation) |> Map.merge(%{module: attrs.data_frame_alias})
-      end
-
     pivot_wider = [
       %{
         field: :pivot_wider,
@@ -312,7 +325,7 @@ defmodule KinoExplorer.DataTransformCell do
       }
     ]
 
-    nodes = fill_missing ++ operations ++ sorting ++ pivot_wider
+    nodes = fill_missing ++ filters ++ sorting ++ pivot_wider
     root = build_root(df)
     Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
   end
@@ -331,18 +344,10 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp build_operation(%{operation_type: :filters} = filter) do
-    %{
-      field: :filter,
-      name: :filter,
-      args: build_filter([filter.column, filter.filter, filter.value, filter.type])
-    }
-  end
-
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
          {:ok, filter_value} <- cast_typed_value(type, value) do
-      [{String.to_atom(filter), [], [quoted_column(column), filter_value]}]
+      {String.to_atom(filter), [], [quoted_column(column), filter_value]}
     else
       _ -> nil
     end
