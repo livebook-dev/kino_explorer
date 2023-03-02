@@ -28,8 +28,8 @@ defmodule KinoExplorer.MixProject do
   defp deps do
     [
       {:kino, github: "livebook-dev/kino", branch: "main"},
-      {:explorer, "~> 0.5.0"},
-      {:rustler, "~> 0.26.0", optional: true},
+      {:explorer, "~> 0.5.2"},
+      {:rustler, "~> 0.27.0", optional: true},
       {:ex_doc, "~> 0.29", only: :dev, runtime: false}
     ]
   end
