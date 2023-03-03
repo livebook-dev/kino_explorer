@@ -434,7 +434,7 @@ select option {
   height: 12px;
   border-radius: 50%;
   position: absolute;
-  left: 9px;
+  left: 8px;
   margin-top: 3px;
 }
 
@@ -495,8 +495,8 @@ select option {
 }
 
 .operations:last-of-type {
-  padding-bottom: 0;
-  margin-bottom: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .tooltip {

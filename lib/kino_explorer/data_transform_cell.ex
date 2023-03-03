@@ -149,6 +149,15 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
+  def handle_event("move_operation", %{"removedIndex" => remove, "addedIndex" => add}, ctx) do
+    {operation, operations} = List.pop_at(ctx.assigns.operations, remove)
+    updated_operations = List.insert_at(operations, add, operation)
+    ctx = assign(ctx, operations: updated_operations)
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
+
+    {:noreply, ctx}
+  end
+
   def handle_event("remove_operation", %{"idx" => idx}, ctx) do
     updated_operations = if idx, do: List.delete_at(ctx.assigns.operations, idx), else: []
     ctx = assign(ctx, operations: updated_operations)
