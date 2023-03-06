@@ -127,21 +127,24 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
-    new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-
     operations = ctx.assigns.operations
-    fill_missing = Enum.filter(operations, &(&1["operation_type"] == "fill_missing"))
-    filters = Enum.filter(operations, &(&1["operation_type"] == "filters"))
-    pivot_wider = Enum.filter(operations, &(&1["operation_type"] == "pivot_wider"))
-    sorting = Enum.filter(operations, &(&1["operation_type"] == "sorting"))
+    new_operation = operation_type |> String.to_existing_atom() |> default_operation()
+    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
 
     updated_operations =
-      case operation_type do
-        "fill_missing" -> fill_missing ++ [new_operation] ++ filters ++ sorting ++ pivot_wider
-        "filters" -> fill_missing ++ filters ++ [new_operation] ++ sorting ++ pivot_wider
-        "sorting" -> fill_missing ++ filters ++ sorting ++ [new_operation] ++ pivot_wider
-        "pivot_wider" -> operations ++ [new_operation]
-      end
+      if has_pivot_wider and operation_type != "pivot_wider",
+        do: List.insert_at(operations, -2, new_operation),
+        else: operations ++ [new_operation]
+
+    ctx = assign(ctx, operations: updated_operations)
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("add_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
+    new_operation = operation_type |> String.to_existing_atom() |> default_operation()
+    updated_operations = List.insert_at(ctx.assigns.operations, idx, new_operation)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
