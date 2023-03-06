@@ -358,8 +358,20 @@ select option {
 
 .card-buttons {
   display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: -16px;
+  position: relative;
+  top: 10px;
+}
+
+.card-controls {
+  display: flex;
+}
+
+.operation-controls {
+  display: flex;
   align-items: baseline;
-  margin-top: -12px;
 }
 
 .button-svg {
@@ -368,6 +380,15 @@ select option {
   width: 0.95rem;
   height: 0.95rem;
   color: var(--gray-600);
+}
+
+.drag-move {
+  opacity: 0;
+}
+
+.drag-move:hover {
+  opacity: 100%;
+  cursor: move;
 }
 
 .rotate-180 {
