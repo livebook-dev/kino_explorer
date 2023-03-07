@@ -367,6 +367,7 @@ select option {
 
 .card-controls {
   display: flex;
+  justify-content: flex-end;
 }
 
 .operation-controls {
