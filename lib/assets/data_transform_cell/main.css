@@ -397,6 +397,23 @@ select option {
   cursor: move;
 }
 
+.card:hover .drag-move {
+  opacity: 100%;
+  cursor: move;
+}
+
+.card:hover {
+  cursor: move;
+}
+
+.card-content:hover .drag-move {
+  opacity: 0;
+}
+
+.card-content:hover {
+  cursor: default;
+}
+
 .rotate-180 {
   transform: rotate(180deg);
 }
