@@ -99,7 +99,7 @@ input[type="number"] {
   height: 0;
   position: relative;
   left: 85%;
-  bottom: 55%;
+  bottom: 47%;
 }
 
 .validation-message {
@@ -344,35 +344,18 @@ select option {
   color: black;
 }
 
-.card {
-  display: flex;
-  font-size: 0.875rem;
-  padding: 0;
-  padding-top: 0.25rem;
-  width: auto;
-  flex-grow: 1;
-  color: var(--gray-700);
-  margin-bottom: 0px;
-  justify-content: space-between;
-}
-
-.card-buttons {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  margin-top: -16px;
-  position: relative;
-  top: 10px;
-}
-
 .card-controls {
   display: flex;
   justify-content: flex-end;
+  position: relative;
+  bottom: -12px;
 }
 
 .operation-controls {
   display: flex;
   align-items: baseline;
+  position: relative;
+  top: -6px;
 }
 
 .button-svg {
@@ -398,18 +381,6 @@ select option {
 
 .rotate-0 {
   transform: rotate(0deg);
-}
-
-.wrapper {
-  margin-left: 14px;
-  margin-right: 14px;
-  margin-bottom: 6px;
-  padding-top: 0px;
-}
-
-.wrapper:last-child {
-  border: none;
-  margin-bottom: 0px;
 }
 
 .add-operation {
@@ -449,7 +420,7 @@ select option {
   margin: 0 12px;
 }
 
-.operations-wrapper:before {
+.card:before {
   content: "";
   display: block;
   width: 12px;
@@ -460,19 +431,19 @@ select option {
   margin-top: 3px;
 }
 
-.operations-wrapper.filters:before {
+.card.filters:before {
   background-color: var(--blue-600);
 }
 
-.operations-wrapper.fill_missing:before {
+.card.fill_missing:before {
   background-color: var(--light-pink-600);
 }
 
-.operations-wrapper.sorting:before {
+.card.sorting:before {
   background-color: var(--green-600);
 }
 
-.operations-wrapper.pivot_wider:before {
+.card.pivot_wider:before {
   background-color: var(--yellow-600);
 }
 
@@ -492,33 +463,34 @@ select option {
   border-left: solid 3px var(--yellow-600);
 }
 
-.operations-wrapper {
-  padding: 9px 12px 12px;
-  margin: 0;
-  margin-bottom: 12px;
+.card {
+  display: flex;
+  font-size: 0.875rem;
+  justify-content: space-between;
+  padding: 9px 12px;
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
 }
 
-.operations-wrapper.filters {
+.card.filters {
   background-color: var(--blue-100);
 }
 
-.operations-wrapper.fill_missing {
+.card.fill_missing {
   background-color: var(--light-pink-100);
 }
 
-.operations-wrapper.sorting {
+.card.sorting {
   background-color: var(--green-100);
 }
 
-.operations-wrapper.pivot_wider {
+.card.pivot_wider {
   background-color: var(--yellow-100);
 }
 
-.operations:last-of-type {
-  padding-bottom: 12px;
-  margin-bottom: 0;
+.dndrop-draggable-wrapper:last-child > .operations {
+  padding-bottom: 0;
+  margin-bottom: 9px;
 }
 
 .tooltip {
