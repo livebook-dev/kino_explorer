@@ -126,23 +126,35 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
+  def handle_event("add_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
+    updated_operations = List.insert_at(ctx.assigns.operations, idx, new_operation)
 
+    ctx = assign(ctx, operations: updated_operations)
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     operations = ctx.assigns.operations
-    fill_missing = Enum.filter(operations, &(&1["operation_type"] == "fill_missing"))
-    filters = Enum.filter(operations, &(&1["operation_type"] == "filters"))
-    pivot_wider = Enum.filter(operations, &(&1["operation_type"] == "pivot_wider"))
-    sorting = Enum.filter(operations, &(&1["operation_type"] == "sorting"))
+    new_operation = operation_type |> String.to_existing_atom() |> default_operation()
+    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
 
     updated_operations =
-      case operation_type do
-        "fill_missing" -> fill_missing ++ [new_operation] ++ filters ++ sorting ++ pivot_wider
-        "filters" -> fill_missing ++ filters ++ [new_operation] ++ sorting ++ pivot_wider
-        "sorting" -> fill_missing ++ filters ++ sorting ++ [new_operation] ++ pivot_wider
-        "pivot_wider" -> operations ++ [new_operation]
-      end
+      if has_pivot_wider and operation_type != "pivot_wider",
+        do: List.insert_at(operations, -2, new_operation),
+        else: operations ++ [new_operation]
 
+    ctx = assign(ctx, operations: updated_operations)
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("move_operation", %{"removedIndex" => remove, "addedIndex" => add}, ctx) do
+    {operation, operations} = List.pop_at(ctx.assigns.operations, remove)
+    updated_operations = List.insert_at(operations, add, operation)
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
@@ -253,34 +265,31 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
-    fill_missing = Enum.filter(attrs.operations, &(&1["operation_type"] == "fill_missing"))
-    filters = Enum.filter(attrs.operations, &(&1["operation_type"] == "filters"))
-    sorting = Enum.filter(attrs.operations, &(&1["operation_type"] == "sorting"))
-    pivot_wider_args = Enum.filter(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
 
+    nodes =
+      attrs.operations
+      |> Enum.map(&Map.new(&1, fn {k, v} -> convert_field(k, v) end))
+      |> Enum.chunk_by(& &1.operation_type)
+      |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
+
+    root = build_root(df)
+    Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
+  end
+
+  defp to_quoted([%{operation_type: :fill_missing} | _] = fill_missing) do
     fill_missing_args =
-      for fill <- fill_missing,
-          fill = Map.new(fill, fn {k, v} -> convert_field(k, v) end),
-          fill.active,
-          fill.column do
+      for fill <- fill_missing, fill.active, fill.column do
         build_fill_missing(fill)
       end
       |> Enum.reject(&(&1 == nil))
       |> then(fn args -> if args != [], do: [args] end)
 
-    fill_missing = [
-      %{
-        field: :fill_missing,
-        name: :mutate,
-        module: attrs.data_frame_alias,
-        args: fill_missing_args
-      }
-    ]
+    %{field: :fill_missing, name: :mutate, args: fill_missing_args}
+  end
 
+  defp to_quoted([%{operation_type: :filters} | _] = filters) do
     filters_args =
-      for filter <- filters,
-          filter = Map.new(filter, fn {k, v} -> convert_field(k, v) end),
-          filter.active do
+      for filter <- filters, filter.active do
         build_filter([filter.column, filter.filter, filter.value, filter.type])
       end
       |> Enum.reject(&(&1 == nil))
@@ -289,45 +298,22 @@ defmodule KinoExplorer.DataTransformCell do
         args -> Enum.reduce(args, &{:and, [], [&2, &1]}) |> then(&[&1])
       end
 
-    filters = [
-      %{
-        field: :filter,
-        name: :filter,
-        module: attrs.data_frame_alias,
-        args: filters_args
-      }
-    ]
+    %{field: :filter, name: :filter, args: filters_args}
+  end
 
+  defp to_quoted([%{operation_type: :sorting} | _] = sorting) do
     sorting_args =
-      for sort <- sorting,
-          sort = Map.new(sort, fn {k, v} -> convert_field(k, v) end),
-          sort.active,
-          sort.direction != nil and sort.sort_by != nil do
+      for sort <- sorting, sort.active, sort.direction != nil and sort.sort_by != nil do
         {sort.direction, quoted_column(sort.sort_by)}
       end
       |> then(fn args -> if args != [], do: [args] end)
 
-    sorting = [
-      %{
-        field: :sorting,
-        name: :arrange,
-        module: attrs.data_frame_alias,
-        args: sorting_args
-      }
-    ]
+    %{field: :sorting, name: :arrange, args: sorting_args}
+  end
 
-    pivot_wider = [
-      %{
-        field: :pivot_wider,
-        name: :pivot_wider,
-        module: attrs.data_frame_alias,
-        args: build_pivot(pivot_wider_args)
-      }
-    ]
-
-    nodes = fill_missing ++ filters ++ sorting ++ pivot_wider
-    root = build_root(df)
-    Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
+  defp to_quoted([%{operation_type: :pivot_wider, names_from: names, values_from: values}]) do
+    pivot_wider_args = if names && values, do: [names, values]
+    %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
   defp build_root(df) do
@@ -372,12 +358,6 @@ defmodule KinoExplorer.DataTransformCell do
        fill_missing(unquote(quoted_column(column)), unquote(value))
      end}
   end
-
-  defp build_pivot([%{"names_from" => names, "values_from" => values, "active" => true}]) do
-    if names && values, do: [names, values]
-  end
-
-  defp build_pivot(_), do: nil
 
   defp apply_node(%{args: nil}, acc), do: acc
 

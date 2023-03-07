@@ -461,6 +461,57 @@ defmodule KinoExplorer.DataTransformCellTest do
              exported_df = people |> DF.filter(name == "Ana") |> DF.arrange(asc: col("full name"))\
              """
     end
+
+    test "source with grouped and ungrouped operations" do
+      root = %{
+        "data_frame" => "people",
+        "assign_to" => "exported_df",
+        "data_frame_alias" => DF
+      }
+
+      operations = [
+        %{
+          "column" => "name",
+          "filter" => "equal",
+          "type" => "string",
+          "value" => "Ana",
+          "active" => true,
+          "operation_type" => "filters"
+        },
+        %{
+          "column" => "id",
+          "filter" => "less",
+          "type" => "integer",
+          "value" => "2",
+          "active" => true,
+          "operation_type" => "filters"
+        },
+        %{
+          "direction" => "asc",
+          "sort_by" => "full name",
+          "active" => true,
+          "operation_type" => "sorting"
+        },
+        %{
+          "column" => "surname",
+          "filter" => "contains",
+          "type" => "string",
+          "value" => "Santiago",
+          "active" => true,
+          "operation_type" => "filters"
+        }
+      ]
+
+      attrs = Map.put(root, "operations", operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             exported_df =
+               people
+               |> DF.filter(name == "Ana" and id < 2)
+               |> DF.arrange(asc: col("full name"))
+               |> DF.filter(contains(surname, "Santiago"))\
+             """
+    end
   end
 
   defp people_df() do
