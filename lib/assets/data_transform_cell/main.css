@@ -23,15 +23,26 @@
   --green-600: #1d891a;
 
   --yellow-100: #fff7ec;
-  --yellow-200: #ffeed9;
   --yellow-600: #ffa83f;
-
-  --light-pink-100: #fff3f6;
-  --light-pink-200: #ffe6eb;
-  --light-pink-600: #ffc2d1;
 
   --red-300: #F1A3A6;
   --red-500: #E2474D;
+
+  --magenta-100: #FAEDFA;
+  --magenta-200: #FAD4FA;
+  --magenta-600: #C689C6;
+
+  --orange-100: #FFF5F2;
+  --orange-200: #FFE3D9;
+  --orange-600: #FF9770;
+
+  --teal-100: #EDF7FA;
+  --teal-200: #D4F1FA;
+  --teal-600: #88C7DB;
+
+  --purple-100: #F4F2FD;
+  --purple-200: #D2CBEF;
+  --purple-600: #957FEF;
 }
 
 p,
@@ -443,35 +454,35 @@ select option {
 }
 
 .card.filters:before {
-  background-color: var(--blue-600);
+  background-color: var(--teal-600);
 }
 
 .card.fill_missing:before {
-  background-color: var(--light-pink-600);
+  background-color: var(--magenta-600);
 }
 
 .card.sorting:before {
-  background-color: var(--green-600);
+  background-color: var(--purple-600);
 }
 
 .card.pivot_wider:before {
-  background-color: var(--yellow-600);
+  background-color: var(--orange-600);
 }
 
 .operations.filters {
-  border-left: solid 3px var(--blue-600);
+  border-left: solid 3px var(--teal-600);
 }
 
 .operations.fill_missing {
-  border-left: solid 3px var(--light-pink-600);
+  border-left: solid 3px var(--magenta-600);
 }
 
 .operations.sorting {
-  border-left: solid 3px var(--green-600);
+  border-left: solid 3px var(--purple-600);
 }
 
 .operations.pivot_wider {
-  border-left: solid 3px var(--yellow-600);
+  border-left: solid 3px var(--orange-600);
 }
 
 .card {
@@ -484,19 +495,19 @@ select option {
 }
 
 .card.filters {
-  background-color: var(--blue-100);
+  background-color: var(--teal-100);
 }
 
 .card.fill_missing {
-  background-color: var(--light-pink-100);
+  background-color: var(--magenta-100);
 }
 
 .card.sorting {
-  background-color: var(--green-100);
+  background-color: var(--purple-100);
 }
 
 .card.pivot_wider {
-  background-color: var(--yellow-100);
+  background-color: var(--orange-100);
   padding-bottom: 14px;
 }
 
@@ -626,25 +637,25 @@ select option {
 
 .switch-button-checkbox.filters:checked {
   background: white;
-  border-color: var(--blue-600);
+  border-color: var(--teal-600);
   transform: translateX(100%);
 }
 
 .switch-button-checkbox.fill_missing:checked {
   background: white;
-  border-color: var(--light-pink-600);
+  border-color: var(--magenta-600);
   transform: translateX(100%);
 }
 
 .switch-button-checkbox.sorting:checked {
   background: white;
-  border-color: var(--green-600);
+  border-color: var(--purple-600);
   transform: translateX(100%);
 }
 
 .switch-button-checkbox.pivot_wider:checked {
   background: white;
-  border-color: var(--yellow-600);
+  border-color: var(--orange-600);
   transform: translateX(100%);
 }
 
@@ -653,19 +664,19 @@ select option {
 }
 
 .switch-button-checkbox.filters:checked + .switch-button-bg {
-  background-color: var(--blue-600);
+  background-color: var(--teal-600);
 }
 
 .switch-button-checkbox.fill_missing:checked + .switch-button-bg {
-  background-color: var(--light-pink-600);
+  background-color: var(--magenta-600);
 }
 
 .switch-button-checkbox.sorting:checked + .switch-button-bg {
-  background-color: var(--green-600);
+  background-color: var(--purple-600);
 }
 
 .switch-button-checkbox.pivot_wider:checked + .switch-button-bg {
-  background-color: var(--yellow-600);
+  background-color: var(--orange-600);
 }
 
 .switch-button-checkbox:disabled {
@@ -675,22 +686,22 @@ select option {
 
 .switch-button-checkbox.filters:disabled {
   background: white;
-  border-color: var(--blue-100);
+  border-color: var(--teal-100);
 }
 
 .switch-button-checkbox.fill_missing:disabled {
   background: white;
-  border-color: var(--light-pink-100);
+  border-color: var(--magenta-100);
 }
 
 .switch-button-checkbox.sorting:disabled {
   background: white;
-  border-color: var(--green-100);
+  border-color: var(--purple-100);
 }
 
 .switch-button-checkbox.pivot_wider:disabled {
   background: white;
-  border-color: var(--yellow-100);
+  border-color: var(--orange-100);
 }
 
 .switch-button-checkbox:disabled + .switch-button-bg {
@@ -698,17 +709,17 @@ select option {
 }
 
 .switch-button-checkbox.filters:disabled + .switch-button-bg {
-  background-color: var(--blue-200);
+  background-color: var(--teal-200);
 }
 
 .switch-button-checkbox.fill_missing:disabled + .switch-button-bg {
-  background-color: var(--light-pink-200);
+  background-color: var(--magenta-200);
 }
 
 .switch-button-checkbox.sorting:disabled + .switch-button-bg {
-  background-color: var(--green-200);
+  background-color: var(--purple-200);
 }
 
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
-  background-color: var(--yellow-200);
+  background-color: var(--orange-200);
 }
