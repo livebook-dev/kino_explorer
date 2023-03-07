@@ -27,7 +27,7 @@ defmodule KinoExplorer.MixProject do
 
   defp deps do
     [
-      {:kino, github: "livebook-dev/kino", branch: "main"},
+      {:kino, "~> 0.8.1 or ~> 0.9.0"},
       {:explorer, "~> 0.5.2"},
       {:rustler, "~> 0.27.0", optional: true},
       {:ex_doc, "~> 0.29", only: :dev, runtime: false}
