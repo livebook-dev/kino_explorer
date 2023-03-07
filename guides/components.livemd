@@ -10,7 +10,7 @@ Mix.install([
 
 ### Explorer
 
-This integration automatically renders an `Explorer.DataFrame` as a data table:
+This integration automatically renders an `Explorer.DataFrame` or `Explorer.Series` as a data table:
 
 ```elixir
 Explorer.Datasets.fossil_fuels()
@@ -18,9 +18,15 @@ Explorer.Datasets.fossil_fuels()
 
 ### Kino.Explorer
 
-A widget for interactively viewing `Explorer.DataFrame`.
+A widget for interactively viewing `Explorer.DataFrame` or `Explorer.Series`.
 
 ```elixir
 df = Explorer.Datasets.fossil_fuels()
 Kino.Explorer.new(df)
 ```
+
+## Smart cells
+
+The following Smart cells are available:
+
+* **Data transform** - for building data transform pipelines
