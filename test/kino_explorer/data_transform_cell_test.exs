@@ -499,7 +499,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           "value" => "Santiago",
           "active" => true,
           "operation_type" => "filters"
-        },
+        }
       ]
 
       attrs = Map.put(root, "operations", operations)
