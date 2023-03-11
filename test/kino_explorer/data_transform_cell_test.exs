@@ -452,6 +452,14 @@ defmodule KinoExplorer.DataTransformCellTest do
             "active" => false,
             "operation_type" => "filters"
           }
+        ],
+        pivot_wider: [
+          %{
+            "names_from" => "name",
+            "values_from" => "id",
+            "active" => false,
+            "operation_type" => "pivot_wider"
+          }
         ]
       }
 

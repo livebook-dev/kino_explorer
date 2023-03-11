@@ -311,8 +311,10 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :sorting, name: :arrange, args: sorting_args}
   end
 
-  defp to_quoted([%{operation_type: :pivot_wider, names_from: names, values_from: values}]) do
-    pivot_wider_args = if names && values, do: [names, values]
+  defp to_quoted([
+         %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
+       ]) do
+    pivot_wider_args = if names && values && active, do: [names, values]
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
