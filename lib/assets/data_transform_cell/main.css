@@ -386,7 +386,11 @@ select option {
   transition-duration: 200ms;
   width: 0.95rem;
   height: 0.95rem;
-  color: var(--gray-600);
+  color: var(--gray-500);
+}
+
+.button-svg:hover {
+  color: var(--gray-900);
 }
 
 .drag-move {
