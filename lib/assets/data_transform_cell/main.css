@@ -414,6 +414,10 @@ select option {
   cursor: move;
 }
 
+.card.pivot_wider:hover {
+  cursor: default;
+}
+
 .card-content:hover .drag-move {
   opacity: 0;
 }
