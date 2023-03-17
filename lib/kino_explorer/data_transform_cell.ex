@@ -396,12 +396,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp default_operations() do
-    [
-      default_operation(:fill_missing),
-      default_operation(:filters),
-      default_operation(:sorting),
-      default_operation(:pivot_wider)
-    ]
+    [default_operation(:filters)]
   end
 
   defp default_operation(:filters) do
