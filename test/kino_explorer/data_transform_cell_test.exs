@@ -10,7 +10,8 @@ defmodule KinoExplorer.DataTransformCellTest do
   @root %{
     "data_frame" => "people",
     "assign_to" => nil,
-    "data_frame_alias" => Explorer.DataFrame
+    "data_frame_alias" => Explorer.DataFrame,
+    "missing_require" => nil
   }
 
   @base_operations %{
@@ -474,7 +475,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       root = %{
         "data_frame" => "people",
         "assign_to" => "exported_df",
-        "data_frame_alias" => DF
+        "data_frame_alias" => DF,
+        "missing_require" => nil
       }
 
       operations = [
@@ -518,6 +520,42 @@ defmodule KinoExplorer.DataTransformCellTest do
                |> DF.filter(name == "Ana" and id < 2)
                |> DF.arrange(asc: col("full name"))
                |> DF.filter(contains(surname, "Santiago"))\
+             """
+    end
+
+    test "source with an auto generated require" do
+      root = %{
+        "data_frame_alias" => DF,
+        "assign_to" => "exported_df",
+        "missing_require" => Explorer.DataFrame
+      }
+
+      operations = %{
+        filters: [
+          %{
+            "column" => "name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          },
+          %{
+            "column" => "id",
+            "filter" => "less",
+            "type" => "integer",
+            "value" => "2",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             require Explorer.DataFrame
+             exported_df = people |> DF.filter(name == "Ana" and id < 2)\
              """
     end
   end

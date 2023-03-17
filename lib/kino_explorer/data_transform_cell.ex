@@ -80,8 +80,7 @@ defmodule KinoExplorer.DataTransformCell do
 
     broadcast_event(ctx, "set_available_data", %{
       "data_options" => data_options,
-      "fields" => updated_fields,
-      "require" => missing_require
+      "fields" => updated_fields
     })
 
     {:noreply, ctx}
@@ -249,6 +248,7 @@ defmodule KinoExplorer.DataTransformCell do
     ctx.assigns.root_fields
     |> Map.put("operations", ctx.assigns.operations)
     |> Map.put("data_frame_alias", ctx.assigns.data_frame_alias)
+    |> Map.put("missing_require", ctx.assigns.missing_require)
   end
 
   @impl true
@@ -265,6 +265,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
+    missing_require = attrs.missing_require
 
     nodes =
       attrs.operations
@@ -273,7 +274,11 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
 
     root = build_root(df)
-    Enum.reduce(nodes, root, &apply_node/2) |> build_var(variable)
+
+    nodes
+    |> Enum.reduce(root, &apply_node/2)
+    |> build_var(variable)
+    |> build_missing_require(missing_require)
   end
 
   defp to_quoted([%{operation_type: :fill_missing} | _] = fill_missing) do
@@ -329,6 +334,15 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_var(acc, var) do
     quote do
       unquote({String.to_atom(var), [], nil}) = unquote(acc)
+    end
+  end
+
+  defp build_missing_require(acc, nil), do: acc
+
+  defp build_missing_require(acc, missing_require) do
+    quote do
+      require unquote(missing_require)
+      unquote(acc)
     end
   end
 
@@ -477,6 +491,6 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp missing_require(%Macro.Env{requires: requires}) do
-    if Explorer.DataFrame not in requires, do: "require Explorer.DataFrame"
+    if Explorer.DataFrame not in requires, do: Explorer.DataFrame
   end
 end
