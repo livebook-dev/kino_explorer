@@ -484,11 +484,11 @@ select option {
 }
 
 .card.filters:before {
-  background-color: var(--teal-blue-600);
+  background-color: var(--teal-green-600);
 }
 
 .card.fill_missing:before {
-  background-color: var(--teal-green-600);
+  background-color: var(--teal-blue-600);
 }
 
 .card.sorting:before {
@@ -500,11 +500,11 @@ select option {
 }
 
 .operations.filters {
-  border-left: solid 3px var(--teal-blue-600);
+  border-left: solid 3px var(--teal-green-600);
 }
 
 .operations.fill_missing {
-  border-left: solid 3px var(--teal-green-600);
+  border-left: solid 3px var(--teal-blue-600);
 }
 
 .operations.sorting {
@@ -525,11 +525,11 @@ select option {
 }
 
 .card.filters {
-  background-color: var(--teal-blue-100);
+  background-color: var(--teal-green-100);
 }
 
 .card.fill_missing {
-  background-color: var(--teal-green-100);
+  background-color: var(--teal-blue-100);
 }
 
 .card.sorting {
@@ -667,13 +667,13 @@ select option {
 
 .switch-button-checkbox.filters:checked {
   background: white;
-  border-color: var(--teal-blue-600);
+  border-color: var(--teal-green-600);
   transform: translateX(100%);
 }
 
 .switch-button-checkbox.fill_missing:checked {
   background: white;
-  border-color: var(--teal-green-600);
+  border-color: var(--teal-blue-600);
   transform: translateX(100%);
 }
 
@@ -694,11 +694,11 @@ select option {
 }
 
 .switch-button-checkbox.filters:checked + .switch-button-bg {
-  background-color: var(--teal-blue-600);
+  background-color: var(--teal-green-600);
 }
 
 .switch-button-checkbox.fill_missing:checked + .switch-button-bg {
-  background-color: var(--teal-green-600);
+  background-color: var(--teal-blue-600);
 }
 
 .switch-button-checkbox.sorting:checked + .switch-button-bg {
@@ -716,12 +716,12 @@ select option {
 
 .switch-button-checkbox.filters:disabled {
   background: white;
-  border-color: var(--teal-blue-100);
+  border-color: var(--teal-green-100);
 }
 
 .switch-button-checkbox.fill_missing:disabled {
   background: white;
-  border-color: var(--teal-green-100);
+  border-color: var(--teal-blue-100);
 }
 
 .switch-button-checkbox.sorting:disabled {
@@ -739,11 +739,11 @@ select option {
 }
 
 .switch-button-checkbox.filters:disabled + .switch-button-bg {
-  background-color: var(--teal-blue-200);
+  background-color: var(--teal-green-200);
 }
 
 .switch-button-checkbox.fill_missing:disabled + .switch-button-bg {
-  background-color: var(--teal-green-200);
+  background-color: var(--teal-blue-200);
 }
 
 .switch-button-checkbox.sorting:disabled + .switch-button-bg {
