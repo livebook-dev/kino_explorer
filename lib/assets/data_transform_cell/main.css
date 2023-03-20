@@ -753,3 +753,15 @@ select option {
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
   background-color: var(--orange-200);
 }
+
+/* MultiSelect */
+
+.multiselect {
+  width: 300px;
+}
+
+.multiselect-pivot-wider {
+  --ms-tag-bg: var(--orange-100);
+  --ms-tag-color: var(--orange-600);
+  --ms-ring-color: var(--orange-200);
+}

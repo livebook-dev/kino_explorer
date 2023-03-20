@@ -319,7 +319,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
-    pivot_wider_args = if names && values && active, do: [names, values]
+    pivot_wider_args = if names && values && active, do: build_pivot_wider(names, values)
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
@@ -345,6 +345,10 @@ defmodule KinoExplorer.DataTransformCell do
       unquote(acc)
     end
   end
+
+  defp build_pivot_wider(_names, []), do: nil
+  defp build_pivot_wider(names, [values]), do: [names, values]
+  defp build_pivot_wider(names, values), do: [names, values]
 
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
@@ -428,7 +432,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp default_operation(:pivot_wider) do
     %{
       "names_from" => nil,
-      "values_from" => nil,
+      "values_from" => [],
       "active" => true,
       "operation_type" => "pivot_wider"
     }
