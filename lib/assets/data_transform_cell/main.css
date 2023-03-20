@@ -757,11 +757,28 @@ select option {
 /* MultiSelect */
 
 .multiselect {
-  width: 300px;
+  width: 425px;
+  height: 35px;
+  min-height: 0;
+  background-color: var(--gray-50);
+  font-size: 0.875rem;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  color: var(--gray-600);
+  --ms-tag-font-weight: 500;
+  --ms-ring-width: 0px;
+  --ms-tag-bg: var(--gray-100);
+  --ms-tag-color: var(--gray-600);
 }
 
-.multiselect-pivot-wider {
-  --ms-tag-bg: var(--orange-100);
-  --ms-tag-color: var(--orange-600);
-  --ms-ring-color: var(--orange-200);
+.multiselect-caret {
+  mask-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik01Ljk5OTg5IDQuOTc2NzFMMTAuMTI0OSAwLjg1MTcwOEwxMS4zMDMyIDIuMDMwMDRMNS45OTk4OSA3LjMzMzM3TDAuNjk2NTU1IDIuMDMwMDRMMS44NzQ4OSAwLjg1MTcwOEw1Ljk5OTg5IDQuOTc2NzFaIiBmaWxsPSIjNjE3NThBIi8+Cjwvc3ZnPgo=");
+}
+
+.multiselect-tag-remove:hover {
+  background-color: var(--gray-200);
+}
+
+.multiselect-clear-icon:hover {
+  color: var(--gray-900);
 }
