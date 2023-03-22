@@ -787,3 +787,13 @@ select option {
 .multiselect.is-open {
   margin-bottom: 100px;
 }
+
+.multiselect.is-open.is-empty {
+  margin-bottom: 0;
+}
+
+/* It will not break in browsers that don't support :has.
+It just makes the behavior more refined in those that do */
+.multiselect:has(.multiselect-no-results) {
+  margin-bottom: 0;
+}
