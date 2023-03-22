@@ -758,8 +758,6 @@ select option {
 
 .multiselect {
   width: 425px;
-  height: 35px;
-  min-height: 0;
   background-color: var(--gray-50);
   font-size: 0.875rem;
   border: 1px solid var(--gray-200);
@@ -769,6 +767,9 @@ select option {
   --ms-ring-width: 0px;
   --ms-tag-bg: var(--gray-100);
   --ms-tag-color: var(--gray-600);
+  --ms-option-font-size: 0.85rem;
+  --ms-max-height: 7rem;
+  --ms-min-height: 0;
 }
 
 .multiselect-caret {
@@ -781,4 +782,8 @@ select option {
 
 .multiselect-clear-icon:hover {
   color: var(--gray-900);
+}
+
+.multiselect.is-open {
+  margin-bottom: 100px;
 }
