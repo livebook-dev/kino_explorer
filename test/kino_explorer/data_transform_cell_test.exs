@@ -348,6 +348,27 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with pivot wider whit multiple values_from" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        pivot_wider: [
+          %{
+            "names_from" => "weekdays",
+            "values_from" => ["hour", "day"],
+            "active" => true,
+            "operation_type" => "pivot_wider"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.pivot_wider("weekdays", ["hour", "day"])\
+             """
+    end
+
     test "source with alias" do
       root = %{"data_frame_alias" => DF}
 
