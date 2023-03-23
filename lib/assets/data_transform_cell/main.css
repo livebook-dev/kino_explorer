@@ -754,34 +754,73 @@ select option {
   background-color: var(--orange-200);
 }
 
-/* MultiSelect */
+.tag-button {
+  padding: 0;
+  width: auto;
+  height: auto;
+  position: relative;
+  top: 2px;
+}
+
+.tag-button:hover {
+  color: var(--gray-900);
+}
+
+.tag-button:hover .tag-svg {
+  background-color: var(--gray-300);
+  border-radius: 0.25rem;
+}
+
+.tag-svg:hover {
+  background-color: var(--gray-300);
+  border-radius: 0.25rem;
+}
 
 .multiselect {
-  position: absolute;
-  float: left;
   width: 425px;
-  background-color: var(--gray-50);
-  font-size: 0.875rem;
-  border: 1px solid var(--gray-200);
-  border-radius: 0.5rem;
+}
+
+.tags {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 4px;
+}
+
+.tag-pill {
+  display: flex;
+  padding: 1px 5px;
+  background-color: var(--gray-100);
   color: var(--gray-600);
-  --ms-tag-font-weight: 500;
-  --ms-ring-width: 0px;
-  --ms-tag-bg: var(--gray-100);
-  --ms-tag-color: var(--gray-600);
-  --ms-option-font-size: 0.85rem;
-  --ms-max-height: 7rem;
-  --ms-min-height: 0;
+  border-radius: 1.5rem;
+  align-items: baseline;
 }
 
-.multiselect-caret {
-  mask-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik01Ljk5OTg5IDQuOTc2NzFMMTAuMTI0OSAwLjg1MTcwOEwxMS4zMDMyIDIuMDMwMDRMNS45OTk4OSA3LjMzMzM3TDAuNjk2NTU1IDIuMDMwMDRMMS44NzQ4OSAwLjg1MTcwOEw1Ljk5OTg5IDQuOTc2NzFaIiBmaWxsPSIjNjE3NThBIi8+Cjwvc3ZnPgo=");
+.tag-controls {
+  display: flex;
+  height: 17px;
 }
 
-.multiselect-tag-remove:hover {
-  background-color: var(--gray-200);
+.tag-input {
+  width: 25px;
+  padding: 0 4px;
+  border: none;
 }
 
-.multiselect-clear-icon:hover {
-  color: var(--gray-900);
+.tag-input:focus {
+  border: none;
+}
+
+.clear-tags {
+  padding: 0;
+}
+
+.clear-tags-svg {
+  position: relative;
+  bottom: 2px;
 }

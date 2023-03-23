@@ -125,6 +125,40 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
+  def handle_event("add_inner_value", fields, ctx) do
+    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
+    parsed_value = parse_value(field, value)
+    updated_value = get_in(ctx.assigns.operations, [Access.at(idx), field]) ++ [parsed_value]
+
+    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "update_operation", %{
+      "idx" => idx,
+      "fields" => %{field => updated_value}
+    })
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("remove_inner_value", fields, ctx) do
+    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
+    parsed_value = parse_value(field, value)
+
+    updated_value =
+      get_in(ctx.assigns.operations, [Access.at(idx), field]) |> List.delete(parsed_value)
+
+    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "update_operation", %{
+      "idx" => idx,
+      "fields" => %{field => updated_value}
+    })
+
+    {:noreply, ctx}
+  end
+
   def handle_event("add_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
     updated_operations = List.insert_at(ctx.assigns.operations, idx, new_operation)
