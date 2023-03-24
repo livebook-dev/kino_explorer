@@ -783,44 +783,37 @@ select option {
 .tags {
   display: flex;
   justify-content: space-between;
+  padding: 3px 12px;
+  min-height: 27px;
 }
 
 .tags-wrapper {
   display: flex;
   flex-wrap: wrap;
   align-content: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .tag-pill {
   display: flex;
+  gap: 3px;
   padding: 1px 5px;
-  background-color: var(--gray-100);
+  background-color: rgba(225, 232, 240, 0.5);
   color: var(--gray-600);
   border-radius: 1.5rem;
   align-items: baseline;
-}
-
-.tag-controls {
-  display: flex;
-  height: 17px;
 }
 
 .tag-input {
   width: 25px;
   padding: 0 4px;
   border: none;
+  flex-grow: 1;
+  position: relative;
+  left: 13px;
+  background-color: transparent;
 }
 
 .tag-input:focus {
   border: none;
-}
-
-.clear-tags {
-  padding: 0;
-}
-
-.clear-tags-svg {
-  position: relative;
-  bottom: 2px;
 }
