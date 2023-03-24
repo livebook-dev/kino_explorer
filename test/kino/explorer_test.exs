@@ -138,6 +138,28 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "supports infinity" do
+    df = Explorer.DataFrame.new(a: [:infinity])
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "a",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["infinity", "infinity", "infinity", "0"]
+                   },
+                   type: "number"
+                 }
+               ]
+             }
+           } = data
+  end
+
   test "supports types" do
     df =
       Explorer.DataFrame.new(

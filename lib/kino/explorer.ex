@@ -91,7 +91,8 @@ defmodule Kino.Explorer do
         nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
       if summary_type == :numeric do
-        mean = if mean = Series.mean(series), do: Float.round(mean, 2) |> to_string(), else: ""
+        mean = Series.mean(series)
+        mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
         min = Series.min(series) |> to_string()
         max = Series.max(series) |> to_string()
         {column, %{keys: ["min", "max", "mean", "nulls"], values: [min, max, mean, nulls]}}
