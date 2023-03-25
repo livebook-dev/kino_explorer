@@ -23,7 +23,8 @@ defmodule KinoExplorer.DataTransformCell do
   @impl true
   def init(attrs, ctx) do
     root_fields = %{"data_frame" => attrs["data_frame"], "assign_to" => attrs["assign_to"]}
-    operations = attrs["operations"] || default_operations()
+    operations = attrs["operations"]
+    operations = if operations, do: normalize_operations(operations), else: default_operations()
 
     ctx =
       assign(ctx,
@@ -121,6 +122,40 @@ defmodule KinoExplorer.DataTransformCell do
     ctx = assign(ctx, operations: updated_operations)
 
     broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => %{field => parsed_value}})
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("add_inner_value", fields, ctx) do
+    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
+    parsed_value = parse_value(field, value)
+    updated_value = get_in(ctx.assigns.operations, [Access.at(idx), field]) ++ [parsed_value]
+
+    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "update_operation", %{
+      "idx" => idx,
+      "fields" => %{field => updated_value}
+    })
+
+    {:noreply, ctx}
+  end
+
+  def handle_event("remove_inner_value", fields, ctx) do
+    {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
+    parsed_value = parse_value(field, value)
+
+    updated_value =
+      get_in(ctx.assigns.operations, [Access.at(idx), field]) |> List.delete(parsed_value)
+
+    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    ctx = assign(ctx, operations: updated_operations)
+
+    broadcast_event(ctx, "update_operation", %{
+      "idx" => idx,
+      "fields" => %{field => updated_value}
+    })
 
     {:noreply, ctx}
   end
@@ -319,7 +354,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
-    pivot_wider_args = if names && values && active, do: [names, values]
+    pivot_wider_args = if names && values && active, do: build_pivot_wider(names, values)
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
@@ -345,6 +380,10 @@ defmodule KinoExplorer.DataTransformCell do
       unquote(acc)
     end
   end
+
+  defp build_pivot_wider(_names, []), do: nil
+  defp build_pivot_wider(names, [values]), do: [names, values]
+  defp build_pivot_wider(names, values), do: [names, values]
 
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
@@ -428,7 +467,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp default_operation(:pivot_wider) do
     %{
       "names_from" => nil,
-      "values_from" => nil,
+      "values_from" => [],
       "active" => true,
       "operation_type" => "pivot_wider"
     }
@@ -488,4 +527,20 @@ defmodule KinoExplorer.DataTransformCell do
   defp missing_require(%Macro.Env{requires: requires}) do
     if Explorer.DataFrame not in requires, do: Explorer.DataFrame
   end
+
+  defp normalize_operations(operations) do
+    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
+
+    if has_pivot_wider do
+      List.update_at(operations, -1, fn operation ->
+        Map.update!(operation, "values_from", fn values -> normalize_values_from(values) end)
+      end)
+    else
+      operations
+    end
+  end
+
+  defp normalize_values_from(values) when is_list(values), do: values
+  defp normalize_values_from(nil), do: []
+  defp normalize_values_from(values), do: [values]
 end

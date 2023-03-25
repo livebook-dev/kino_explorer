@@ -753,3 +753,67 @@ select option {
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
   background-color: var(--orange-200);
 }
+
+.tag-button {
+  padding: 0;
+  width: auto;
+  height: auto;
+  position: relative;
+  top: 2px;
+}
+
+.tag-button:hover {
+  color: var(--gray-900);
+}
+
+.tag-button:hover .tag-svg {
+  background-color: var(--gray-300);
+  border-radius: 0.25rem;
+}
+
+.tag-svg:hover {
+  background-color: var(--gray-300);
+  border-radius: 0.25rem;
+}
+
+.multiselect {
+  width: 425px;
+}
+
+.tags {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 12px;
+  min-height: 27px;
+}
+
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 3px;
+}
+
+.tag-pill {
+  display: flex;
+  gap: 3px;
+  padding: 1px 5px;
+  background-color: rgba(225, 232, 240, 0.5);
+  color: var(--gray-600);
+  border-radius: 1.5rem;
+  align-items: baseline;
+}
+
+.tag-input {
+  width: 25px;
+  padding: 0 4px;
+  border: none;
+  flex-grow: 1;
+  position: relative;
+  left: 13px;
+  background-color: transparent;
+}
+
+.tag-input:focus {
+  border: none;
+}
