@@ -36,6 +36,7 @@ defmodule Kino.Explorer do
 
   @impl true
   def init({df, name}) do
+    df = DataFrame.ungroup(df)
     total_rows = DataFrame.n_rows(df)
     dtypes = DataFrame.dtypes(df)
     sample_data = df |> DataFrame.head(1) |> DataFrame.to_columns()
