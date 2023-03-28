@@ -138,6 +138,43 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "shows if a column is in a group when there are groups" do
+    df =
+      Explorer.DataFrame.new(%{
+        id: [3, 1, 2, nil],
+        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Jake Peralta"]
+      })
+      |> Explorer.DataFrame.group_by(:name)
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "id",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls", "grouped"],
+                     values: ["1", "3", "2.0", "1", "false"]
+                   },
+                   type: "number"
+                 },
+                 %{
+                   key: "1",
+                   label: "name",
+                   summary: %{
+                     keys: ["unique", "top", "top_freq", "nulls", "grouped"],
+                     values: ["3", "Jake Peralta", "2", "0", "true"]
+                   },
+                   type: "text"
+                 }
+               ]
+             }
+           } = data
+  end
+
   test "supports infinity" do
     df = Explorer.DataFrame.new(a: [:infinity])
     widget = Kino.Explorer.new(df)
