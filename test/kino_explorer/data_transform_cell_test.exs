@@ -41,10 +41,13 @@ defmodule KinoExplorer.DataTransformCellTest do
     pivot_wider: [
       %{
         "names_from" => nil,
-        "values_from" => nil,
+        "values_from" => [],
         "active" => true,
         "operation_type" => "pivot_wider"
       }
+    ],
+    group_by: [
+      %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
     ]
   }
 
@@ -324,6 +327,46 @@ defmodule KinoExplorer.DataTransformCellTest do
                df
                |> Explorer.DataFrame.filter(col("full name") == "Ana" and id < 2)
                |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)\
+             """
+    end
+
+    test "source for a data frame with group_by" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.group_by("weekdays")\
+             """
+    end
+
+    test "source for a data frame with group_by whit multiple columns" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => ["hour", "day"],
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.group_by(["hour", "day"])\
              """
     end
 
@@ -613,7 +656,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
     operations =
       operations.fill_missing ++
-        operations.filters ++ operations.sorting ++ operations.pivot_wider
+        operations.filters ++ operations.sorting ++ operations.group_by ++ operations.pivot_wider
 
     Map.put(root_attrs, "operations", operations)
   end
