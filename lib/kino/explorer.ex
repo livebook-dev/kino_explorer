@@ -87,10 +87,11 @@ defmodule Kino.Explorer do
 
   defp summaries(df, groups) do
     df_series = DataFrame.to_series(df)
+    has_groups = length(groups) > 0
 
     for {column, series} <- df_series,
         summary_type = summary_type(series),
-        grouped = column in groups |> to_string(),
+        grouped = (column in groups) |> to_string(),
         nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
       if summary_type == :numeric do
@@ -98,23 +99,25 @@ defmodule Kino.Explorer do
         mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
         min = Series.min(series) |> to_string()
         max = Series.max(series) |> to_string()
+        keys = ["min", "max", "mean", "nulls"]
+        values = [min, max, mean, nulls]
 
-        {column,
-         %{
-           keys: ["min", "max", "mean", "nulls", "grouped"],
-           values: [min, max, mean, nulls, grouped]
-         }}
+        keys = if has_groups, do: keys ++ ["grouped"], else: keys
+        values = if has_groups, do: values ++ [grouped], else: values
+
+        {column, %{keys: keys, values: values}}
       else
         %{"counts" => top_freq, "values" => top} = most_frequent(series)
         top_freq = top_freq |> List.first() |> to_string()
         top = List.first(top) || ""
         unique = count_unique(series)
+        keys = ["unique", "top", "top_freq", "nulls"]
+        values = [unique, top, top_freq, nulls]
 
-        {column,
-         %{
-           keys: ["unique", "top", "top_freq", "nulls", "grouped"],
-           values: [unique, top, top_freq, nulls, grouped]
-         }}
+        keys = if has_groups, do: keys ++ ["grouped"], else: keys
+        values = if has_groups, do: values ++ [grouped], else: values
+
+        {column, %{keys: keys, values: values}}
       end
     end
   end
