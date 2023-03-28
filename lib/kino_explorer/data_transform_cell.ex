@@ -358,6 +358,11 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
+  defp to_quoted([%{operation_type: :group_by, group_by: group_by, active: active}]) do
+    group_by_args = if group_by && active, do: build_group_by(group_by)
+    %{field: :group_by, name: :group_by, args: group_by_args}
+  end
+
   defp build_root(df) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
@@ -384,6 +389,10 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_pivot_wider(_names, []), do: nil
   defp build_pivot_wider(names, [values]), do: [names, values]
   defp build_pivot_wider(names, values), do: [names, values]
+
+  defp build_group_by([]), do: nil
+  defp build_group_by([group_by]), do: [group_by]
+  defp build_group_by(group_by), do: [group_by]
 
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
@@ -471,6 +480,10 @@ defmodule KinoExplorer.DataTransformCell do
       "active" => true,
       "operation_type" => "pivot_wider"
     }
+  end
+
+  defp default_operation(:group_by) do
+    %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
   end
 
   defp cast_typed_value(:boolean, "true"), do: {:ok, true}
