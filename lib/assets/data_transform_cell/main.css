@@ -47,6 +47,10 @@
   --purple-100: #f4f2fd;
   --purple-200: #d2cbef;
   --purple-600: #957fef;
+
+  --marsala-100: #F0DFE4;
+  --marsala-200: #E1BFC8;
+  --marsala-600: #B45F76;
 }
 
 p,
@@ -499,6 +503,10 @@ select option {
   background-color: var(--magenta-600);
 }
 
+.card.summarise:before {
+  background-color: var(--marsala-600);
+}
+
 .card.pivot_wider:before {
   background-color: var(--orange-600);
 }
@@ -517,6 +525,10 @@ select option {
 
 .operations.group_by {
   border-left: solid 3px var(--magenta-600);
+}
+
+.operations.summarise {
+  border-left: solid 3px var(--marsala-600);
 }
 
 .operations.pivot_wider {
@@ -546,6 +558,10 @@ select option {
 
 .card.group_by {
   background-color: var(--magenta-100);
+}
+
+.card.summarise {
+  background-color: var(--marsala-100);
 }
 
 .card.pivot_wider {
@@ -701,6 +717,12 @@ select option {
   transform: translateX(100%);
 }
 
+.switch-button-checkbox.summarise:checked {
+  background: white;
+  border-color: var(--marsala-600);
+  transform: translateX(100%);
+}
+
 .switch-button-checkbox.pivot_wider:checked {
   background: white;
   border-color: var(--orange-600);
@@ -725,6 +747,10 @@ select option {
 
 .switch-button-checkbox.group_by:checked + .switch-button-bg {
   background-color: var(--magenta-600);
+}
+
+.switch-button-checkbox.summarise:checked + .switch-button-bg {
+  background-color: var(--marsala-600);
 }
 
 .switch-button-checkbox.pivot_wider:checked + .switch-button-bg {
@@ -756,6 +782,11 @@ select option {
   border-color: var(--magenta-100);
 }
 
+.switch-button-checkbox.summarise:disabled {
+  background: white;
+  border-color: var(--marsala-100);
+}
+
 .switch-button-checkbox.pivot_wider:disabled {
   background: white;
   border-color: var(--orange-100);
@@ -779,6 +810,10 @@ select option {
 
 .switch-button-checkbox.group_by:disabled + .switch-button-bg {
   background-color: var(--magenta-200);
+}
+
+.switch-button-checkbox.summarise:disabled + .switch-button-bg {
+  background-color: var(--marsala-200);
 }
 
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
