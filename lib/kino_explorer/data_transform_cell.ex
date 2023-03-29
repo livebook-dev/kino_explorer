@@ -9,7 +9,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   @grouped_fields_operations ["filters", "fill_missing"]
   @validation_by_type [:filters, :fill_missing]
-  @as_atom ["direction", "type", "operation_type", "strategy"]
+  @as_atom ["direction", "type", "operation_type", "strategy", "name", "query"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -351,6 +351,21 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :sorting, name: :arrange, args: sorting_args}
   end
 
+  defp to_quoted([%{operation_type: :summarise} | _] = summarization) do
+    summarize_args =
+      for summarize <- summarization,
+          summarize.column,
+          summarize.query,
+          summarize.name,
+          summarize.active do
+        {summarize.name, quote do
+          unquote(summarize.query)(unquote(quoted_column(summarize.column)))
+        end}
+      end
+      |> then(fn args -> if args != [], do: [args] end)
+    %{field: :summarise, name: :summarise, args: summarize_args}
+  end
+
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
@@ -484,6 +499,16 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp default_operation(:group_by) do
     %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
+  end
+
+  defp default_operation(:summarise) do
+    %{
+      "column" => nil,
+      "query" => nil,
+      "name" => nil,
+      "active" => true,
+      "operation_type" => "summarise"
+    }
   end
 
   defp cast_typed_value(:boolean, "true"), do: {:ok, true}
