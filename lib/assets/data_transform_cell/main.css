@@ -48,9 +48,9 @@
   --purple-200: #d2cbef;
   --purple-600: #957fef;
 
-  --marsala-100: #F0DFE4;
-  --marsala-200: #E1BFC8;
-  --marsala-600: #B45F76;
+  --beige-100: #FBF5F1;
+  --beige-200: #F8EBE4;
+  --beige-600: #EDCDBB;
 }
 
 p,
@@ -505,7 +505,7 @@ select option {
 }
 
 .card.summarise:before {
-  background-color: var(--marsala-600);
+  background-color: var(--beige-600);
 }
 
 .card.pivot_wider:before {
@@ -529,7 +529,7 @@ select option {
 }
 
 .operations.summarise {
-  border-left: solid 3px var(--marsala-600);
+  border-left: solid 3px var(--beige-600);
 }
 
 .operations.pivot_wider {
@@ -562,7 +562,7 @@ select option {
 }
 
 .card.summarise {
-  background-color: var(--marsala-100);
+  background-color: var(--beige-100);
 }
 
 .card.pivot_wider {
@@ -720,7 +720,7 @@ select option {
 
 .switch-button-checkbox.summarise:checked {
   background: white;
-  border-color: var(--marsala-600);
+  border-color: var(--beige-600);
   transform: translateX(100%);
 }
 
@@ -751,7 +751,7 @@ select option {
 }
 
 .switch-button-checkbox.summarise:checked + .switch-button-bg {
-  background-color: var(--marsala-600);
+  background-color: var(--beige-600);
 }
 
 .switch-button-checkbox.pivot_wider:checked + .switch-button-bg {
@@ -785,7 +785,7 @@ select option {
 
 .switch-button-checkbox.summarise:disabled {
   background: white;
-  border-color: var(--marsala-100);
+  border-color: var(--beige-100);
 }
 
 .switch-button-checkbox.pivot_wider:disabled {
@@ -814,7 +814,7 @@ select option {
 }
 
 .switch-button-checkbox.summarise:disabled + .switch-button-bg {
-  background-color: var(--marsala-200);
+  background-color: var(--beige-200);
 }
 
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
