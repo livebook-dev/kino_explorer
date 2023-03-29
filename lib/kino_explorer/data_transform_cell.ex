@@ -9,7 +9,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   @grouped_fields_operations ["filters", "fill_missing"]
   @validation_by_type [:filters, :fill_missing]
-  @as_atom ["direction", "type", "operation_type", "strategy"]
+  @as_atom ["direction", "type", "operation_type", "strategy", "query"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -172,13 +172,16 @@ defmodule KinoExplorer.DataTransformCell do
 
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     operations = ctx.assigns.operations
+    operations_by_type = Enum.frequencies_by(operations, & &1["operation_type"])
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
+    pivot_wider = operations_by_type["pivot_wider"]
+    summarise = operations_by_type["summarise"]
+    offset = (pivot_wider || summarise || 0) + 1
 
     updated_operations =
-      if has_pivot_wider and operation_type != "pivot_wider",
-        do: List.insert_at(operations, -2, new_operation),
-        else: operations ++ [new_operation]
+      if operation_type == "pivot_wider" or operation_type == "summarise",
+        do: operations ++ [new_operation],
+        else: List.insert_at(operations, -offset, new_operation)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
@@ -351,11 +354,32 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :sorting, name: :arrange, args: sorting_args}
   end
 
+  defp to_quoted([%{operation_type: :summarise} | _] = summarization) do
+    summarize_args =
+      for summarize <- summarization,
+          column <- summarize.columns,
+          summarize.query,
+          summarize.active do
+        {String.to_atom("#{column}_#{summarize.query}"),
+         quote do
+           unquote(summarize.query)(unquote(quoted_column(column)))
+         end}
+      end
+      |> then(fn args -> if args != [], do: [args] end)
+
+    %{field: :summarise, name: :summarise, args: summarize_args}
+  end
+
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
     pivot_wider_args = if names && values && active, do: build_pivot_wider(names, values)
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
+  end
+
+  defp to_quoted([%{operation_type: :group_by, group_by: group_by, active: active}]) do
+    group_by_args = if group_by && active, do: build_group_by(group_by)
+    %{field: :group_by, name: :group_by, args: group_by_args}
   end
 
   defp build_root(df) do
@@ -384,6 +408,10 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_pivot_wider(_names, []), do: nil
   defp build_pivot_wider(names, [values]), do: [names, values]
   defp build_pivot_wider(names, values), do: [names, values]
+
+  defp build_group_by([]), do: nil
+  defp build_group_by([group_by]), do: [group_by]
+  defp build_group_by(group_by), do: [group_by]
 
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
@@ -471,6 +499,14 @@ defmodule KinoExplorer.DataTransformCell do
       "active" => true,
       "operation_type" => "pivot_wider"
     }
+  end
+
+  defp default_operation(:group_by) do
+    %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
+  end
+
+  defp default_operation(:summarise) do
+    %{"columns" => [], "query" => nil, "active" => true, "operation_type" => "summarise"}
   end
 
   defp cast_typed_value(:boolean, "true"), do: {:ok, true}

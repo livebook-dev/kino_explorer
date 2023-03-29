@@ -38,10 +38,16 @@ defmodule KinoExplorer.DataTransformCellTest do
     sorting: [
       %{"direction" => "asc", "sort_by" => nil, "active" => true, "operation_type" => "sorting"}
     ],
+    group_by: [
+      %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
+    ],
+    summarise: [
+      %{"columns" => [], "query" => nil, "active" => true, "operation_type" => "summarise"}
+    ],
     pivot_wider: [
       %{
         "names_from" => nil,
-        "values_from" => nil,
+        "values_from" => [],
         "active" => true,
         "operation_type" => "pivot_wider"
       }
@@ -327,6 +333,146 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with group_by" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.group_by("weekdays")\
+             """
+    end
+
+    test "source for a data frame with group_by with multiple columns" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => ["hour", "day"],
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.group_by(["hour", "day"])\
+             """
+    end
+
+    test "source for a data frame with summarise" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        summarise: [
+          %{
+            "columns" => ["hour"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> Explorer.DataFrame.group_by("weekdays")
+             |> Explorer.DataFrame.summarise(hour_max: max(hour))\
+             """
+    end
+
+    test "source for a data frame with summarise with multiple columns" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        summarise: [
+          %{
+            "columns" => ["hour", "day"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> Explorer.DataFrame.group_by("weekdays")
+             |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))\
+             """
+    end
+
+    test "source for a data frame with multiple summarise" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        group_by: [
+          %{
+            "group_by" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        summarise: [
+          %{
+            "columns" => ["hour"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          },
+          %{
+            "columns" => ["hour", "day"],
+            "query" => "min",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> Explorer.DataFrame.group_by("weekdays")
+             |> Explorer.DataFrame.summarise(
+               hour_max: max(hour),
+               hour_min: min(hour),
+               day_min: min(day)
+             )\
+             """
+    end
+
     test "source for a data frame with pivot wider" do
       root = %{"data_frame" => "teams"}
 
@@ -609,12 +755,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
   defp build_attrs(root_attrs \\ %{}, operations_attrs) do
     root_attrs = Map.merge(@root, root_attrs)
-    operations = Map.merge(@base_operations, operations_attrs)
-
-    operations =
-      operations.fill_missing ++
-        operations.filters ++ operations.sorting ++ operations.pivot_wider
-
+    operations = Map.merge(@base_operations, operations_attrs) |> Map.values() |> List.flatten()
     Map.put(root_attrs, "operations", operations)
   end
 end
