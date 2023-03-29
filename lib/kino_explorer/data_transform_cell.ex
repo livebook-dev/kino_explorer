@@ -9,7 +9,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   @grouped_fields_operations ["filters", "fill_missing"]
   @validation_by_type [:filters, :fill_missing]
-  @as_atom ["direction", "type", "operation_type", "strategy", "name", "query"]
+  @as_atom ["direction", "type", "operation_type", "strategy", "query"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -356,9 +356,8 @@ defmodule KinoExplorer.DataTransformCell do
       for summarize <- summarization,
           summarize.column,
           summarize.query,
-          summarize.name,
           summarize.active do
-        {summarize.name, quote do
+        {String.to_atom("#{summarize.column}_#{summarize.query}"), quote do
           unquote(summarize.query)(unquote(quoted_column(summarize.column)))
         end}
       end
@@ -505,7 +504,6 @@ defmodule KinoExplorer.DataTransformCell do
     %{
       "column" => nil,
       "query" => nil,
-      "name" => nil,
       "active" => true,
       "operation_type" => "summarise"
     }
