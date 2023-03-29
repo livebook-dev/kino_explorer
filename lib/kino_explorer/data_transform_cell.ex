@@ -178,7 +178,10 @@ defmodule KinoExplorer.DataTransformCell do
     summarise = operations_by_type["summarise"]
     offset = (pivot_wider || summarise || 0) + 1
 
-    updated_operations = List.insert_at(operations, -offset, new_operation)
+    updated_operations =
+      if operation_type == "pivot_wider" or operation_type == "summarise",
+        do: operations ++ [new_operation],
+        else: List.insert_at(operations, -offset, new_operation)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
