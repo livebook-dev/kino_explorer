@@ -353,12 +353,11 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp to_quoted([%{operation_type: :summarise} | _] = summarization) do
     summarize_args =
-      for summarize <- summarization,
-          summarize.column,
+      for summarize <- summarization, column <- summarize.columns,
           summarize.query,
           summarize.active do
-        {String.to_atom("#{summarize.column}_#{summarize.query}"), quote do
-          unquote(summarize.query)(unquote(quoted_column(summarize.column)))
+        {String.to_atom("#{column}_#{summarize.query}"), quote do
+          unquote(summarize.query)(unquote(quoted_column(column)))
         end}
       end
       |> then(fn args -> if args != [], do: [args] end)
@@ -502,7 +501,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp default_operation(:summarise) do
     %{
-      "column" => nil,
+      "columns" => [],
       "query" => nil,
       "active" => true,
       "operation_type" => "summarise"
