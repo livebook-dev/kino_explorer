@@ -172,13 +172,13 @@ defmodule KinoExplorer.DataTransformCell do
 
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     operations = ctx.assigns.operations
+    operations_by_type = Enum.frequencies_by(operations, & &1["operation_type"])
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
+    pivot_wider = operations_by_type["pivot_wider"]
+    summarise = operations_by_type["summarise"]
+    offset = (pivot_wider || summarise || 0) + 1
 
-    updated_operations =
-      if has_pivot_wider and operation_type != "pivot_wider",
-        do: List.insert_at(operations, -2, new_operation),
-        else: operations ++ [new_operation]
+    updated_operations = List.insert_at(operations, -offset, new_operation)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
