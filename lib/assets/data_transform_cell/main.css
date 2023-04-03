@@ -872,6 +872,7 @@ select option {
 }
 
 .tag-input {
+  color: var(--gray-50);
   width: 25px;
   padding: 0 4px;
   border: none;
