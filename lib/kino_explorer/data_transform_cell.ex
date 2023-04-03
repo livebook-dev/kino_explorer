@@ -7,6 +7,45 @@ defmodule KinoExplorer.DataTransformCell do
 
   alias Explorer.DataFrame
 
+  @column_types [
+    "binary",
+    "boolean",
+    "category",
+    "date",
+    "datetime",
+    "float",
+    "integer",
+    "string",
+    "time"
+  ]
+  @filter_options %{
+    binary: ["equal", "contains", "not equal"],
+    boolean: ["equal", "not equal"],
+    category: ["equal", "contains", "not equal"],
+    date: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    datetime: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    float: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    integer: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    string: ["equal", "contains", "not equal"],
+    time: ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
+  }
+  @fill_missing_options %{
+    binary: ["forward", "backward", "max", "min", "scalar"],
+    boolean: ["forward", "backward", "max", "min", "scalar"],
+    category: ["forward", "backward", "max", "min", "scalar"],
+    date: ["forward", "backward", "max", "min", "mean", "scalar"],
+    datetime: ["forward", "backward", "max", "min", "mean", "scalar"],
+    float: ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
+    integer: ["forward", "backward", "max", "min", "mean", "scalar"],
+    string: ["forward", "backward", "max", "min", "scalar"],
+    time: ["forward", "backward", "max", "min", "mean", "scalar"]
+  }
+  @pivot_wider_types %{
+    names_from: @column_types,
+    values_from: ["date", "datetime", "float", "integer", "time"]
+  }
+  @summarise_types %{columns: ["date", "datetime", "float", "integer", "time"]}
+
   @grouped_fields_operations ["filters", "fill_missing"]
   @validation_by_type [:filters, :fill_missing]
   @as_atom ["direction", "type", "operation_type", "strategy", "query"]
@@ -32,6 +71,8 @@ defmodule KinoExplorer.DataTransformCell do
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
         data_options: [],
+        operation_options: %{fill_missing: @fill_missing_options, filter: @filter_options},
+        operation_types: %{pivot_wider: @pivot_wider_types, summarise: @summarise_types},
         missing_require: nil
       )
 
@@ -56,6 +97,8 @@ defmodule KinoExplorer.DataTransformCell do
       root_fields: ctx.assigns.root_fields,
       operations: ctx.assigns.operations,
       data_options: ctx.assigns.data_options,
+      operation_options: ctx.assigns.operation_options,
+      operation_types: ctx.assigns.operation_types,
       missing_require: ctx.assigns.missing_require
     }
 
