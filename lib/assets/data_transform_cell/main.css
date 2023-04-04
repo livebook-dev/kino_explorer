@@ -885,3 +885,11 @@ select option {
 .tag-input:focus {
   border: none;
 }
+
+.tag-message {
+  opacity: 50%;
+}
+
+select.input.tag-input:disabled {
+  display: none;
+}
