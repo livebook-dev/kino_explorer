@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.4](https://github.com/livebook-dev/kino_explorer/tree/v0.1.4) (2023-04-04)
+
+### Fixed
+
+* Correctly toggles `summarise` ([#60](https://github.com/livebook-dev/kino_explorer/pull/60))
+
 ## [v0.1.3](https://github.com/livebook-dev/kino_explorer/tree/v0.1.3) (2023-04-04)
 
 ### Added
