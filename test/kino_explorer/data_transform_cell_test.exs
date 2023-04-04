@@ -27,16 +27,16 @@ defmodule KinoExplorer.DataTransformCellTest do
     ],
     filters: [
       %{
+        "filter" => nil,
         "column" => nil,
-        "filter" => "equal",
-        "type" => "string",
         "value" => nil,
+        "type" => "string",
         "active" => true,
         "operation_type" => "filters"
       }
     ],
     sorting: [
-      %{"direction" => "asc", "sort_by" => nil, "active" => true, "operation_type" => "sorting"}
+      %{"sort_by" => nil, "direction" => "asc", "active" => true, "operation_type" => "sorting"}
     ],
     group_by: [
       %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
@@ -52,6 +52,14 @@ defmodule KinoExplorer.DataTransformCellTest do
         "operation_type" => "pivot_wider"
       }
     ]
+  }
+
+  @base_attrs %{
+    "assign_to" => nil,
+    "data_frame" => "teams",
+    "data_frame_alias" => Explorer.DataFrame,
+    "missing_require" => nil,
+    "operations" => []
   }
 
   test "returns no source when starting fresh with no data" do
@@ -724,6 +732,144 @@ defmodule KinoExplorer.DataTransformCellTest do
              require Explorer.DataFrame
              exported_df = people |> DF.filter(name == "Ana" and id < 2)\
              """
+    end
+  end
+
+  describe "events" do
+    test "add operations" do
+      for operation_type <- Map.keys(@base_operations) do
+        {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
+        connect(kino)
+
+        push_event(kino, "add_operation", %{"operation_type" => to_string(operation_type)})
+        operations = @base_operations[operation_type]
+
+        assert_broadcast_event(kino, "set_operations", %{
+          "operations" => ^operations
+        })
+      end
+    end
+
+    test "duplicate operations" do
+      operations = @base_operations |> Map.keys() |> Enum.with_index()
+
+      for {operation_type, index} <- operations, idx = index + 1 do
+        attrs =
+          @base_operations
+          |> Map.delete(:pivot_wider)
+          |> Map.values()
+          |> List.flatten()
+          |> then(&Map.put(@base_attrs, "operations", &1))
+
+        {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+        connect(kino)
+
+        push_event(kino, "add_operation", %{
+          "operation_type" => to_string(operation_type),
+          "idx" => idx
+        })
+
+        operations =
+          attrs["operations"] |> List.insert_at(idx, hd(@base_operations[operation_type]))
+
+        assert_broadcast_event(kino, "set_operations", %{
+          "operations" => ^operations
+        })
+      end
+    end
+
+    test "delete operations" do
+      for operation_type <- Map.keys(@base_operations) do
+        attrs = Map.put(@base_attrs, "operations", @base_operations[operation_type])
+        {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+        connect(kino)
+
+        push_event(kino, "remove_operation", %{"idx" => 0})
+        operations = []
+
+        assert_broadcast_event(kino, "set_operations", %{
+          "operations" => ^operations
+        })
+      end
+    end
+
+    test "move operations" do
+      operations = @base_operations |> Map.keys() |> Enum.with_index()
+
+      for {_operation_type, index} <- operations do
+        attrs =
+          @base_operations
+          |> Map.drop([:pivot_wider, :summarise])
+          |> Map.values()
+          |> List.flatten()
+          |> then(&Map.put(@base_attrs, "operations", &1))
+
+        remove = index
+        add = if index == length(attrs["operations"]), do: index - 1, else: index + 1
+
+        {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+        connect(kino)
+
+        push_event(kino, "move_operation", %{"removedIndex" => remove, "addedIndex" => add})
+
+        {operation, operations} = List.pop_at(attrs["operations"], remove)
+        operations = List.insert_at(operations, add, operation)
+
+        assert_broadcast_event(kino, "set_operations", %{
+          "operations" => ^operations
+        })
+      end
+    end
+
+    test "toggle operations" do
+      operations =
+        @base_operations |> Map.drop([:filters, :fill_missing, :summarise]) |> Map.keys()
+
+      for operation_type <- operations do
+        attrs = Map.put(@base_attrs, "operations", @base_operations[operation_type])
+        {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+        connect(kino)
+
+        push_event(kino, "update_field", %{
+          "operation_type" => to_string(operation_type),
+          "field" => "active",
+          "value" => false,
+          "idx" => 0
+        })
+
+        assert_broadcast_event(kino, "update_operation", %{
+          "fields" => %{"active" => false},
+          "idx" => 0
+        })
+      end
+    end
+
+    test "toggle operations with grouped fields" do
+      operations =
+        @base_operations |> Map.take([:filters, :fill_missing, :summarise]) |> Map.keys()
+
+      for operation_type <- operations do
+        attrs = Map.put(@base_attrs, "operations", @base_operations[operation_type])
+        {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+        connect(kino)
+
+        push_event(kino, "update_field", %{
+          "operation_type" => to_string(operation_type),
+          "field" => "active",
+          "value" => false,
+          "idx" => 0
+        })
+
+        updated_fields =
+          if operation_type == :summarise,
+            do: %{"active" => false},
+            else: %{"active" => false, "message" => nil}
+
+        operation = hd(@base_operations[operation_type])
+        operation = Map.merge(operation, updated_fields)
+
+        assert_broadcast_event(kino, "update_operation", %{"fields" => ^operation, "idx" => 0})
+      end
     end
   end
 
