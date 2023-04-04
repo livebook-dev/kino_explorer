@@ -271,9 +271,10 @@ defmodule KinoExplorer.DataTransformCell do
     }
   end
 
-  defp updates_for_grouped_fields(:summarise, "query", value, idx, ctx) do
+  defp updates_for_grouped_fields(:summarise, field, value, idx, ctx) do
     current_summarise = get_in(ctx.assigns.operations, [Access.at(idx)])
-    Map.merge(current_summarise, %{"query" => value, "columns" => []})
+    columns = if field == "query", do: [], else: current_summarise["columns"]
+    Map.merge(current_summarise, %{field => value, "columns" => columns})
   end
 
   defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
