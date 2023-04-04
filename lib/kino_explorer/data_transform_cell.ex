@@ -40,13 +40,24 @@ defmodule KinoExplorer.DataTransformCell do
     string: ["forward", "backward", "max", "min", "scalar"],
     time: ["forward", "backward", "max", "min", "mean", "scalar"]
   }
+  @summarise_options %{
+    count: @column_types,
+    max: ["integer", "float", "date", "time", "datetime"],
+    mean: ["integer", "float"],
+    median: ["integer", "float"],
+    min: ["integer", "float", "date", "time", "datetime"],
+    n_distinct: @column_types,
+    nil_count: @column_types,
+    standard_deviation: ["integer", "float"],
+    sum: ["integer", "float", "boolean"],
+    variance: ["integer", "float"]
+  }
   @pivot_wider_types %{
     names_from: @column_types,
     values_from: ["date", "datetime", "float", "integer", "time"]
   }
-  @summarise_types %{columns: ["date", "datetime", "float", "integer", "time"]}
 
-  @grouped_fields_operations ["filters", "fill_missing"]
+  @grouped_fields_operations ["filters", "fill_missing", "summarise"]
   @validation_by_type [:filters, :fill_missing]
   @as_atom ["direction", "type", "operation_type", "strategy", "query"]
   @filters %{
@@ -71,8 +82,12 @@ defmodule KinoExplorer.DataTransformCell do
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
         data_options: [],
-        operation_options: %{fill_missing: @fill_missing_options, filter: @filter_options},
-        operation_types: %{pivot_wider: @pivot_wider_types, summarise: @summarise_types},
+        operation_options: %{
+          fill_missing: @fill_missing_options,
+          filter: @filter_options,
+          summarise: @summarise_options
+        },
+        operation_types: %{pivot_wider: @pivot_wider_types},
         missing_require: nil
       )
 
@@ -254,6 +269,11 @@ defmodule KinoExplorer.DataTransformCell do
       root_fields: %{"data_frame" => data_frame, "assign_to" => nil},
       operations: default_operations()
     }
+  end
+
+  defp updates_for_grouped_fields(:summarise, "query", value, idx, ctx) do
+    current_summarise = get_in(ctx.assigns.operations, [Access.at(idx)])
+    Map.merge(current_summarise, %{"query" => value, "columns" => []})
   end
 
   defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
