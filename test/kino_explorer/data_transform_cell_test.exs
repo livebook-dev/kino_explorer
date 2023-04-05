@@ -735,7 +735,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     end
   end
 
-  describe "events" do
+  describe "operation events" do
     test "add operations" do
       for operation_type <- Map.keys(@base_operations) do
         {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
@@ -870,6 +870,43 @@ defmodule KinoExplorer.DataTransformCellTest do
 
         assert_broadcast_event(kino, "update_operation", %{"fields" => ^operation, "idx" => 0})
       end
+    end
+  end
+
+  describe "root fields" do
+    test "update date frame" do
+      attrs =
+        @base_operations
+        |> Map.delete(:pivot_wider)
+        |> Map.values()
+        |> List.flatten()
+        |> then(&Map.put(@base_attrs, "operations", &1))
+
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+
+      push_event(kino, "update_field", %{"field" => "data_frame", "value" => "people"})
+      operations = @base_operations.filters
+
+      assert_broadcast_event(kino, "update_data_frame", %{
+        "fields" => %{
+          operations: ^operations,
+          root_fields: %{"assign_to" => nil, "data_frame" => "people"}
+        }
+      })
+    end
+
+    test "update assign to" do
+      {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
+      connect(kino)
+
+      push_event(kino, "update_field", %{
+        "operation_type" => nil,
+        "field" => "assign_to",
+        "value" => "df"
+      })
+
+      assert_broadcast_event(kino, "update_root", %{"fields" => %{"assign_to" => "df"}})
     end
   end
 
