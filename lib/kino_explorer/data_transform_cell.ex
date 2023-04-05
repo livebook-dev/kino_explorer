@@ -99,7 +99,11 @@ defmodule KinoExplorer.DataTransformCell do
     data_options =
       for {key, val} <- binding,
           is_struct(val, DataFrame),
-          do: %{variable: Atom.to_string(key), columns: DataFrame.dtypes(val)}
+          do: %{
+            variable: Atom.to_string(key),
+            columns: DataFrame.dtypes(val),
+            distinct: get_distinct(val)
+          }
 
     data_frame_alias = data_frame_alias(env)
     missing_require = missing_require(env)
@@ -305,6 +309,7 @@ defmodule KinoExplorer.DataTransformCell do
     type = column_type(column, ctx)
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
+    datalist = if type == "string", do: column_distinct(column, ctx), else: []
 
     if field == "column" do
       %{
@@ -314,7 +319,8 @@ defmodule KinoExplorer.DataTransformCell do
         "type" => type,
         "message" => message,
         "active" => current_filter["active"],
-        "operation_type" => "filters"
+        "operation_type" => "filters",
+        "datalist" => datalist
       }
     else
       Map.merge(current_filter, %{field => value, "message" => message})
@@ -327,6 +333,12 @@ defmodule KinoExplorer.DataTransformCell do
 
     Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
     |> Atom.to_string()
+  end
+
+  defp column_distinct(column, ctx) do
+    df = ctx.assigns.root_fields["data_frame"]
+    data = ctx.assigns.data_options
+    Enum.find_value(data, &(&1.variable == df && Map.get(&1.distinct, column)))
   end
 
   defp parse_value(_field, ""), do: nil
@@ -537,7 +549,8 @@ defmodule KinoExplorer.DataTransformCell do
       "value" => nil,
       "type" => "string",
       "active" => true,
-      "operation_type" => "filters"
+      "operation_type" => "filters",
+      "datalist" => []
     }
   end
 
@@ -643,4 +656,11 @@ defmodule KinoExplorer.DataTransformCell do
   defp normalize_values_from(values) when is_list(values), do: values
   defp normalize_values_from(nil), do: []
   defp normalize_values_from(values), do: [values]
+
+  defp get_distinct(df) do
+    for {col, type} <- DataFrame.dtypes(df), type == :string, into: %{} do
+      values = DataFrame.distinct(df, [col]) |> DataFrame.to_columns() |> Map.get(col)
+      {col, values}
+    end
+  end
 end

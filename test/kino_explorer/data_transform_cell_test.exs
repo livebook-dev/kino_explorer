@@ -32,7 +32,8 @@ defmodule KinoExplorer.DataTransformCellTest do
         "value" => nil,
         "type" => "string",
         "active" => true,
-        "operation_type" => "filters"
+        "operation_type" => "filters",
+        "datalist" => []
       }
     ],
     sorting: [
@@ -79,9 +80,17 @@ defmodule KinoExplorer.DataTransformCellTest do
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
     data_options = [
-      %{columns: %{"id" => :integer, "name" => :string}, variable: "people"},
+      %{
+        columns: %{"id" => :integer, "name" => :string},
+        distinct: %{"name" => ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]},
+        variable: "people"
+      },
       %{
         columns: %{"hour" => :integer, "team" => :string, "weekday" => :string},
+        distinct: %{
+          "team" => ["A", "B", "C"],
+          "weekday" => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        },
         variable: "teams"
       }
     ]
