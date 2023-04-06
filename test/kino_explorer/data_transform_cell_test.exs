@@ -32,7 +32,8 @@ defmodule KinoExplorer.DataTransformCellTest do
         "value" => nil,
         "type" => "string",
         "active" => true,
-        "operation_type" => "filters"
+        "operation_type" => "filters",
+        "datalist" => []
       }
     ],
     sorting: [
@@ -79,9 +80,17 @@ defmodule KinoExplorer.DataTransformCellTest do
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
     data_options = [
-      %{columns: %{"id" => :integer, "name" => :string}, variable: "people"},
+      %{
+        columns: %{"id" => :integer, "name" => :string},
+        distinct: %{"name" => ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]},
+        variable: "people"
+      },
       %{
         columns: %{"hour" => :integer, "team" => :string, "weekday" => :string},
+        distinct: %{
+          "team" => ["A", "B", "C"],
+          "weekday" => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        },
         variable: "teams"
       }
     ]
@@ -908,6 +917,26 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert_broadcast_event(kino, "update_root", %{"fields" => %{"assign_to" => "df"}})
     end
+  end
+
+  test "autocomplete for filters" do
+    {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
+    connect(kino)
+    teams = teams_df()
+    env = Code.env_for_eval([])
+    DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+    push_event(kino, "update_field", %{
+      "operation_type" => "filters",
+      "field" => "column",
+      "value" => "team",
+      "idx" => 0
+    })
+
+    assert_broadcast_event(kino, "update_operation", %{
+      "fields" => %{"datalist" => ["A", "B", "C"]},
+      "idx" => 0
+    })
   end
 
   defp people_df() do
