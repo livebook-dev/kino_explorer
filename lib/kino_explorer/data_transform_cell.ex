@@ -6,6 +6,7 @@ defmodule KinoExplorer.DataTransformCell do
   use Kino.SmartCell, name: "Data transform"
 
   alias Explorer.DataFrame
+  alias Explorer.Series
 
   @column_types [
     "binary",
@@ -659,7 +660,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp get_distinct(df) do
     for {col, type} <- DataFrame.dtypes(df), type == :string, into: %{} do
-      values = DataFrame.distinct(df, [col]) |> DataFrame.to_columns() |> Map.get(col)
+      values = df[col] |> Series.distinct() |> Series.to_list()
       {col, values}
     end
   end
