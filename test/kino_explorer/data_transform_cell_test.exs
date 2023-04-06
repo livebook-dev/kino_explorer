@@ -919,6 +919,26 @@ defmodule KinoExplorer.DataTransformCellTest do
     end
   end
 
+  test "autocomplete for filters" do
+    {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
+    connect(kino)
+    teams = teams_df()
+    env = Code.env_for_eval([])
+    DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+    push_event(kino, "update_field", %{
+      "operation_type" => "filters",
+      "field" => "column",
+      "value" => "team",
+      "idx" => 0
+    })
+
+    assert_broadcast_event(kino, "update_operation", %{
+      "fields" => %{"datalist" => ["A", "B", "C"]},
+      "idx" => 0
+    })
+  end
+
   defp people_df() do
     Explorer.DataFrame.new(%{
       id: [3, 1, 2],
