@@ -225,6 +225,98 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with a queried filter" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "mean",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id > mean(id))\
+             """
+    end
+
+    test "source for a data frame with multiple queried filters" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "median",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "mean",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id < median(id) and id > mean(id))\
+             """
+    end
+
+    test "do not generate code for invalid queried filters" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "medians",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "means",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "median",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "mean",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id < median(id) and id > mean(id))\
+             """
+    end
+
     test "source for a data frame with fill_missing" do
       attrs =
         build_attrs(%{
