@@ -57,6 +57,8 @@ defmodule KinoExplorer.DataTransformCell do
     names_from: @column_types,
     values_from: ["date", "datetime", "float", "integer", "time"]
   }
+  @queried_filter_options ["mean", "median"]
+  @queried_filter_types [:integer, :float]
 
   @grouped_fields_operations ["filters", "fill_missing", "summarise"]
   @validation_by_type [:filters, :fill_missing]
@@ -70,6 +72,9 @@ defmodule KinoExplorer.DataTransformCell do
     "greater" => ">",
     "contains" => "contains"
   }
+
+  defguard is_queried(type, value)
+           when type in @queried_filter_types and value in @queried_filter_options
 
   @impl true
   def init(attrs, ctx) do
@@ -86,9 +91,13 @@ defmodule KinoExplorer.DataTransformCell do
         operation_options: %{
           fill_missing: @fill_missing_options,
           filter: @filter_options,
-          summarise: @summarise_options
+          summarise: @summarise_options,
+          queried_filter: @queried_filter_options
         },
-        operation_types: %{pivot_wider: @pivot_wider_types},
+        operation_types: %{
+          pivot_wider: @pivot_wider_types,
+          queried_filter: @queried_filter_types
+        },
         missing_require: nil
       )
 
@@ -287,7 +296,9 @@ defmodule KinoExplorer.DataTransformCell do
     column = if field == "column", do: value, else: current_fill["column"]
     type = column_type(column, ctx)
     default_scalar = if type == "boolean", do: "true"
-    message = if field == "scalar", do: validation_message(:fill_missing, type, value)
+
+    message =
+      if field == "scalar", do: validation_message(:fill_missing, String.to_atom(type), value)
 
     if field == "column" do
       %{
@@ -309,7 +320,7 @@ defmodule KinoExplorer.DataTransformCell do
     column = if field == "column", do: value, else: current_filter["column"]
     type = column_type(column, ctx)
     default_value = if type == "boolean", do: "true"
-    message = if field == "value", do: validation_message(:filters, type, value)
+    message = if field == "value", do: validation_message(:filters, String.to_atom(type), value)
     datalist = if type == "string", do: column_distinct(column, ctx), else: []
 
     if field == "column" do
@@ -490,6 +501,20 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_group_by([group_by]), do: [group_by]
   defp build_group_by(group_by), do: [group_by]
 
+  defp build_filter([column, filter, value, type] = args) when is_queried(type, value) do
+    if Enum.all?(args, &(&1 != nil)) do
+      {String.to_atom(filter), [],
+       [
+         quoted_column(column),
+         quote do
+           unquote(String.to_atom(value))(unquote(quoted_column(column)))
+         end
+       ]}
+    else
+      nil
+    end
+  end
+
   defp build_filter([column, filter, value, type] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
          {:ok, filter_value} <- cast_typed_value(type, value) do
@@ -622,9 +647,9 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp validation_message(operation, type, value) when operation in @validation_by_type do
-    type = String.to_atom(type)
+  defp validation_message(:filters, type, value) when is_queried(type, value), do: nil
 
+  defp validation_message(operation, type, value) when operation in @validation_by_type do
     case cast_typed_value(type, value) do
       {:ok, _} -> nil
       _ -> "invalid value for type #{type}"
