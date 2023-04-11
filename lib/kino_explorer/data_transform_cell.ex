@@ -57,7 +57,18 @@ defmodule KinoExplorer.DataTransformCell do
     names_from: @column_types,
     values_from: ["date", "datetime", "float", "integer", "time"]
   }
-  @queried_filter_options ["mean", "median"]
+  @queried_filter_options [
+    "mean",
+    "median",
+    "quantile(10)",
+    "quantile(20)",
+    "quantile(30)",
+    "quantile(40)",
+    "quantile(60)",
+    "quantile(70)",
+    "quantile(80)",
+    "quantile(90)"
+  ]
   @queried_filter_types [:integer, :float]
 
   @grouped_fields_operations ["filters", "fill_missing", "summarise"]
@@ -501,6 +512,25 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_group_by([group_by]), do: [group_by]
   defp build_group_by(group_by), do: [group_by]
 
+  defp build_filter([column, filter, "quantile(" <> <<value::bytes-size(1)>> <> ")", type]) do
+    build_filter([column, filter, "quantile(0#{value})", type])
+  end
+
+  defp build_filter([column, filter, "quantile(" <> <<value::bytes-size(2)>> <> ")", _] = args) do
+    with true <- Enum.all?(args, &(&1 != nil)),
+         {:ok, filter_value} <- cast_typed_value(:integer, value) do
+      {String.to_atom(filter), [],
+       [
+         quoted_column(column),
+         quote do
+           quantile(unquote(quoted_column(column)), unquote(filter_value / 100))
+         end
+       ]}
+    else
+      _ -> nil
+    end
+  end
+
   defp build_filter([column, filter, value, type] = args) when is_queried(type, value) do
     if Enum.all?(args, &(&1 != nil)) do
       {String.to_atom(filter), [],
@@ -644,6 +674,16 @@ defmodule KinoExplorer.DataTransformCell do
     case DateTime.from_iso8601(value) do
       {:ok, date, _} -> {:ok, date}
       _ -> nil
+    end
+  end
+
+  defp validation_message(:filters, _type, "quantile" <> _rest = quantile) do
+    with %{"value" => value} <- Regex.named_captures(~r/quantile\((?<value>\d+)\)/, quantile),
+         {:ok, value} <- cast_typed_value(:integer, value),
+         true <- value >= 0 and value <= 100 do
+      nil
+    else
+      _ -> "should be between 0 and 100"
     end
   end
 

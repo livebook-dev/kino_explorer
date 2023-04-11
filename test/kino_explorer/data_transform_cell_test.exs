@@ -317,6 +317,106 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with a filter by quantile" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "quantile(10)",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id > quantile(id, 0.1))\
+             """
+    end
+
+    test "source for a data frame with multiple filters by quantile" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "quantile(50)",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "quantile(10)",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id < quantile(id, 0.5) and id > quantile(id, 0.1))\
+             """
+    end
+
+    test "do not generate code for invalid quantiles" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "quantile(150)",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "quantile(abc)",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "quantiles(10)",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "less",
+              "type" => "integer",
+              "value" => "quantile(50)",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "id",
+              "filter" => "greater",
+              "type" => "integer",
+              "value" => "quantile(10)",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> Explorer.DataFrame.filter(id < quantile(id, 0.5) and id > quantile(id, 0.1))\
+             """
+    end
+
     test "source for a data frame with fill_missing" do
       attrs =
         build_attrs(%{
