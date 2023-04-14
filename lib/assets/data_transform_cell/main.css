@@ -418,8 +418,7 @@ select option {
   cursor: move;
 }
 
-.card.pivot_wider:hover,
-.card.summarise:hover {
+.card.pivot_wider:hover {
   cursor: default;
 }
 

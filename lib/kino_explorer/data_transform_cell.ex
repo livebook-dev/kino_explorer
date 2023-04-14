@@ -311,18 +311,18 @@ defmodule KinoExplorer.DataTransformCell do
   defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
     current_fill = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_fill["column"]
-    type = column_type(column, ctx)
-    default_scalar = if type == "boolean", do: "true"
+    data_options = current_fill["data_options"]
+    type = Map.get(data_options, column)
+    default_scalar = if type == :boolean, do: "true"
 
-    message =
-      if field == "scalar", do: validation_message(:fill_missing, String.to_atom(type), value)
+    message = if field == "scalar", do: validation_message(:fill_missing, type, value)
 
     if field == "column" do
       %{
         "column" => column,
         "strategy" => "forward",
         "scalar" => default_scalar,
-        "type" => type,
+        "type" => Atom.to_string(type),
         "active" => current_fill["active"],
         "operation_type" => "fill_missing",
         "message" => message
@@ -339,7 +339,7 @@ defmodule KinoExplorer.DataTransformCell do
     type = Map.get(data_options, column)
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
-    datalist = if type == "string", do: column_distinct(column, ctx), else: []
+    datalist = if type == :string, do: column_distinct(column, ctx), else: []
 
     if field == "column" do
       %{
@@ -358,18 +358,11 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp column_type(column, ctx) do
-    df = ctx.assigns.root_fields["data_frame"]
-    data = ctx.assigns.data_options
-
-    Enum.find_value(data, &(&1.variable == df && Map.get(&1.columns, column)))
-    |> Atom.to_string()
-  end
-
   defp column_distinct(column, ctx) do
     df = ctx.assigns.root_fields["data_frame"]
-    data = ctx.assigns.data_options
-    Enum.find_value(data, &(&1.variable == df && Map.get(&1.distinct, column)))
+    data_frames = ctx.assigns.data_frames
+    df = Enum.find_value(data_frames, &(&1.variable == df && Map.get(&1, :data)))
+    df[column] |> Series.distinct() |> Series.to_list()
   end
 
   defp parse_value(_field, ""), do: nil
@@ -740,8 +733,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp update_data_options([operation], ctx, data_frame) do
     data_options =
-      Enum.find(ctx.assigns.data_frames, &(&1.variable == data_frame))
-      |> Map.get(:data)
+      Enum.find_value(ctx.assigns.data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
       |> DataFrame.dtypes()
 
     [Map.put(operation, "data_options", data_options)]
@@ -750,17 +742,21 @@ defmodule KinoExplorer.DataTransformCell do
   defp update_data_options(operations, ctx) do
     binding = ctx.assigns.binding
 
-    for {operation, idx} <- Enum.with_index(operations) do
-      partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - 1)), else: []
+    if binding != [] do
+      for {operation, idx} <- Enum.with_index(operations) do
+        partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - 1)), else: []
 
-      data_options =
-        to_partial_attrs(ctx, partial_operations)
-        |> to_source()
-        |> Code.eval_string(binding)
-        |> elem(0)
-        |> then(&if &1, do: DataFrame.dtypes(&1))
+        data_options =
+          to_partial_attrs(ctx, partial_operations)
+          |> to_source()
+          |> Code.eval_string(binding)
+          |> elem(0)
+          |> then(&if &1, do: DataFrame.dtypes(&1))
 
-      Map.put(operation, "data_options", data_options)
+        Map.put(operation, "data_options", data_options)
+      end
+    else
+      operations
     end
   end
 
