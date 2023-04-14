@@ -98,7 +98,7 @@ defmodule KinoExplorer.DataTransformCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        data_options: [],
+        data_frames_variables: [],
         operation_options: %{
           fill_missing: @fill_missing_options,
           filter: @filter_options,
@@ -117,18 +117,9 @@ defmodule KinoExplorer.DataTransformCell do
 
   @impl true
   def scan_binding(pid, binding, env) do
-    data_options =
-      for {key, val} <- binding,
-          is_struct(val, DataFrame),
-          do: %{
-            variable: Atom.to_string(key),
-            columns: DataFrame.dtypes(val),
-            distinct: get_distinct(val)
-          }
-
     data_frame_alias = data_frame_alias(env)
     missing_require = missing_require(env)
-    send(pid, {:scan_binding_result, data_options, data_frame_alias, missing_require})
+    send(pid, {:scan_binding_result, binding, data_frame_alias, missing_require})
   end
 
   @impl true
@@ -136,7 +127,7 @@ defmodule KinoExplorer.DataTransformCell do
     payload = %{
       root_fields: ctx.assigns.root_fields,
       operations: ctx.assigns.operations,
-      data_options: ctx.assigns.data_options,
+      data_frames_variables: ctx.assigns.data_frames_variables,
       operation_options: ctx.assigns.operation_options,
       operation_types: ctx.assigns.operation_types,
       missing_require: ctx.assigns.missing_require
@@ -146,24 +137,38 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   @impl true
-  def handle_info({:scan_binding_result, data_options, data_frame_alias, missing_require}, ctx) do
+  def handle_info({:scan_binding_result, binding, data_frame_alias, missing_require}, ctx) do
+    data_frames =
+      for {key, val} <- binding,
+          is_struct(val, DataFrame),
+          do: %{
+            variable: Atom.to_string(key),
+            columns: DataFrame.dtypes(val),
+            distinct: get_distinct(val),
+            data: val
+          }
+
+    data_frames_variables = Enum.map(data_frames, & &1.variable)
+
     ctx =
       assign(ctx,
-        data_options: data_options,
+        binding: binding,
+        data_frames: data_frames,
+        data_frames_variables: data_frames_variables,
         data_frame_alias: data_frame_alias,
         missing_require: missing_require
       )
 
     updated_fields =
-      case {ctx.assigns.root_fields["data_frame"], data_options} do
-        {nil, [%{variable: data_frame} | _]} -> updates_for_data_frame(data_frame)
+      case {ctx.assigns.root_fields["data_frame"], data_frames_variables} do
+        {nil, [data_frame | _]} -> updates_for_data_frame(data_frame, ctx)
         _ -> %{}
       end
 
     ctx = if updated_fields == %{}, do: ctx, else: assign(ctx, updated_fields)
 
     broadcast_event(ctx, "set_available_data", %{
-      "data_options" => data_options,
+      "data_frames_variables" => data_frames_variables,
       "fields" => updated_fields
     })
 
@@ -172,7 +177,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   @impl true
   def handle_event("update_field", %{"field" => "data_frame", "value" => value}, ctx) do
-    updated_fields = updates_for_data_frame(value)
+    updated_fields = updates_for_data_frame(value, ctx)
     ctx = assign(ctx, updated_fields)
     broadcast_event(ctx, "update_data_frame", %{"fields" => updated_fields})
     {:noreply, ctx}
@@ -192,20 +197,25 @@ defmodule KinoExplorer.DataTransformCell do
       {fields["field"], fields["value"], fields["idx"], String.to_atom(operation_type)}
 
     updated_operation = updates_for_grouped_fields(operation_type, field, value, idx, ctx)
-    updated_operations = List.replace_at(ctx.assigns.operations, idx, updated_operation)
+
+    updated_operations =
+      List.replace_at(ctx.assigns.operations, idx, updated_operation) |> update_data_options(ctx)
+
     ctx = assign(ctx, operations: updated_operations)
-    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => updated_operation})
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
     {:noreply, ctx}
   end
 
   def handle_event("update_field", fields, ctx) do
     {field, value, idx} = {fields["field"], fields["value"], fields["idx"]}
     parsed_value = parse_value(field, value)
-    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], parsed_value)
+
+    updated_operations =
+      put_in(ctx.assigns.operations, [Access.at(idx), field], parsed_value)
+      |> update_data_options(ctx)
+
     ctx = assign(ctx, operations: updated_operations)
-
-    broadcast_event(ctx, "update_operation", %{"idx" => idx, "fields" => %{field => parsed_value}})
-
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
     {:noreply, ctx}
   end
 
@@ -214,14 +224,12 @@ defmodule KinoExplorer.DataTransformCell do
     parsed_value = parse_value(field, value)
     updated_value = get_in(ctx.assigns.operations, [Access.at(idx), field]) ++ [parsed_value]
 
-    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    updated_operations =
+      put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+      |> update_data_options(ctx)
+
     ctx = assign(ctx, operations: updated_operations)
-
-    broadcast_event(ctx, "update_operation", %{
-      "idx" => idx,
-      "fields" => %{field => updated_value}
-    })
-
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
     {:noreply, ctx}
   end
 
@@ -232,20 +240,20 @@ defmodule KinoExplorer.DataTransformCell do
     updated_value =
       get_in(ctx.assigns.operations, [Access.at(idx), field]) |> List.delete(parsed_value)
 
-    updated_operations = put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+    updated_operations =
+      put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+      |> update_data_options(ctx)
+
     ctx = assign(ctx, operations: updated_operations)
-
-    broadcast_event(ctx, "update_operation", %{
-      "idx" => idx,
-      "fields" => %{field => updated_value}
-    })
-
+    broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
     {:noreply, ctx}
   end
 
   def handle_event("add_operation", %{"operation_type" => operation_type, "idx" => idx}, ctx) do
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-    updated_operations = List.insert_at(ctx.assigns.operations, idx, new_operation)
+
+    updated_operations =
+      List.insert_at(ctx.assigns.operations, idx, new_operation) |> update_data_options(ctx)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
@@ -264,7 +272,9 @@ defmodule KinoExplorer.DataTransformCell do
     updated_operations =
       if operation_type == "pivot_wider" or operation_type == "summarise",
         do: operations ++ [new_operation],
-        else: List.insert_at(operations, -offset, new_operation)
+        else:
+          List.insert_at(operations, -offset, new_operation)
+          |> update_data_options(ctx)
 
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
@@ -274,7 +284,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   def handle_event("move_operation", %{"removedIndex" => remove, "addedIndex" => add}, ctx) do
     {operation, operations} = List.pop_at(ctx.assigns.operations, remove)
-    updated_operations = List.insert_at(operations, add, operation)
+    updated_operations = List.insert_at(operations, add, operation) |> update_data_options(ctx)
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
@@ -289,10 +299,10 @@ defmodule KinoExplorer.DataTransformCell do
     {:noreply, ctx}
   end
 
-  defp updates_for_data_frame(data_frame) do
+  defp updates_for_data_frame(data_frame, ctx) do
     %{
       root_fields: %{"data_frame" => data_frame, "assign_to" => nil},
-      operations: default_operations()
+      operations: default_operations() |> update_data_options(ctx, data_frame)
     }
   end
 
@@ -329,9 +339,10 @@ defmodule KinoExplorer.DataTransformCell do
   defp updates_for_grouped_fields(:filters, field, value, idx, ctx) do
     current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_filter["column"]
-    type = column_type(column, ctx)
+    data_options = current_filter["data_options"]
+    type = Map.get(data_options, column)
     default_value = if type == "boolean", do: "true"
-    message = if field == "value", do: validation_message(:filters, String.to_atom(type), value)
+    message = if field == "value", do: validation_message(:filters, type, value)
     datalist = if type == "string", do: column_distinct(column, ctx), else: []
 
     if field == "column" do
@@ -339,11 +350,12 @@ defmodule KinoExplorer.DataTransformCell do
         "filter" => "equal",
         "column" => column,
         "value" => default_value,
-        "type" => type,
+        "type" => Atom.to_string(type),
         "message" => message,
         "active" => current_filter["active"],
         "operation_type" => "filters",
-        "datalist" => datalist
+        "datalist" => datalist,
+        "data_options" => data_options
       }
     else
       Map.merge(current_filter, %{field => value, "message" => message})
@@ -728,5 +740,38 @@ defmodule KinoExplorer.DataTransformCell do
       values = df[col] |> Series.distinct() |> Series.to_list()
       {col, values}
     end
+  end
+
+  defp update_data_options([operation], ctx, data_frame) do
+    data_options =
+      Enum.find(ctx.assigns.data_frames, &(&1.variable == data_frame))
+      |> Map.get(:data)
+      |> DataFrame.dtypes()
+
+    [Map.put(operation, "data_options", data_options)]
+  end
+
+  defp update_data_options(operations, ctx) do
+    binding = ctx.assigns.binding
+
+    for {operation, idx} <- Enum.with_index(operations) do
+      partial_operations = if idx > 0, do: Enum.slice(operations, 0..idx-1), else: []
+
+      data_options =
+        to_partial_attrs(ctx, partial_operations)
+        |> to_source()
+        |> Code.eval_string(binding)
+        |> elem(0)
+        |> then(&if &1, do: DataFrame.dtypes(&1))
+
+      Map.put(operation, "data_options", data_options)
+    end
+  end
+
+  def to_partial_attrs(ctx, partial_operations) do
+    ctx.assigns.root_fields
+    |> Map.put("operations", partial_operations)
+    |> Map.put("data_frame_alias", Explorer.DataFrame)
+    |> Map.put("missing_require", Explorer.DataFrame)
   end
 end
