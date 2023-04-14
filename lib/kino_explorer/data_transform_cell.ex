@@ -263,19 +263,15 @@ defmodule KinoExplorer.DataTransformCell do
 
   def handle_event("add_operation", %{"operation_type" => operation_type}, ctx) do
     operations = ctx.assigns.operations
-    operations_by_type = Enum.frequencies_by(operations, & &1["operation_type"])
     new_operation = operation_type |> String.to_existing_atom() |> default_operation()
-    pivot_wider = operations_by_type["pivot_wider"]
-    summarise = operations_by_type["summarise"]
-    offset = (pivot_wider || summarise || 0) + 1
+    has_pivot_wider = Enum.any?(operations, &(&1["operation_type"] == "pivot_wider"))
 
     updated_operations =
-      if operation_type == "pivot_wider" or operation_type == "summarise",
-        do: operations ++ [new_operation],
-        else:
-          List.insert_at(operations, -offset, new_operation)
-          |> update_data_options(ctx)
+      if has_pivot_wider and operation_type != "pivot_wider",
+        do: List.insert_at(operations, -2, new_operation),
+        else: operations ++ [new_operation]
 
+    updated_operations = update_data_options(updated_operations, ctx)
     ctx = assign(ctx, operations: updated_operations)
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
@@ -755,7 +751,7 @@ defmodule KinoExplorer.DataTransformCell do
     binding = ctx.assigns.binding
 
     for {operation, idx} <- Enum.with_index(operations) do
-      partial_operations = if idx > 0, do: Enum.slice(operations, 0..idx-1), else: []
+      partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - 1)), else: []
 
       data_options =
         to_partial_attrs(ctx, partial_operations)
