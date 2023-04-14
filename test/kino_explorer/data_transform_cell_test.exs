@@ -79,23 +79,26 @@ defmodule KinoExplorer.DataTransformCellTest do
     env = Code.env_for_eval([])
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
-    data_options = [
-      %{
-        columns: %{"id" => :integer, "name" => :string},
-        distinct: %{"name" => ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]},
-        variable: "people"
-      },
-      %{
-        columns: %{"hour" => :integer, "team" => :string, "weekday" => :string},
-        distinct: %{
-          "team" => ["A", "B", "C"],
-          "weekday" => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        },
-        variable: "teams"
-      }
-    ]
+    data_frame_variables = ["people", "teams"]
 
-    assert_broadcast_event(kino, "set_available_data", %{"data_options" => ^data_options})
+    assert_broadcast_event(kino, "set_available_data", %{
+      "data_frame_variables" => ^data_frame_variables,
+      "fields" => %{
+        operations: [
+          %{
+            "active" => true,
+            "column" => nil,
+            "data_options" => %{"id" => :integer, "name" => :string},
+            "datalist" => [],
+            "filter" => nil,
+            "operation_type" => "filters",
+            "type" => "string",
+            "value" => nil
+          }
+        ],
+        root_fields: %{"assign_to" => nil, "data_frame" => "people"}
+      }
+    })
   end
 
   describe "code generation" do

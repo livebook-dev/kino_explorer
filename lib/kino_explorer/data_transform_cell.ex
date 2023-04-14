@@ -98,7 +98,7 @@ defmodule KinoExplorer.DataTransformCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        data_frames_variables: [],
+        data_frame_variables: [],
         operation_options: %{
           fill_missing: @fill_missing_options,
           filter: @filter_options,
@@ -127,7 +127,7 @@ defmodule KinoExplorer.DataTransformCell do
     payload = %{
       root_fields: ctx.assigns.root_fields,
       operations: ctx.assigns.operations,
-      data_frames_variables: ctx.assigns.data_frames_variables,
+      data_frame_variables: ctx.assigns.data_frame_variables,
       operation_options: ctx.assigns.operation_options,
       operation_types: ctx.assigns.operation_types,
       missing_require: ctx.assigns.missing_require
@@ -148,19 +148,19 @@ defmodule KinoExplorer.DataTransformCell do
             data: val
           }
 
-    data_frames_variables = Enum.map(data_frames, & &1.variable)
+    data_frame_variables = Enum.map(data_frames, & &1.variable)
 
     ctx =
       assign(ctx,
         binding: binding,
         data_frames: data_frames,
-        data_frames_variables: data_frames_variables,
+        data_frame_variables: data_frame_variables,
         data_frame_alias: data_frame_alias,
         missing_require: missing_require
       )
 
     updated_fields =
-      case {ctx.assigns.root_fields["data_frame"], data_frames_variables} do
+      case {ctx.assigns.root_fields["data_frame"], data_frame_variables} do
         {nil, [data_frame | _]} -> updates_for_data_frame(data_frame, ctx)
         _ -> %{}
       end
@@ -168,7 +168,7 @@ defmodule KinoExplorer.DataTransformCell do
     ctx = if updated_fields == %{}, do: ctx, else: assign(ctx, updated_fields)
 
     broadcast_event(ctx, "set_available_data", %{
-      "data_frames_variables" => data_frames_variables,
+      "data_frame_variables" => data_frame_variables,
       "fields" => updated_fields
     })
 
