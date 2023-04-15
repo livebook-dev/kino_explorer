@@ -339,7 +339,6 @@ defmodule KinoExplorer.DataTransformCell do
     type = Map.get(data_options, column)
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
-    datalist = if type == :string, do: column_distinct(column, ctx), else: []
 
     if field == "column" do
       %{
@@ -350,19 +349,12 @@ defmodule KinoExplorer.DataTransformCell do
         "message" => message,
         "active" => current_filter["active"],
         "operation_type" => "filters",
-        "datalist" => datalist,
+        "datalist" => current_filter["datalist"] || [],
         "data_options" => data_options
       }
     else
       Map.merge(current_filter, %{field => value, "message" => message})
     end
-  end
-
-  defp column_distinct(column, ctx) do
-    df = ctx.assigns.root_fields["data_frame"]
-    data_frames = ctx.assigns.data_frames
-    df = Enum.find_value(data_frames, &(&1.variable == df && Map.get(&1, :data)))
-    df[column] |> Series.distinct() |> Series.to_list()
   end
 
   defp parse_value(_field, ""), do: nil
@@ -742,18 +734,26 @@ defmodule KinoExplorer.DataTransformCell do
   defp update_data_options(operations, ctx) do
     binding = ctx.assigns.binding
 
+    offsets =
+      Enum.chunk_by(operations, & &1["operation_type"])
+      |> Enum.map(&length(&1))
+      |> Enum.reduce([], fn x, acc -> acc ++ Enum.to_list(1..x) end)
+
     if binding != [] do
       for {operation, idx} <- Enum.with_index(operations) do
-        partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - 1)), else: []
+        offset = Enum.at(offsets, idx)
+        partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - offset)), else: []
 
-        data_options =
+        df =
           to_partial_attrs(ctx, partial_operations)
           |> to_source()
           |> Code.eval_string(binding)
           |> elem(0)
-          |> then(&if &1, do: DataFrame.dtypes(&1))
+
+        data_options = DataFrame.dtypes(df)
 
         Map.put(operation, "data_options", data_options)
+        |> maybe_update_datalist(df)
       end
     else
       operations
@@ -766,4 +766,15 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("data_frame_alias", Explorer.DataFrame)
     |> Map.put("missing_require", Explorer.DataFrame)
   end
+
+  defp maybe_update_datalist(%{"operation_type" => "filters"} = operation, df) do
+    if operation["active"] && operation["column"] && operation["type"] == "string" do
+      datalist = df[operation["column"]] |> Series.distinct() |> Series.to_list()
+      Map.put(operation, "datalist", datalist)
+    else
+      operation
+    end
+  end
+
+  defp maybe_update_datalist(operation, _df), do: operation
 end
