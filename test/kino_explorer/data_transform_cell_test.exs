@@ -1131,6 +1131,247 @@ defmodule KinoExplorer.DataTransformCellTest do
     })
   end
 
+  describe "synced data options" do
+    test "update data_options after a summarise" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "group_by" => ["weekday"],
+          "operation_type" => "group_by"
+        },
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "operation_type" => "summarise",
+          "query" => "max"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "add_operation", %{"operation_type" => "filters"})
+
+      synced_filter =
+        @base_operations.filters
+        |> hd()
+        |> Map.put("data_options", %{"hour_max" => :integer, "weekday" => :string})
+
+      updated_operations = operations ++ [synced_filter]
+
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+
+    test "synced data options respect grouped operations" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "group_by" => ["weekday"],
+          "operation_type" => "group_by"
+        },
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "operation_type" => "summarise",
+          "query" => "max"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "add_operation", %{"operation_type" => "summarise"})
+
+      synced_summarise =
+        @base_operations.summarise
+        |> hd()
+        |> Map.put("data_options", %{"hour" => :integer, "team" => :string, "weekday" => :string})
+
+      updated_operations = operations ++ [synced_summarise]
+
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+  end
+
+  describe "synced datalists" do
+    test "filtered datalist based on a previous filter" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "filter" => nil,
+          "column" => nil,
+          "value" => nil,
+          "type" => "string",
+          "active" => true,
+          "operation_type" => "filters",
+          "datalist" => []
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "update_field", %{
+        "operation_type" => "filters",
+        "field" => "column",
+        "value" => "team",
+        "idx" => 1
+      })
+
+      synced_filter = %{
+        "active" => true,
+        "column" => "team",
+        "data_options" => %{
+          "hour" => :integer,
+          "team" => :string,
+          "weekday" => :string
+        },
+        "datalist" => ["A"],
+        "filter" => "equal",
+        "message" => nil,
+        "operation_type" => "filters",
+        "type" => "string",
+        "value" => nil
+      }
+
+      updated_operations = List.replace_at(operations, 1, synced_filter)
+
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+
+    test "sync datalist after updates a previous filter" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "datalist" => ["A"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => nil
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "update_field", %{
+        "operation_type" => "filters",
+        "field" => "value",
+        "value" => "B",
+        "idx" => 0
+      })
+
+      updated_filter = %{hd(operations) | "value" => "B"}
+      synced_filter = %{List.last(operations) | "datalist" => ["B"]}
+
+      updated_operations = [updated_filter, synced_filter]
+
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+  end
+
   defp people_df() do
     Explorer.DataFrame.new(%{
       id: [3, 1, 2],
