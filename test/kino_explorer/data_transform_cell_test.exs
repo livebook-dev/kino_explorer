@@ -1191,7 +1191,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
     end
 
-    test "synced data options respect grouped operations" do
+    test "synced data_options respect grouped operations" do
       operations = [
         %{
           "active" => true,
@@ -1369,6 +1369,118 @@ defmodule KinoExplorer.DataTransformCellTest do
       updated_operations = [updated_filter, synced_filter]
 
       assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+  end
+
+  describe "sync or inject data_options after scan_binding" do
+    test "injects the initial data_options to ensure backward compatibility" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "group_by" => ["weekday"],
+          "operation_type" => "group_by"
+        },
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "operation_type" => "summarise",
+          "query" => "max"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      updated_operations =
+        Enum.map(
+          operations,
+          &Map.put(&1, "data_options", %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          })
+        )
+
+      assert_broadcast_event(kino, "set_available_data", %{
+        "fields" => %{
+          operations: ^updated_operations,
+          root_fields: %{"assign_to" => nil, "data_frame" => "teams"}
+        },
+        "data_frame_variables" => ["teams"]
+      })
+    end
+
+    test "injects the initial data_options respecting the previous operations" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "group_by" => ["weekday"],
+          "operation_type" => "group_by"
+        },
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "operation_type" => "summarise",
+          "query" => "max"
+        },
+        %{"sort_by" => nil, "direction" => "asc", "active" => true, "operation_type" => "sorting"}
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      {operations, [sort]} = Enum.split(operations, 3)
+
+      updated_operations =
+        Enum.map(
+          operations,
+          &Map.put(&1, "data_options", %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          })
+        )
+
+      updated_sort =
+        Map.put(sort, "data_options", %{"hour_max" => :integer, "weekday" => :string})
+
+      updated_operations = updated_operations ++ [updated_sort]
+
+      assert_broadcast_event(kino, "set_available_data", %{
+        "fields" => %{
+          operations: ^updated_operations,
+          root_fields: %{"assign_to" => nil, "data_frame" => "teams"}
+        },
+        "data_frame_variables" => ["teams"]
+      })
     end
   end
 

@@ -163,11 +163,17 @@ defmodule KinoExplorer.DataTransformCell do
 
     updated_fields =
       case {ctx.assigns.root_fields["data_frame"], data_frame_variables} do
-        {nil, [data_frame | _]} -> updates_for_data_frame(data_frame, ctx)
-        _ -> %{}
+        {nil, [data_frame | _]} ->
+          updates_for_data_frame(data_frame, ctx)
+
+        _ ->
+          %{
+            root_fields: ctx.assigns.root_fields,
+            operations: update_data_options(ctx.assigns.operations, ctx)
+          }
       end
 
-    ctx = if updated_fields == %{}, do: ctx, else: assign(ctx, updated_fields)
+    ctx = assign(ctx, updated_fields)
 
     broadcast_event(ctx, "set_available_data", %{
       "data_frame_variables" => data_frame_variables,
