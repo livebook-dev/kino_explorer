@@ -99,6 +99,8 @@ defmodule KinoExplorer.DataTransformCell do
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
         data_frame_variables: [],
+        data_frames: [],
+        binding: [],
         operation_options: %{
           fill_missing: @fill_missing_options,
           filter: @filter_options,
@@ -311,8 +313,8 @@ defmodule KinoExplorer.DataTransformCell do
   defp updates_for_grouped_fields(:fill_missing, field, value, idx, ctx) do
     current_fill = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_fill["column"]
-    data_options = current_fill["data_options"]
-    type = Map.get(data_options, column)
+    data_options = current_fill["data_options"] || %{}
+    type = Map.get(data_options, column) || :string
     default_scalar = if type == :boolean, do: "true"
 
     message = if field == "scalar", do: validation_message(:fill_missing, type, value)
@@ -335,8 +337,8 @@ defmodule KinoExplorer.DataTransformCell do
   defp updates_for_grouped_fields(:filters, field, value, idx, ctx) do
     current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_filter["column"]
-    data_options = current_filter["data_options"]
-    type = Map.get(data_options, column)
+    data_options = current_filter["data_options"] || %{}
+    type = Map.get(data_options, column) || :string
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
 
@@ -726,7 +728,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp update_data_options([operation], ctx, data_frame) do
     data_options =
       Enum.find_value(ctx.assigns.data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
-      |> DataFrame.dtypes()
+      |> then(&if &1, do: DataFrame.dtypes(&1))
 
     [Map.put(operation, "data_options", data_options)]
   end
@@ -742,7 +744,7 @@ defmodule KinoExplorer.DataTransformCell do
     if binding != [] do
       for {operation, idx} <- Enum.with_index(operations) do
         offset = Enum.at(offsets, idx)
-        partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx - offset)), else: []
+        partial_operations = if idx > 0, do: Enum.slice(operations, 0..(idx + 1 - offset)), else: []
 
         df =
           to_partial_attrs(ctx, partial_operations)

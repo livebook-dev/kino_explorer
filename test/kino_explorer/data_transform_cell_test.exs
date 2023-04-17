@@ -1041,10 +1041,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           "idx" => 0
         })
 
-        assert_broadcast_event(kino, "update_operation", %{
-          "fields" => %{"active" => false},
-          "idx" => 0
-        })
+        assert_broadcast_event(kino, "set_operations", %{"operations" => [%{"active" => false}]})
       end
     end
 
@@ -1064,15 +1061,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           "idx" => 0
         })
 
-        updated_fields =
-          if operation_type == :summarise,
-            do: %{"active" => false},
-            else: %{"active" => false, "message" => nil}
-
-        operation = hd(@base_operations[operation_type])
-        operation = Map.merge(operation, updated_fields)
-
-        assert_broadcast_event(kino, "update_operation", %{"fields" => ^operation, "idx" => 0})
+        assert_broadcast_event(kino, "set_operations", %{"operations" => [%{"active" => false}]})
       end
     end
   end
@@ -1090,13 +1079,9 @@ defmodule KinoExplorer.DataTransformCellTest do
       connect(kino)
 
       push_event(kino, "update_field", %{"field" => "data_frame", "value" => "people"})
-      operations = @base_operations.filters
 
       assert_broadcast_event(kino, "update_data_frame", %{
-        "fields" => %{
-          operations: ^operations,
-          root_fields: %{"assign_to" => nil, "data_frame" => "people"}
-        }
+        "fields" => %{root_fields: %{"assign_to" => nil, "data_frame" => "people"}}
       })
     end
 
@@ -1115,7 +1100,8 @@ defmodule KinoExplorer.DataTransformCellTest do
   end
 
   test "autocomplete for filters" do
-    {kino, _source} = start_smart_cell!(DataTransformCell, @base_attrs)
+    attrs = Map.put(@base_attrs, "operations", @base_operations.filters)
+    {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
     connect(kino)
     teams = teams_df()
     env = Code.env_for_eval([])
@@ -1128,9 +1114,20 @@ defmodule KinoExplorer.DataTransformCellTest do
       "idx" => 0
     })
 
-    assert_broadcast_event(kino, "update_operation", %{
-      "fields" => %{"datalist" => ["A", "B", "C"]},
-      "idx" => 0
+    assert_broadcast_event(kino, "set_operations", %{
+      "operations" => [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{"hour" => :integer, "team" => :string, "weekday" => :string},
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => nil
+        }
+      ]
     })
   end
 
