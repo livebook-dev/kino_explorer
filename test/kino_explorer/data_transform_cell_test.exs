@@ -1484,6 +1484,89 @@ defmodule KinoExplorer.DataTransformCellTest do
     end
   end
 
+  describe "invalid operations" do
+    test "doesn't crash the smart cell when there're invalid operations" do
+      operations = [
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "operation_type" => "summarise",
+          "query" => "max"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "add_operation", %{"operation_type" => "filters"})
+      updated_operations = operations ++ @base_operations.filters
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+
+    test "allows user to recover from invalid operations" do
+      operations = [
+        %{
+          "active" => true,
+          "columns" => ["hour"],
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "operation_type" => "summarise",
+          "query" => "max"
+        },
+        %{
+          "active" => true,
+          "data_options" => %{
+            "hour" => :integer,
+            "team" => :string,
+            "weekday" => :string
+          },
+          "group_by" => ["weekday"],
+          "operation_type" => "group_by"
+        },
+        %{
+          "filter" => nil,
+          "column" => nil,
+          "value" => nil,
+          "type" => "string",
+          "active" => true,
+          "operation_type" => "filters",
+          "datalist" => []
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "move_operation", %{"removedIndex" => 1, "addedIndex" => 0})
+      {operations, [filter]} = Enum.split(operations, 2)
+      {operation, operations} = List.pop_at(operations, 1)
+      operations = List.insert_at(operations, 0, operation)
+
+      synced_filter =
+        Map.put(filter, "data_options", %{"hour_max" => :integer, "weekday" => :string})
+
+      updated_operations = operations ++ [synced_filter]
+
+      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+  end
+
   defp people_df() do
     Explorer.DataFrame.new(%{
       id: [3, 1, 2],

@@ -749,23 +749,27 @@ defmodule KinoExplorer.DataTransformCell do
 
     if binding != [] do
       for {operation, idx} <- Enum.with_index(operations) do
-        offset = if operation["operation_type"] == "filters", do: 1, else: Enum.at(offsets, idx)
+        try do
+          offset = if operation["operation_type"] == "filters", do: 1, else: Enum.at(offsets, idx)
 
-        partial_operations =
-          if idx - offset >= 0 and idx > 0,
-            do: Enum.slice(operations, 0..(idx - offset)),
-            else: []
+          partial_operations =
+            if idx - offset >= 0 and idx > 0,
+              do: Enum.slice(operations, 0..(idx - offset)),
+              else: []
 
-        df =
-          to_partial_attrs(ctx, partial_operations)
-          |> to_source()
-          |> Code.eval_string(binding)
-          |> elem(0)
+          df =
+            to_partial_attrs(ctx, partial_operations)
+            |> to_source()
+            |> Code.eval_string(binding)
+            |> elem(0)
 
-        data_options = DataFrame.dtypes(df)
+          data_options = DataFrame.dtypes(df)
 
-        Map.put(operation, "data_options", data_options)
-        |> maybe_update_datalist(df)
+          Map.put(operation, "data_options", data_options)
+          |> maybe_update_datalist(df)
+        rescue
+          _ -> operation
+        end
       end
     else
       operations
