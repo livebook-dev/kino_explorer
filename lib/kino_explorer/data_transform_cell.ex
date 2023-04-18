@@ -750,6 +750,9 @@ defmodule KinoExplorer.DataTransformCell do
 
     if binding != [] do
       for {operation, idx} <- Enum.with_index(operations) do
+        # This will fail if there are invalid operations.
+        # The rescue allows us to let it crash in the output without crashing the smart cell,
+        # keeping the previous data_options synchronized
         try do
           offset = if operation["operation_type"] == "filters", do: 1, else: Enum.at(offsets, idx)
 
