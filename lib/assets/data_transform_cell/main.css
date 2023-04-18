@@ -476,6 +476,10 @@ select option {
   margin: 0 12px;
 }
 
+.operations.grouped {
+  padding-bottom: 4px;
+}
+
 .card:before {
   content: "";
   display: block;
