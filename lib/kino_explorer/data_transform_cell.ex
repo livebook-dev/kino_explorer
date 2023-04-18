@@ -732,9 +732,11 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp update_data_options([operation], ctx, data_frame) do
+    data_frames = ctx.assigns.data_frames
+
     data_options =
-      Enum.find_value(ctx.assigns.data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
-      |> then(&if &1, do: DataFrame.dtypes(&1))
+      if df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data))),
+        do: DataFrame.dtypes(df)
 
     [Map.put(operation, "data_options", data_options)]
   end
@@ -744,8 +746,7 @@ defmodule KinoExplorer.DataTransformCell do
 
     offsets =
       Enum.chunk_by(operations, & &1["operation_type"])
-      |> Enum.map(&length(&1))
-      |> Enum.reduce([], fn x, acc -> acc ++ Enum.to_list(1..x) end)
+      |> Enum.flat_map(&Enum.to_list(1..length(&1)))
 
     if binding != [] do
       for {operation, idx} <- Enum.with_index(operations) do
