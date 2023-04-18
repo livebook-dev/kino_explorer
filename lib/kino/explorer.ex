@@ -111,7 +111,7 @@ defmodule Kino.Explorer do
         top_freq = top_freq |> List.first() |> to_string()
         top = List.first(top) || ""
         unique = count_unique(series)
-        keys = ["unique", "top", "top_freq", "nulls"]
+        keys = ["unique", "top", "top freq", "nulls"]
         values = [unique, top, top_freq, nulls]
 
         keys = if has_groups, do: keys ++ ["grouped"], else: keys
@@ -124,6 +124,7 @@ defmodule Kino.Explorer do
 
   defp most_frequent(data) do
     data
+    |> Series.mask(Series.is_not_nil(data))
     |> Series.frequencies()
     |> DataFrame.head(1)
     |> DataFrame.to_columns()
