@@ -418,8 +418,7 @@ select option {
   cursor: move;
 }
 
-.card.pivot_wider:hover,
-.card.summarise:hover {
+.card.pivot_wider:hover {
   cursor: default;
 }
 
@@ -475,6 +474,10 @@ select option {
   padding-bottom: 12px;
   border-left: solid 3px var(--gray-200);
   margin: 0 12px;
+}
+
+.operations.grouped {
+  padding-bottom: 4px;
 }
 
 .card:before {
