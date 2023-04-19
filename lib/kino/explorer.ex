@@ -11,6 +11,7 @@ defmodule Kino.Explorer do
 
   alias Explorer.DataFrame
   alias Explorer.Series
+  require Explorer.DataFrame
 
   @behaviour Kino.Table
 
@@ -109,9 +110,9 @@ defmodule Kino.Explorer do
       else
         %{"counts" => top_freq, "values" => top} = most_frequent(series)
         top_freq = top_freq |> List.first() |> to_string()
-        top = List.first(top) || ""
+        top = List.first(top) |> to_string()
         unique = count_unique(series)
-        keys = ["unique", "top", "top_freq", "nulls"]
+        keys = ["unique", "top", "top freq", "nulls"]
         values = [unique, top, top_freq, nulls]
 
         keys = if has_groups, do: keys ++ ["grouped"], else: keys
@@ -125,6 +126,8 @@ defmodule Kino.Explorer do
   defp most_frequent(data) do
     data
     |> Series.frequencies()
+    |> DataFrame.head(2)
+    |> DataFrame.filter(Series.is_not_nil(values))
     |> DataFrame.head(1)
     |> DataFrame.to_columns()
   end

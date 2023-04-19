@@ -105,8 +105,9 @@ defmodule Kino.ExplorerTest do
   test "supports data summary" do
     df =
       Explorer.DataFrame.new(%{
-        id: [3, 1, 2, nil],
-        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Jake Peralta"]
+        id: [3, 1, 2, nil, nil, nil, nil],
+        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Jake Peralta", nil, nil, nil],
+        woman: [true, false, false, false, nil, nil, nil]
       })
 
     widget = Kino.Explorer.new(df)
@@ -120,7 +121,7 @@ defmodule Kino.ExplorerTest do
                    label: "id",
                    summary: %{
                      keys: ["min", "max", "mean", "nulls"],
-                     values: ["1", "3", "2.0", "1"]
+                     values: ["1", "3", "2.0", "4"]
                    },
                    type: "number"
                  },
@@ -128,10 +129,45 @@ defmodule Kino.ExplorerTest do
                    key: "1",
                    label: "name",
                    summary: %{
-                     keys: ["unique", "top", "top_freq", "nulls"],
-                     values: ["3", "Jake Peralta", "2", "0"]
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["4", "Jake Peralta", "2", "3"]
                    },
                    type: "text"
+                 },
+                 %{
+                   key: "2",
+                   label: "woman",
+                   summary: %{
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["3", "false", "3", "3"]
+                   },
+                   type: "boolean"
+                 }
+               ]
+             }
+           } = data
+  end
+
+  test "support data summary for all nils" do
+    df =
+      Explorer.DataFrame.new(%{
+        id: [nil, nil, nil, nil]
+      })
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "id",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["", "", "", "4"]
+                   },
+                   type: "number"
                  }
                ]
              }
@@ -165,7 +201,7 @@ defmodule Kino.ExplorerTest do
                    key: "1",
                    label: "name",
                    summary: %{
-                     keys: ["unique", "top", "top_freq", "nulls", "grouped"],
+                     keys: ["unique", "top", "top freq", "nulls", "grouped"],
                      values: ["3", "Jake Peralta", "2", "0", "true"]
                    },
                    type: "text"
