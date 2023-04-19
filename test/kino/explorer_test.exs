@@ -138,6 +138,32 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "support data summary for all nils" do
+    df =
+      Explorer.DataFrame.new(%{
+        id: [nil, nil, nil, nil],
+      })
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "id",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["", "", "", "4"]
+                   },
+                   type: "number"
+                 }
+               ]
+             }
+           } = data
+  end
+
   test "shows if a column is in a group when there are groups" do
     df =
       Explorer.DataFrame.new(%{
