@@ -106,7 +106,8 @@ defmodule Kino.ExplorerTest do
     df =
       Explorer.DataFrame.new(%{
         id: [3, 1, 2, nil, nil, nil, nil],
-        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Jake Peralta", nil, nil, nil]
+        name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords", "Jake Peralta", nil, nil, nil],
+        woman: [true, false, false, false, nil, nil, nil]
       })
 
     widget = Kino.Explorer.new(df)
@@ -132,6 +133,15 @@ defmodule Kino.ExplorerTest do
                      values: ["4", "Jake Peralta", "2", "3"]
                    },
                    type: "text"
+                 },
+                 %{
+                   key: "2",
+                   label: "woman",
+                   summary: %{
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["3", "false", "3", "3"]
+                   },
+                   type: "boolean"
                  }
                ]
              }
@@ -141,7 +151,7 @@ defmodule Kino.ExplorerTest do
   test "support data summary for all nils" do
     df =
       Explorer.DataFrame.new(%{
-        id: [nil, nil, nil, nil],
+        id: [nil, nil, nil, nil]
       })
 
     widget = Kino.Explorer.new(df)

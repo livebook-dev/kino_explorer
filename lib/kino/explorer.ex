@@ -110,7 +110,7 @@ defmodule Kino.Explorer do
       else
         %{"counts" => top_freq, "values" => top} = most_frequent(series)
         top_freq = top_freq |> List.first() |> to_string()
-        top = List.first(top) || ""
+        top = List.first(top) |> to_string()
         unique = count_unique(series)
         keys = ["unique", "top", "top freq", "nulls"]
         values = [unique, top, top_freq, nulls]
