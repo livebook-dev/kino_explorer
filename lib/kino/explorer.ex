@@ -11,6 +11,7 @@ defmodule Kino.Explorer do
 
   alias Explorer.DataFrame
   alias Explorer.Series
+  require Explorer.DataFrame
 
   @behaviour Kino.Table
 
@@ -124,8 +125,9 @@ defmodule Kino.Explorer do
 
   defp most_frequent(data) do
     data
-    |> Series.mask(Series.is_not_nil(data))
     |> Series.frequencies()
+    |> DataFrame.head(2)
+    |> DataFrame.filter(Series.is_not_nil(values))
     |> DataFrame.head(1)
     |> DataFrame.to_columns()
   end
