@@ -142,7 +142,7 @@ defmodule KinoExplorer.DataTransformCell do
   def handle_info({:scan_binding_result, binding, data_frame_alias, missing_require}, ctx) do
     data_frames =
       for {key, val} <- binding,
-          is_struct(val, DataFrame),
+          valid_data(val),
           do: %{
             variable: Atom.to_string(key),
             data: val
@@ -386,6 +386,7 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", ctx.assigns.operations)
     |> Map.put("data_frame_alias", ctx.assigns.data_frame_alias)
     |> Map.put("missing_require", ctx.assigns.missing_require)
+    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   @impl true
@@ -409,6 +410,8 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.map(&Map.new(&1, fn {k, v} -> convert_field(k, v) end))
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
+
+    nodes = if attrs.is_data_frame, do: nodes, else: [build_df() | nodes]
 
     root = build_root(df)
 
@@ -485,6 +488,10 @@ defmodule KinoExplorer.DataTransformCell do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
     end
+  end
+
+  defp build_df() do
+    %{args: [], field: :new, module: Explorer.DataFrame, name: :new}
   end
 
   defp build_var(acc, nil), do: acc
@@ -725,10 +732,14 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
+    df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
 
     data_options =
-      if df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data))),
-        do: DataFrame.dtypes(df)
+      case df do
+        nil -> nil
+        %DataFrame{} -> DataFrame.dtypes(df)
+        _ -> df |> DataFrame.new() |> DataFrame.dtypes()
+      end
 
     [Map.put(operation, "data_options", data_options)]
   end
@@ -777,6 +788,7 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", partial_operations)
     |> Map.put("data_frame_alias", Explorer.DataFrame)
     |> Map.put("missing_require", Explorer.DataFrame)
+    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   defp maybe_update_datalist(%{"operation_type" => "filters"} = operation, df) do
@@ -789,4 +801,24 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp maybe_update_datalist(operation, _df), do: operation
+
+  defp valid_data(%DataFrame{}), do: true
+
+  defp valid_data(data) do
+    with true <- implements?(Table.Reader, data),
+         {_, %{columns: [_ | _] = columns}, _} <- Table.Reader.init(data),
+         true <- Enum.all?(columns, &implements?(String.Chars, &1)) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp implements?(protocol, value), do: protocol.impl_for(value) != nil
+
+  defp is_data_frame?(ctx) do
+    df = ctx.assigns.root_fields["data_frame"]
+    data = Enum.find_value(ctx.assigns.data_frames, &(&1.variable == df && Map.get(&1, :data)))
+    is_struct(data, DataFrame)
+  end
 end

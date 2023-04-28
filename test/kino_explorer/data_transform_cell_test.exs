@@ -11,7 +11,8 @@ defmodule KinoExplorer.DataTransformCellTest do
     "data_frame" => "people",
     "assign_to" => nil,
     "data_frame_alias" => Explorer.DataFrame,
-    "missing_require" => nil
+    "missing_require" => nil,
+    "is_data_frame" => true
   }
 
   @base_operations %{
@@ -69,17 +70,23 @@ defmodule KinoExplorer.DataTransformCellTest do
     assert source == ""
   end
 
-  test "finds Explorer DataFrames in binding and sends the data options to the client" do
+  test "finds valid data in binding and sends the data options to the client" do
     {kino, _source} = start_smart_cell!(DataTransformCell, %{})
 
     teams = teams_df()
     people = people_df()
+
+    simple_data = [
+      %{id: 1, name: "Elixir", website: "https://elixir-lang.org"},
+      %{id: 2, name: "Erlang", website: "https://www.erlang.org"}
+    ]
+
     invalid_data = %{self() => [1, 2], :y => [1, 2]}
 
     env = Code.env_for_eval([])
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
-    data_frame_variables = ["people", "teams"]
+    data_frame_variables = ["people", "simple_data", "teams"]
 
     assert_broadcast_event(kino, "set_available_data", %{
       "data_frame_variables" => ^data_frame_variables,
@@ -101,12 +108,58 @@ defmodule KinoExplorer.DataTransformCellTest do
     })
   end
 
+  test "initial data options for a non data_frame data" do
+    {kino, _source} = start_smart_cell!(DataTransformCell, %{})
+
+    simple_data = [
+      %{id: 1, name: "Elixir", website: "https://elixir-lang.org"},
+      %{id: 2, name: "Erlang", website: "https://www.erlang.org"}
+    ]
+
+    env = Code.env_for_eval([])
+    DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+    data_frame_variables = ["simple_data"]
+
+    assert_broadcast_event(kino, "set_available_data", %{
+      "data_frame_variables" => ^data_frame_variables,
+      "fields" => %{
+        operations: [
+          %{
+            "active" => true,
+            "column" => nil,
+            "data_options" => %{
+              "id" => :integer,
+              "name" => :string,
+              "website" => :string
+            },
+            "datalist" => [],
+            "filter" => nil,
+            "operation_type" => "filters",
+            "type" => "string",
+            "value" => nil
+          }
+        ],
+        root_fields: %{"assign_to" => nil, "data_frame" => "simple_data"}
+      }
+    })
+  end
+
   describe "code generation" do
     test "source for a data frame without operations" do
       attrs = build_attrs(%{})
 
       assert DataTransformCell.to_source(attrs) == """
              people\
+             """
+    end
+
+    test "source for a data without operations" do
+      root = %{"data_frame" => "simple_data", "is_data_frame" => false}
+      attrs = build_attrs(root, %{})
+
+      assert DataTransformCell.to_source(attrs) == """
+             simple_data |> Explorer.DataFrame.new()\
              """
     end
 
@@ -855,7 +908,8 @@ defmodule KinoExplorer.DataTransformCellTest do
         "data_frame" => "people",
         "assign_to" => "exported_df",
         "data_frame_alias" => DF,
-        "missing_require" => nil
+        "missing_require" => nil,
+        "is_data_frame" => true
       }
 
       operations = [
@@ -1403,7 +1457,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       connect(kino)
       teams = teams_df()
       env = Code.env_for_eval([])
-      DataTransformCell.scan_binding(kino.pid, binding(), env)
+      binding = binding() |> Keyword.delete(:operations)
+      DataTransformCell.scan_binding(kino.pid, binding, env)
 
       updated_operations =
         Enum.map(
@@ -1455,7 +1510,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       connect(kino)
       teams = teams_df()
       env = Code.env_for_eval([])
-      DataTransformCell.scan_binding(kino.pid, binding(), env)
+      binding = binding() |> Keyword.delete(:operations)
+      DataTransformCell.scan_binding(kino.pid, binding, env)
 
       {operations, [sort]} = Enum.split(operations, 3)
 
