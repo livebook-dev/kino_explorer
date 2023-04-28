@@ -145,8 +145,6 @@ defmodule KinoExplorer.DataTransformCell do
           is_struct(val, DataFrame),
           do: %{
             variable: Atom.to_string(key),
-            columns: DataFrame.dtypes(val),
-            distinct: get_distinct(val),
             data: val
           }
 
@@ -333,7 +331,8 @@ defmodule KinoExplorer.DataTransformCell do
         "type" => Atom.to_string(type),
         "active" => current_fill["active"],
         "operation_type" => "fill_missing",
-        "message" => message
+        "message" => message,
+        "data_options" => data_options
       }
     else
       Map.merge(current_fill, %{field => value, "message" => message})
@@ -723,13 +722,6 @@ defmodule KinoExplorer.DataTransformCell do
   defp normalize_values_from(values) when is_list(values), do: values
   defp normalize_values_from(nil), do: []
   defp normalize_values_from(values), do: [values]
-
-  defp get_distinct(df) do
-    for {col, type} <- DataFrame.dtypes(df), type == :string, into: %{} do
-      values = df[col] |> Series.distinct() |> Series.to_list()
-      {col, values}
-    end
-  end
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
