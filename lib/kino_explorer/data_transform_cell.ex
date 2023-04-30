@@ -98,7 +98,7 @@ defmodule KinoExplorer.DataTransformCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        data_frame_variables: [],
+        data_frame_variables: %{},
         data_frames: [],
         binding: [],
         operation_options: %{
@@ -132,7 +132,8 @@ defmodule KinoExplorer.DataTransformCell do
       data_frame_variables: ctx.assigns.data_frame_variables,
       operation_options: ctx.assigns.operation_options,
       operation_types: ctx.assigns.operation_types,
-      missing_require: ctx.assigns.missing_require
+      missing_require: ctx.assigns.missing_require,
+      data_frame_alias: ctx.assigns.data_frame_alias
     }
 
     {:ok, payload, ctx}
@@ -145,10 +146,11 @@ defmodule KinoExplorer.DataTransformCell do
           valid_data(val),
           do: %{
             variable: Atom.to_string(key),
-            data: val
+            data: val,
+            data_frame: is_struct(val, DataFrame)
           }
 
-    data_frame_variables = Enum.map(data_frames, & &1.variable)
+    data_frame_variables = Enum.map(data_frames, &{&1.variable, &1.data_frame}) |> Enum.into(%{})
 
     ctx =
       assign(ctx,
@@ -160,7 +162,7 @@ defmodule KinoExplorer.DataTransformCell do
       )
 
     updated_fields =
-      case {ctx.assigns.root_fields["data_frame"], data_frame_variables} do
+      case {ctx.assigns.root_fields["data_frame"], Map.keys(data_frame_variables)} do
         {nil, [data_frame | _]} ->
           updates_for_data_frame(data_frame, ctx)
 
@@ -175,6 +177,7 @@ defmodule KinoExplorer.DataTransformCell do
 
     broadcast_event(ctx, "set_available_data", %{
       "data_frame_variables" => data_frame_variables,
+      "data_frame_alias" => data_frame_alias,
       "fields" => updated_fields
     })
 
@@ -818,7 +821,6 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp is_data_frame?(ctx) do
     df = ctx.assigns.root_fields["data_frame"]
-    data = Enum.find_value(ctx.assigns.data_frames, &(&1.variable == df && Map.get(&1, :data)))
-    is_struct(data, DataFrame)
+    Map.get(ctx.assigns.data_frame_variables, df)
   end
 end

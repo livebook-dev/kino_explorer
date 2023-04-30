@@ -86,7 +86,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     env = Code.env_for_eval([])
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
-    data_frame_variables = ["people", "simple_data", "teams"]
+    data_frame_variables = %{"people" => true, "simple_data" => false, "teams" => true}
 
     assert_broadcast_event(kino, "set_available_data", %{
       "data_frame_variables" => ^data_frame_variables,
@@ -119,7 +119,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     env = Code.env_for_eval([])
     DataTransformCell.scan_binding(kino.pid, binding(), env)
 
-    data_frame_variables = ["simple_data"]
+    data_frame_variables = %{"simple_data" => false}
 
     assert_broadcast_event(kino, "set_available_data", %{
       "data_frame_variables" => ^data_frame_variables,
@@ -1475,7 +1475,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           operations: ^updated_operations,
           root_fields: %{"assign_to" => nil, "data_frame" => "teams"}
         },
-        "data_frame_variables" => ["teams"]
+        "data_frame_variables" => %{"teams" => true}
       })
     end
 
@@ -1535,7 +1535,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           operations: ^updated_operations,
           root_fields: %{"assign_to" => nil, "data_frame" => "teams"}
         },
-        "data_frame_variables" => ["teams"]
+        "data_frame_variables" => %{"teams" => true}
       })
     end
   end
