@@ -98,7 +98,7 @@ defmodule KinoExplorer.DataTransformCell do
         root_fields: root_fields,
         operations: operations,
         data_frame_alias: Explorer.DataFrame,
-        data_frame_variables: [],
+        data_frame_variables: %{},
         data_frames: [],
         binding: [],
         operation_options: %{
@@ -132,7 +132,8 @@ defmodule KinoExplorer.DataTransformCell do
       data_frame_variables: ctx.assigns.data_frame_variables,
       operation_options: ctx.assigns.operation_options,
       operation_types: ctx.assigns.operation_types,
-      missing_require: ctx.assigns.missing_require
+      missing_require: ctx.assigns.missing_require,
+      data_frame_alias: ctx.assigns.data_frame_alias
     }
 
     {:ok, payload, ctx}
@@ -142,13 +143,14 @@ defmodule KinoExplorer.DataTransformCell do
   def handle_info({:scan_binding_result, binding, data_frame_alias, missing_require}, ctx) do
     data_frames =
       for {key, val} <- binding,
-          is_struct(val, DataFrame),
+          valid_data(val),
           do: %{
             variable: Atom.to_string(key),
-            data: val
+            data: val,
+            data_frame: is_struct(val, DataFrame)
           }
 
-    data_frame_variables = Enum.map(data_frames, & &1.variable)
+    data_frame_variables = Enum.map(data_frames, &{&1.variable, &1.data_frame}) |> Enum.into(%{})
 
     ctx =
       assign(ctx,
@@ -160,7 +162,7 @@ defmodule KinoExplorer.DataTransformCell do
       )
 
     updated_fields =
-      case {ctx.assigns.root_fields["data_frame"], data_frame_variables} do
+      case {ctx.assigns.root_fields["data_frame"], Map.keys(data_frame_variables)} do
         {nil, [data_frame | _]} ->
           updates_for_data_frame(data_frame, ctx)
 
@@ -175,6 +177,7 @@ defmodule KinoExplorer.DataTransformCell do
 
     broadcast_event(ctx, "set_available_data", %{
       "data_frame_variables" => data_frame_variables,
+      "data_frame_alias" => data_frame_alias,
       "fields" => updated_fields
     })
 
@@ -386,6 +389,7 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", ctx.assigns.operations)
     |> Map.put("data_frame_alias", ctx.assigns.data_frame_alias)
     |> Map.put("missing_require", ctx.assigns.missing_require)
+    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   @impl true
@@ -409,6 +413,8 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.map(&Map.new(&1, fn {k, v} -> convert_field(k, v) end))
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
+
+    nodes = if attrs.is_data_frame, do: nodes, else: [build_df() | nodes]
 
     root = build_root(df)
 
@@ -485,6 +491,10 @@ defmodule KinoExplorer.DataTransformCell do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
     end
+  end
+
+  defp build_df() do
+    %{args: [], field: :new, module: Explorer.DataFrame, name: :new}
   end
 
   defp build_var(acc, nil), do: acc
@@ -725,10 +735,14 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
+    df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
 
     data_options =
-      if df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data))),
-        do: DataFrame.dtypes(df)
+      case df do
+        nil -> nil
+        %DataFrame{} -> DataFrame.dtypes(df)
+        _ -> df |> DataFrame.new() |> DataFrame.dtypes()
+      end
 
     [Map.put(operation, "data_options", data_options)]
   end
@@ -777,6 +791,7 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", partial_operations)
     |> Map.put("data_frame_alias", Explorer.DataFrame)
     |> Map.put("missing_require", Explorer.DataFrame)
+    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   defp maybe_update_datalist(%{"operation_type" => "filters"} = operation, df) do
@@ -789,4 +804,23 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp maybe_update_datalist(operation, _df), do: operation
+
+  defp valid_data(%DataFrame{}), do: true
+
+  defp valid_data(data) do
+    with true <- implements?(Table.Reader, data),
+         {_, %{columns: [_ | _] = columns}, _} <- Table.Reader.init(data),
+         true <- Enum.all?(columns, &implements?(String.Chars, &1)) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp implements?(protocol, value), do: protocol.impl_for(value) != nil
+
+  defp is_data_frame?(ctx) do
+    df = ctx.assigns.root_fields["data_frame"]
+    Map.get(ctx.assigns.data_frame_variables, df)
+  end
 end
