@@ -37,12 +37,14 @@ defmodule Kino.Explorer do
 
   @impl true
   def init({df, name}) do
+    lazy = lazy?(df)
     groups = df.groups
     df = DataFrame.ungroup(df)
-    total_rows = DataFrame.n_rows(df)
+    total_rows = if !lazy, do: DataFrame.n_rows(df)
     dtypes = DataFrame.dtypes(df)
-    sample_data = df |> DataFrame.head(1) |> DataFrame.to_columns()
-    summaries = summaries(df, groups)
+    sample_data = df |> DataFrame.head(1) |> DataFrame.collect() |> DataFrame.to_columns()
+    summaries = if !lazy, do: summaries(df, groups)
+    name = if lazy, do: "Lazy - #{name}", else: name
 
     columns =
       for name <- df.names, dtype = Map.fetch!(dtypes, name) do
@@ -68,11 +70,12 @@ defmodule Kino.Explorer do
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do
+    lazy = lazy?(df)
     df = order_by(df, rows_spec[:order])
-    total_rows = DataFrame.n_rows(df)
-    summaries = if total_rows > 0, do: summaries(df, groups)
+    total_rows = if !lazy, do: DataFrame.n_rows(df)
+    summaries = if total_rows && total_rows > 0, do: summaries(df, groups)
     df = DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
-    records = DataFrame.to_columns(df)
+    records = df |> DataFrame.collect() |> DataFrame.to_columns()
     {records, total_rows, summaries}
   end
 
@@ -148,4 +151,6 @@ defmodule Kino.Explorer do
 
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
+
+  def lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
 end
