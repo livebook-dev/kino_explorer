@@ -269,4 +269,64 @@ defmodule Kino.ExplorerTest do
              }
            } = data
   end
+
+  test "supports lazy data frames" do
+    df = Explorer.Datasets.iris() |> Explorer.DataFrame.to_lazy()
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             features: [:pagination, :sorting],
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "sepal_length",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["4.3", "7.9", "5.84", "0"]
+                   },
+                   type: "number"
+                 },
+                 %{
+                   key: "1",
+                   label: "sepal_width",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["2.0", "4.4", "3.05", "0"]
+                   },
+                   type: "number"
+                 },
+                 %{
+                   key: "2",
+                   label: "petal_length",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["1.0", "6.9", "3.76", "0"]
+                   },
+                   type: "number"
+                 },
+                 %{
+                   key: "3",
+                   label: "petal_width",
+                   summary: %{
+                     keys: ["min", "max", "mean", "nulls"],
+                     values: ["0.1", "2.5", "1.2", "0"]
+                   },
+                   type: "number"
+                 },
+                 %{
+                   key: "4",
+                   label: "species",
+                   summary: %{
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["3", "Iris-setosa", "50", "0"]
+                   },
+                   type: "text"
+                 }
+               ]
+             },
+             name: "DataFrame"
+           } = data
+  end
 end

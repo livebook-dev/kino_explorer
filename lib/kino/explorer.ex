@@ -37,6 +37,7 @@ defmodule Kino.Explorer do
 
   @impl true
   def init({df, name}) do
+    df = if lazy?(df), do: DataFrame.collect(df), else: df
     groups = df.groups
     df = DataFrame.ungroup(df)
     total_rows = DataFrame.n_rows(df)
@@ -148,4 +149,6 @@ defmodule Kino.Explorer do
 
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
+
+  def lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
 end
