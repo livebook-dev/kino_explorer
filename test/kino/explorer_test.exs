@@ -278,55 +278,41 @@ defmodule Kino.ExplorerTest do
     assert %{
              features: [:pagination, :sorting],
              content: %{
+               total_rows: nil,
                columns: [
                  %{
                    key: "0",
                    label: "sepal_length",
-                   summary: %{
-                     keys: ["min", "max", "mean", "nulls"],
-                     values: ["4.3", "7.9", "5.84", "0"]
-                   },
+                   summary: nil,
                    type: "number"
                  },
                  %{
                    key: "1",
                    label: "sepal_width",
-                   summary: %{
-                     keys: ["min", "max", "mean", "nulls"],
-                     values: ["2.0", "4.4", "3.05", "0"]
-                   },
+                   summary: nil,
                    type: "number"
                  },
                  %{
                    key: "2",
                    label: "petal_length",
-                   summary: %{
-                     keys: ["min", "max", "mean", "nulls"],
-                     values: ["1.0", "6.9", "3.76", "0"]
-                   },
+                   summary: nil,
                    type: "number"
                  },
                  %{
                    key: "3",
                    label: "petal_width",
-                   summary: %{
-                     keys: ["min", "max", "mean", "nulls"],
-                     values: ["0.1", "2.5", "1.2", "0"]
-                   },
+                   summary: nil,
                    type: "number"
                  },
                  %{
                    key: "4",
                    label: "species",
-                   summary: %{
-                     keys: ["unique", "top", "top freq", "nulls"],
-                     values: ["3", "Iris-setosa", "50", "0"]
-                   },
+                   summary: nil,
                    type: "text"
                  }
                ]
              },
-             name: "DataFrame"
+             name: "Lazy - DataFrame"
            } = data
   end
 end
