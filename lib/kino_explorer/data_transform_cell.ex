@@ -671,6 +671,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp cast_typed_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
+  defp cast_typed_value(:time, value), do: to_time(value)
   defp cast_typed_value(_, value), do: {:ok, value}
 
   defp to_date(:date, value) do
@@ -683,6 +684,13 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_date(:datetime, value) do
     case NaiveDateTime.from_iso8601(value) do
       {:ok, date} -> {:ok, date}
+      _ -> nil
+    end
+  end
+
+  defp to_time(value) do
+    case Time.from_iso8601(value) do
+      {:ok, time} -> {:ok, time}
       _ -> nil
     end
   end
