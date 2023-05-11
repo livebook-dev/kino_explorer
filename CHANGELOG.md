@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.5](https://github.com/livebook-dev/kino_explorer/tree/v0.1.5) (2023-05-11)
+
+### Added
+
+* Queried filters ([#67](https://github.com/livebook-dev/kino_explorer/pull/67))
+* Filter by quantile ([#68](https://github.com/livebook-dev/kino_explorer/pull/68))
+* Allow any data structure that implements `Table.Reader` ([#75](https://github.com/livebook-dev/kino_explorer/pull/75))
+* Allow `categorical` on `pivot_wider` ([#77](https://github.com/livebook-dev/kino_explorer/pull/77))
+
+### Changed
+
+* Allow `summarise` anywhere ([#71](https://github.com/livebook-dev/kino_explorer/pull/71))
+
+### Fixed
+
+* Correctly handles `nil` in summaries ([#72](https://github.com/livebook-dev/kino_explorer/pull/72))
+* Correctly handles lazy data frames ([#78](https://github.com/livebook-dev/kino_explorer/pull/78))
+
 ## [v0.1.4](https://github.com/livebook-dev/kino_explorer/tree/v0.1.4) (2023-04-04)
 
 ### Fixed
