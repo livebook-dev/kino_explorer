@@ -681,8 +681,8 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp to_date(:datetime, value) do
-    case DateTime.from_iso8601(value) do
-      {:ok, date, _} -> {:ok, date}
+    case NaiveDateTime.from_iso8601(value) do
+      {:ok, date} -> {:ok, date}
       _ -> nil
     end
   end
