@@ -59,7 +59,7 @@ defmodule Kino.Explorer do
     info = %{
       name: name,
       features: [:export, :pagination, :sorting],
-      export: %{formats: [:csv, :parquet]}
+      export: %{formats: ["CSV", "NDJSON", "Parquet"]}
     }
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups}}
@@ -74,12 +74,17 @@ defmodule Kino.Explorer do
   end
 
   @impl true
-  def export_data(%{df: df}, :csv) do
+  def export_data(%{df: df}, "CSV") do
     data = DataFrame.dump_csv!(df)
     %{data: data, extension: ".csv", type: "text/csv"}
   end
 
-  def export_data(%{df: df}, :parquet) do
+  def export_data(%{df: df}, "NDJSON") do
+    data = DataFrame.dump_ndjson!(df)
+    %{data: data, extension: ".ndjson", type: "application/x-ndjson"}
+  end
+
+  def export_data(%{df: df}, "Parquet") do
     data = DataFrame.dump_parquet!(df)
     %{data: data, extension: ".parquet", type: "application/x-parquet"}
   end
