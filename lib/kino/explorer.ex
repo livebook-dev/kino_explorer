@@ -56,7 +56,11 @@ defmodule Kino.Explorer do
         }
       end
 
-    info = %{name: name, features: [:pagination, :sorting]}
+    info = %{
+      name: name,
+      features: [:export, :pagination, :sorting],
+      export: %{formats: ["CSV", "NDJSON", "Parquet"]}
+    }
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups}}
   end
@@ -67,6 +71,22 @@ defmodule Kino.Explorer do
     columns = Enum.map(state.columns, &%{&1 | summary: summaries[&1.key]})
     data = records_to_data(columns, records)
     {:ok, %{columns: columns, data: {:columns, data}, total_rows: total_rows}, state}
+  end
+
+  @impl true
+  def export_data(%{df: df}, "CSV") do
+    data = DataFrame.dump_csv!(df)
+    %{data: data, extension: ".csv", type: "text/csv"}
+  end
+
+  def export_data(%{df: df}, "NDJSON") do
+    data = DataFrame.dump_ndjson!(df)
+    %{data: data, extension: ".ndjson", type: "application/x-ndjson"}
+  end
+
+  def export_data(%{df: df}, "Parquet") do
+    data = DataFrame.dump_parquet!(df)
+    %{data: data, extension: ".parquet", type: "application/x-parquet"}
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do

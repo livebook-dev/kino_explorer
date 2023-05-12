@@ -17,7 +17,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting],
+             features: [:export, :pagination, :sorting],
              content: %{
                columns: [
                  %{key: "0", label: "id", type: "number"},
@@ -256,7 +256,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting],
+             features: [:export, :pagination, :sorting],
              content: %{
                columns: [
                  %{key: "0", label: "sepal_length", summary: nil, type: "number"},
@@ -276,7 +276,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:pagination, :sorting],
+             features: [:export, :pagination, :sorting],
              content: %{
                total_rows: nil,
                columns: [
