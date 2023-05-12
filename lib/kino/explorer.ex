@@ -76,12 +76,12 @@ defmodule Kino.Explorer do
   @impl true
   def export_data(%{df: df}, :csv) do
     data = DataFrame.dump_csv!(df)
-    %{data: data, extension: "csv", type: "text/csv"}
+    %{data: data, extension: ".csv", type: "text/csv"}
   end
 
   def export_data(%{df: df}, :parquet) do
     data = DataFrame.dump_parquet!(df)
-    %{data: data, extension: "parquet", type: "application/x-parquet"}
+    %{data: data, extension: ".parquet", type: "application/x-parquet"}
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do
