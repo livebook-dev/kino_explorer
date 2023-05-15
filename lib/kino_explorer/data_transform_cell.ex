@@ -487,6 +487,11 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :group_by, name: :group_by, args: group_by_args}
   end
 
+  defp to_quoted([%{operation_type: :discard, columns: columns, active: active}]) do
+    discard_args = if active and columns, do: build_discard(columns)
+    %{field: :discard, name: :discard, args: discard_args}
+  end
+
   defp build_root(df) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
@@ -584,6 +589,11 @@ defmodule KinoExplorer.DataTransformCell do
      end}
   end
 
+  @spec build_discard(any()) :: list() | atom()
+  defp build_discard([]), do: nil
+  defp build_discard([columns]), do: [columns]
+  defp build_discard(columns), do: [columns]
+
   defp apply_node(%{args: nil}, acc), do: acc
 
   defp apply_node(%{field: _field, name: function, module: data_frame, args: args}, acc) do
@@ -652,6 +662,10 @@ defmodule KinoExplorer.DataTransformCell do
     %{"columns" => [], "query" => nil, "active" => true, "operation_type" => "summarise"}
   end
 
+  defp default_operation(:discard) do
+    %{"columns" => [], "active" => true, "operation_type" => "discard"}
+  end
+
   defp cast_typed_value(:boolean, "true"), do: {:ok, true}
   defp cast_typed_value(:boolean, "false"), do: {:ok, false}
   defp cast_typed_value(:boolean, _), do: nil
@@ -671,7 +685,6 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp cast_typed_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
-  defp cast_typed_value(:time, value), do: to_time(value)
   defp cast_typed_value(_, value), do: {:ok, value}
 
   defp to_date(:date, value) do
@@ -682,15 +695,8 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp to_date(:datetime, value) do
-    case NaiveDateTime.from_iso8601(value) do
-      {:ok, date} -> {:ok, date}
-      _ -> nil
-    end
-  end
-
-  defp to_time(value) do
-    case Time.from_iso8601(value) do
-      {:ok, time} -> {:ok, time}
+    case DateTime.from_iso8601(value) do
+      {:ok, date, _} -> {:ok, date}
       _ -> nil
     end
   end

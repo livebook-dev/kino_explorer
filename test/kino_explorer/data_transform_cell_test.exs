@@ -53,6 +53,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         "active" => true,
         "operation_type" => "pivot_wider"
       }
+    ],
+    discard: [
+      %{"columns" => [], "active" => true, "operation_type" => "discard"}
     ]
   }
 
@@ -777,6 +780,46 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams |> Explorer.DataFrame.pivot_wider("weekdays", ["hour", "day"])\
+             """
+    end
+
+    test "source for a data frame with discard" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        discard: [
+          %{
+            "columns" => "weekdays",
+            "active" => true,
+            "operation_type" => "discard"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.discard("weekdays")\
+             """
+    end
+
+    test "source for a data frame with discard with multiple columns" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        discard: [
+          %{
+            "columns" => ["hour", "day"],
+            "active" => true,
+            "operation_type" => "discard"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> Explorer.DataFrame.discard(["hour", "day"])\
              """
     end
 
