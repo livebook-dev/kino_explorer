@@ -28,6 +28,10 @@
   --red-300: #f1a3a6;
   --red-500: #e2474d;
 
+  --crimson-100: #ffeff2;
+  --crimson-200: #ffe4e9;
+  --crimson-600: #f56991;
+
   --magenta-100: #fff1ff;
   --magenta-200: #fad4fa;
   --magenta-600: #c689c6;
@@ -525,6 +529,10 @@ select option {
   background-color: var(--orange-600);
 }
 
+.card.discard:before {
+  background-color: var(--crimson-600);
+}
+
 .operations.filters {
   border-left: solid 3px var(--teal-green-600);
 }
@@ -547,6 +555,10 @@ select option {
 
 .operations.pivot_wider {
   border-left: solid 3px var(--orange-600);
+}
+
+.operations.discard {
+  border-left: solid 3px var(--crimson-600);
 }
 
 .card {
@@ -581,6 +593,10 @@ select option {
 .card.pivot_wider {
   background-color: var(--orange-100);
   padding-bottom: 14px;
+}
+
+.card.discard {
+  background-color: var(--crimson-100);
 }
 
 .dndrop-draggable-wrapper:last-child > .operations {
@@ -743,6 +759,12 @@ select option {
   transform: translateX(100%);
 }
 
+.switch-button-checkbox.discard:checked {
+  background: white;
+  border-color: var(--crimson-600);
+  transform: translateX(100%);
+}
+
 .switch-button-checkbox:checked + .switch-button-bg {
   background-color: var(--blue-600);
 }
@@ -769,6 +791,10 @@ select option {
 
 .switch-button-checkbox.pivot_wider:checked + .switch-button-bg {
   background-color: var(--orange-600);
+}
+
+.switch-button-checkbox.discard:checked + .switch-button-bg {
+  background-color: var(--crimson-600);
 }
 
 .switch-button-checkbox:disabled {
@@ -806,6 +832,11 @@ select option {
   border-color: var(--orange-100);
 }
 
+.switch-button-checkbox.discard:disabled {
+  background: white;
+  border-color: var(--crimson-100);
+}
+
 .switch-button-checkbox:disabled + .switch-button-bg {
   background-color: var(--blue-100);
 }
@@ -832,6 +863,10 @@ select option {
 
 .switch-button-checkbox.pivot_wider:disabled + .switch-button-bg {
   background-color: var(--orange-200);
+}
+
+.switch-button-checkbox.discard:disabled + .switch-button-bg {
+  background-color: var(--crimson-200);
 }
 
 .tag-button {
