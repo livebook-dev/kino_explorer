@@ -475,21 +475,33 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :summarise, name: :summarise, args: summarize_args}
   end
 
+  defp to_quoted([%{operation_type: :group_by} | _] = groups) do
+    group_by_args =
+      for group <- groups, group.group_by, group.active do
+        group.group_by
+      end
+      |> List.flatten()
+      |> build_group_by()
+
+    %{field: :group_by, name: :group_by, args: group_by_args}
+  end
+
+  defp to_quoted([%{operation_type: :discard} | _] = discards) do
+    discard_args =
+      for discard <- discards, discard.columns, discard.active do
+        discard.columns
+      end
+      |> List.flatten()
+      |> build_discard()
+
+    %{field: :discard, name: :discard, args: discard_args}
+  end
+
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
     pivot_wider_args = if names && values && active, do: build_pivot_wider(names, values)
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
-  end
-
-  defp to_quoted([%{operation_type: :group_by, group_by: group_by, active: active}]) do
-    group_by_args = if group_by && active, do: build_group_by(group_by)
-    %{field: :group_by, name: :group_by, args: group_by_args}
-  end
-
-  defp to_quoted([%{operation_type: :discard, columns: columns, active: active}]) do
-    discard_args = if active and columns, do: build_discard(columns)
-    %{field: :discard, name: :discard, args: discard_args}
   end
 
   defp build_root(df) do

@@ -1100,7 +1100,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       for {_operation_type, index} <- operations do
         attrs =
           @base_operations
-          |> Map.drop([:pivot_wider, :summarise])
+          |> Map.drop([:pivot_wider])
           |> Map.values()
           |> List.flatten()
           |> then(&Map.put(@base_attrs, "operations", &1))
