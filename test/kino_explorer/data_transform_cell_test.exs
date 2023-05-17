@@ -41,7 +41,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       %{"sort_by" => nil, "direction" => "asc", "active" => true, "operation_type" => "sorting"}
     ],
     group_by: [
-      %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
+      %{"columns" => [], "active" => true, "operation_type" => "group_by"}
     ],
     summarise: [
       %{"columns" => [], "query" => nil, "active" => true, "operation_type" => "summarise"}
@@ -607,7 +607,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = %{
         group_by: [
           %{
-            "group_by" => "weekdays",
+            "columns" => "weekdays",
             "active" => true,
             "operation_type" => "group_by"
           }
@@ -627,7 +627,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = %{
         group_by: [
           %{
-            "group_by" => ["hour", "day"],
+            "columns" => ["hour", "day"],
             "active" => true,
             "operation_type" => "group_by"
           }
@@ -647,7 +647,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = %{
         group_by: [
           %{
-            "group_by" => "weekdays",
+            "columns" => "weekdays",
             "active" => true,
             "operation_type" => "group_by"
           }
@@ -677,7 +677,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = %{
         group_by: [
           %{
-            "group_by" => "weekdays",
+            "columns" => "weekdays",
             "active" => true,
             "operation_type" => "group_by"
           }
@@ -707,7 +707,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = %{
         group_by: [
           %{
-            "group_by" => "weekdays",
+            "columns" => "weekdays",
             "active" => true,
             "operation_type" => "group_by"
           }
@@ -1253,7 +1253,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "team" => :string,
             "weekday" => :string
           },
-          "group_by" => ["weekday"],
+          "columns" => ["weekday"],
           "operation_type" => "group_by"
         },
         %{
@@ -1312,7 +1312,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "team" => :string,
             "weekday" => :string
           },
-          "group_by" => ["weekday"],
+          "columns" => ["weekday"],
           "operation_type" => "group_by"
         },
         %{
@@ -1484,7 +1484,7 @@ defmodule KinoExplorer.DataTransformCellTest do
         },
         %{
           "active" => true,
-          "group_by" => ["weekday"],
+          "columns" => ["weekday"],
           "operation_type" => "group_by"
         },
         %{
@@ -1536,7 +1536,7 @@ defmodule KinoExplorer.DataTransformCellTest do
         },
         %{
           "active" => true,
-          "group_by" => ["weekday"],
+          "columns" => ["weekday"],
           "operation_type" => "group_by"
         },
         %{
@@ -1631,7 +1631,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "team" => :string,
             "weekday" => :string
           },
-          "group_by" => ["weekday"],
+          "columns" => ["weekday"],
           "operation_type" => "group_by"
         },
         %{
