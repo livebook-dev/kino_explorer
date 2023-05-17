@@ -84,6 +84,8 @@ defmodule KinoExplorer.DataTransformCell do
     "contains" => "contains"
   }
 
+  @multiselect_operations [:discard, :group_by]
+
   defguard is_queried(type, value)
            when type in @queried_filter_types and value in @queried_filter_options
 
@@ -475,21 +477,23 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :summarise, name: :summarise, args: summarize_args}
   end
 
+  defp to_quoted([%{operation_type: operation_type} | _] = operations)
+       when operation_type in @multiselect_operations do
+    operation_args =
+      for operation <- operations, operation.columns, operation.active do
+        operation.columns
+      end
+      |> List.flatten()
+      |> build_multiselect()
+
+    %{field: operation_type, name: operation_type, args: operation_args}
+  end
+
   defp to_quoted([
          %{operation_type: :pivot_wider, names_from: names, values_from: values, active: active}
        ]) do
     pivot_wider_args = if names && values && active, do: build_pivot_wider(names, values)
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
-  end
-
-  defp to_quoted([%{operation_type: :group_by, group_by: group_by, active: active}]) do
-    group_by_args = if group_by && active, do: build_group_by(group_by)
-    %{field: :group_by, name: :group_by, args: group_by_args}
-  end
-
-  defp to_quoted([%{operation_type: :discard, columns: columns, active: active}]) do
-    discard_args = if active and columns, do: build_discard(columns)
-    %{field: :discard, name: :discard, args: discard_args}
   end
 
   defp build_root(df) do
@@ -523,9 +527,9 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_pivot_wider(names, [values]), do: [names, values]
   defp build_pivot_wider(names, values), do: [names, values]
 
-  defp build_group_by([]), do: nil
-  defp build_group_by([group_by]), do: [group_by]
-  defp build_group_by(group_by), do: [group_by]
+  defp build_multiselect([]), do: nil
+  defp build_multiselect([columns]), do: [columns]
+  defp build_multiselect(columns), do: [columns]
 
   defp build_filter([column, filter, "quantile(" <> <<value::bytes-size(1)>> <> ")", type]) do
     build_filter([column, filter, "quantile(0#{value})", type])
@@ -589,11 +593,6 @@ defmodule KinoExplorer.DataTransformCell do
      end}
   end
 
-  @spec build_discard(any()) :: list() | atom()
-  defp build_discard([]), do: nil
-  defp build_discard([columns]), do: [columns]
-  defp build_discard(columns), do: [columns]
-
   defp apply_node(%{args: nil}, acc), do: acc
 
   defp apply_node(%{field: _field, name: function, module: data_frame, args: args}, acc) do
@@ -655,7 +654,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp default_operation(:group_by) do
-    %{"group_by" => [], "active" => true, "operation_type" => "group_by"}
+    %{"columns" => [], "active" => true, "operation_type" => "group_by"}
   end
 
   defp default_operation(:summarise) do
@@ -749,11 +748,19 @@ defmodule KinoExplorer.DataTransformCell do
     else
       operations
     end
+    |> normalize_group_by()
   end
 
   defp normalize_values_from(values) when is_list(values), do: values
   defp normalize_values_from(nil), do: []
   defp normalize_values_from(values), do: [values]
+
+  defp normalize_group_by(operations) do
+    Enum.map(
+      operations,
+      &Map.new(&1, fn {k, v} -> if k == "group_by", do: {"columns", v}, else: {k, v} end)
+    )
+  end
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
