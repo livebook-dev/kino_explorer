@@ -91,7 +91,13 @@ defmodule KinoExplorer.DataTransformCell do
 
   @impl true
   def init(attrs, ctx) do
-    root_fields = %{"data_frame" => attrs["data_frame"], "assign_to" => attrs["assign_to"]}
+    root_fields = %{
+      "data_frame" => attrs["data_frame"],
+      "assign_to" => attrs["assign_to"],
+      "lazy" => attrs["lazy"] || false,
+      "collect" => attrs["collect"] || false
+    }
+
     operations = attrs["operations"]
     operations = if operations, do: normalize_operations(operations), else: default_operations()
 
@@ -308,7 +314,12 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp updates_for_data_frame(data_frame, ctx) do
     %{
-      root_fields: %{"data_frame" => data_frame, "assign_to" => nil},
+      root_fields: %{
+        "data_frame" => data_frame,
+        "assign_to" => nil,
+        "lazy" => true,
+        "collect" => false
+      },
       operations: default_operations() |> update_data_options(ctx, data_frame)
     }
   end
@@ -409,6 +420,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
     missing_require = attrs.missing_require
+    has_pivot_wider = Enum.any?(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
 
     nodes =
       attrs.operations
@@ -416,7 +428,12 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
 
-    nodes = if attrs.is_data_frame, do: nodes, else: [build_df(attrs.data_frame_alias) | nodes]
+    nodes =
+      nodes
+      |> maybe_build_df(attrs)
+      |> maybe_lazy(attrs)
+      |> maybe_collect(attrs, has_pivot_wider)
+      |> maybe_clean_up(attrs)
 
     root = build_root(df)
 
@@ -496,14 +513,53 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
+  defp maybe_build_df(nodes, %{is_data_frame: true}), do: nodes
+
+  defp maybe_build_df(nodes, attrs) do
+    [build_df(attrs.data_frame_alias, attrs.lazy) | nodes]
+  end
+
+  defp maybe_lazy(nodes, %{is_data_frame: false}), do: nodes
+  defp maybe_lazy(nodes, %{lazy: true} = attrs), do: [build_lazy(attrs.data_frame_alias) | nodes]
+  defp maybe_lazy(nodes, %{lazy: false}), do: nodes
+
+  defp maybe_collect(nodes, %{lazy: false}, _), do: nodes
+  defp maybe_collect(nodes, %{collect: false}, _), do: nodes
+
+  defp maybe_collect(nodes, %{collect: true, lazy: true} = attrs, false) do
+    nodes ++ [build_collect(attrs.data_frame_alias)]
+  end
+
+  defp maybe_collect(nodes, %{lazy: true, data_frame_alias: data_frame_alias}, true) do
+    {pivot, nodes} = List.pop_at(nodes, -1)
+    nodes ++ [build_collect(data_frame_alias)] ++ [pivot]
+  end
+
+  defp maybe_collect(nodes, _, _), do: nodes
+
+  defp maybe_clean_up(nodes, %{is_data_frame: false}), do: nodes
+
+  defp maybe_clean_up(nodes, _) do
+    if Enum.all?(nodes, &(!&1.args || &1.args == [])), do: [], else: nodes
+  end
+
   defp build_root(df) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
     end
   end
 
-  defp build_df(module) do
-    %{args: [], field: :new, module: module, name: :new}
+  defp build_df(module, lazy) do
+    args = if lazy, do: [[lazy: true]], else: []
+    %{args: args, field: :new, module: module, name: :new}
+  end
+
+  defp build_lazy(module) do
+    %{args: [], field: :to_lazy, module: module, name: :to_lazy}
+  end
+
+  defp build_collect(module) do
+    %{args: [], field: :collect, module: module, name: :collect}
   end
 
   defp build_var(acc, nil), do: acc
