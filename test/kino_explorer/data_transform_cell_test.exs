@@ -1931,7 +1931,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       |> Map.delete(:pivot_wider)
       |> Map.values()
       |> List.flatten()
-      |> then(& &1 ++ pivot_wider)
+      |> then(&(&1 ++ pivot_wider))
 
     Map.put(root_attrs, "operations", operations)
   end
