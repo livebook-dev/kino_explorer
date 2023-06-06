@@ -10,6 +10,8 @@ defmodule KinoExplorer.DataTransformCellTest do
   @root %{
     "data_frame" => "people",
     "assign_to" => nil,
+    "lazy" => false,
+    "collect" => false,
     "data_frame_alias" => Explorer.DataFrame,
     "missing_require" => nil,
     "is_data_frame" => true
@@ -62,6 +64,8 @@ defmodule KinoExplorer.DataTransformCellTest do
   @base_attrs %{
     "assign_to" => nil,
     "data_frame" => "teams",
+    "lazy" => false,
+    "collect" => false,
     "data_frame_alias" => Explorer.DataFrame,
     "missing_require" => nil,
     "operations" => []
@@ -983,7 +987,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         "assign_to" => "exported_df",
         "data_frame_alias" => DF,
         "missing_require" => nil,
-        "is_data_frame" => true
+        "is_data_frame" => true,
+        "lazy" => false,
+        "collect" => false
       }
 
       operations = [
@@ -1063,6 +1069,167 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              require Explorer.DataFrame
              exported_df = people |> DF.filter(name == "Ana" and id < 2)\
+             """
+    end
+
+    test "source for a lazy data frame with collect" do
+      root = %{"lazy" => true, "collect" => true}
+
+      operations = %{
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
+        ],
+        filters: [
+          %{
+            "column" => "full name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.filter(col("full name") == "Ana")
+             |> Explorer.DataFrame.arrange(asc: col("full name"))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
+    test "source for a lazy data frame without collect" do
+      root = %{"lazy" => true}
+
+      operations = %{
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
+        ],
+        filters: [
+          %{
+            "column" => "full name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.filter(col("full name") == "Ana")
+             |> Explorer.DataFrame.arrange(asc: col("full name"))\
+             """
+    end
+
+    test "source for a lazy data with collect" do
+      root = %{
+        "data_frame" => "simple_data",
+        "is_data_frame" => false,
+        "lazy" => true,
+        "collect" => true
+      }
+
+      operations = %{
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
+        ],
+        filters: [
+          %{
+            "column" => "full name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             simple_data
+             |> Explorer.DataFrame.new(lazy: true)
+             |> Explorer.DataFrame.filter(col("full name") == "Ana")
+             |> Explorer.DataFrame.arrange(asc: col("full name"))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
+    test "source for a lazy data without collect" do
+      root = %{"data_frame" => "simple_data", "is_data_frame" => false, "lazy" => true}
+
+      operations = %{
+        sorting: [
+          %{
+            "direction" => "asc",
+            "sort_by" => "full name",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
+        ],
+        filters: [
+          %{
+            "column" => "full name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             simple_data
+             |> Explorer.DataFrame.new(lazy: true)
+             |> Explorer.DataFrame.filter(col("full name") == "Ana")
+             |> Explorer.DataFrame.arrange(asc: col("full name"))\
+             """
+    end
+
+    test "source for a lazy data frame without operations" do
+      root = %{"lazy" => true}
+      attrs = build_attrs(root, %{})
+
+      assert DataTransformCell.to_source(attrs) == """
+             people\
+             """
+    end
+
+    test "source for a lazy data without operations" do
+      root = %{"data_frame" => "simple_data", "is_data_frame" => false, "lazy" => true}
+      attrs = build_attrs(root, %{})
+
+      assert DataTransformCell.to_source(attrs) == """
+             simple_data |> Explorer.DataFrame.new(lazy: true)\
              """
     end
   end
