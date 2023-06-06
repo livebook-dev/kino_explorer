@@ -416,7 +416,7 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
 
-    nodes = if attrs.is_data_frame, do: nodes, else: [build_df() | nodes]
+    nodes = if attrs.is_data_frame, do: nodes, else: [build_df(attrs.data_frame_alias) | nodes]
 
     root = build_root(df)
 
@@ -502,8 +502,8 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp build_df() do
-    %{args: [], field: :new, module: Explorer.DataFrame, name: :new}
+  defp build_df(module) do
+    %{args: [], field: :new, module: module, name: :new}
   end
 
   defp build_var(acc, nil), do: acc
