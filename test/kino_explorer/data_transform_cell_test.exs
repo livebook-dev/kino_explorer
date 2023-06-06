@@ -823,7 +823,7 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
-    test "source with alias" do
+    test "source for a data frame with alias" do
       root = %{"data_frame_alias" => DF}
 
       operations = %{
@@ -851,6 +851,37 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people |> DF.filter(name == "Ana" and id < 2)\
+             """
+    end
+
+    test "source for a data with alias" do
+      root = %{"data_frame_alias" => DF, "is_data_frame" => false}
+
+      operations = %{
+        filters: [
+          %{
+            "column" => "name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          },
+          %{
+            "column" => "id",
+            "filter" => "less",
+            "type" => "integer",
+            "value" => "2",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> DF.new() |> DF.filter(name == "Ana" and id < 2)\
              """
     end
 
