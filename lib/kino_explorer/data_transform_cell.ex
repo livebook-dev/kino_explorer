@@ -420,13 +420,14 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
     missing_require = attrs.missing_require
-    has_pivot_wider = Enum.any?(attrs.operations, &(&1["operation_type"] == "pivot_wider"))
 
     nodes =
       attrs.operations
       |> Enum.map(&Map.new(&1, fn {k, v} -> convert_field(k, v) end))
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
+
+    has_pivot_wider = Enum.any?(nodes, &(&1.name == :pivot_wider && &1.args))
 
     nodes =
       nodes
@@ -524,7 +525,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp maybe_lazy(nodes, %{lazy: false}), do: nodes
 
   defp maybe_collect(nodes, %{lazy: false}, _), do: nodes
-  defp maybe_collect(nodes, %{collect: false}, _), do: nodes
+  defp maybe_collect(nodes, %{collect: false}, false), do: nodes
 
   defp maybe_collect(nodes, %{collect: true, lazy: true} = attrs, false) do
     nodes ++ [build_collect(attrs.data_frame_alias)]

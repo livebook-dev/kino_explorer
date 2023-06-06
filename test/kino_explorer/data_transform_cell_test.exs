@@ -48,6 +48,9 @@ defmodule KinoExplorer.DataTransformCellTest do
     summarise: [
       %{"columns" => [], "query" => nil, "active" => true, "operation_type" => "summarise"}
     ],
+    discard: [
+      %{"columns" => [], "active" => true, "operation_type" => "discard"}
+    ],
     pivot_wider: [
       %{
         "names_from" => nil,
@@ -55,9 +58,6 @@ defmodule KinoExplorer.DataTransformCellTest do
         "active" => true,
         "operation_type" => "pivot_wider"
       }
-    ],
-    discard: [
-      %{"columns" => [], "active" => true, "operation_type" => "discard"}
     ]
   }
 
@@ -1232,6 +1232,38 @@ defmodule KinoExplorer.DataTransformCellTest do
              simple_data |> Explorer.DataFrame.new(lazy: true)\
              """
     end
+
+    test "auto collect before a pivot_wider" do
+      root = %{"data_frame" => "teams", "lazy" => true, "data_frame_alias" => DF}
+
+      operations = %{
+        group_by: [
+          %{
+            "columns" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        pivot_wider: [
+          %{
+            "names_from" => "weekdays",
+            "values_from" => "hour",
+            "active" => true,
+            "operation_type" => "pivot_wider"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> DF.to_lazy()
+             |> DF.group_by("weekdays")
+             |> DF.collect()
+             |> DF.pivot_wider("weekdays", "hour")\
+             """
+    end
   end
 
   describe "operation events" do
@@ -1892,7 +1924,15 @@ defmodule KinoExplorer.DataTransformCellTest do
 
   defp build_attrs(root_attrs \\ %{}, operations_attrs) do
     root_attrs = Map.merge(@root, root_attrs)
-    operations = Map.merge(@base_operations, operations_attrs) |> Map.values() |> List.flatten()
+    pivot_wider = Map.get(operations_attrs, :pivot_wider) || @base_operations.pivot_wider
+
+    operations =
+      Map.merge(@base_operations, operations_attrs)
+      |> Map.delete(:pivot_wider)
+      |> Map.values()
+      |> List.flatten()
+      |> then(& &1 ++ pivot_wider)
+
     Map.put(root_attrs, "operations", operations)
   end
 end
