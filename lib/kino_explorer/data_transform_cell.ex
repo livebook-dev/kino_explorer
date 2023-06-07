@@ -94,8 +94,7 @@ defmodule KinoExplorer.DataTransformCell do
     root_fields = %{
       "data_frame" => attrs["data_frame"],
       "assign_to" => attrs["assign_to"],
-      "lazy" => attrs["lazy"] || false,
-      "collect" => attrs["collect"] || false
+      "collect" => (if Map.has_key?(attrs, "collect"), do: attrs["collect"], else: true)
     }
 
     operations = attrs["operations"]
@@ -427,13 +426,16 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
 
-    has_pivot_wider = Enum.any?(nodes, &(&1.name == :pivot_wider && &1.args))
+    pivot_wider = Enum.find_index(nodes, &(&1.name == :pivot_wider && &1.args))
+    first_group = Enum.find_index(nodes, &(&1.name == :group_by && &1.args))
+
+    idx = first_group || pivot_wider
 
     nodes =
       nodes
       |> maybe_build_df(attrs)
-      |> maybe_lazy(attrs)
-      |> maybe_collect(attrs, has_pivot_wider)
+      |> lazy(attrs)
+      |> maybe_collect(attrs, idx)
       |> maybe_clean_up(attrs)
 
     root = build_root(df)
@@ -515,25 +517,20 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp maybe_build_df(nodes, %{is_data_frame: true}), do: nodes
+  defp maybe_build_df(nodes, attrs), do: [build_df(attrs.data_frame_alias) | nodes]
 
-  defp maybe_build_df(nodes, attrs) do
-    [build_df(attrs.data_frame_alias, attrs.lazy) | nodes]
-  end
+  defp lazy(nodes, %{is_data_frame: false}), do: nodes
+  defp lazy(nodes, attrs), do: [build_lazy(attrs.data_frame_alias) | nodes]
 
-  defp maybe_lazy(nodes, %{is_data_frame: false}), do: nodes
-  defp maybe_lazy(nodes, %{lazy: true} = attrs), do: [build_lazy(attrs.data_frame_alias) | nodes]
-  defp maybe_lazy(nodes, %{lazy: false}), do: nodes
+  defp maybe_collect(nodes, %{collect: false}, nil), do: nodes
 
-  defp maybe_collect(nodes, %{lazy: false}, _), do: nodes
-  defp maybe_collect(nodes, %{collect: false}, false), do: nodes
-
-  defp maybe_collect(nodes, %{collect: true, lazy: true} = attrs, false) do
+  defp maybe_collect(nodes, %{collect: true} = attrs, nil) do
     nodes ++ [build_collect(attrs.data_frame_alias)]
   end
 
-  defp maybe_collect(nodes, %{lazy: true, data_frame_alias: data_frame_alias}, true) do
-    {pivot, nodes} = List.pop_at(nodes, -1)
-    nodes ++ [build_collect(data_frame_alias)] ++ [pivot]
+  defp maybe_collect(nodes, %{data_frame_alias: data_frame_alias}, idx) do
+    {lazy, collected} = Enum.split(nodes, idx + 1)
+    lazy ++ [build_collect(data_frame_alias)] ++ collected
   end
 
   defp maybe_collect(nodes, _, _), do: nodes
@@ -550,9 +547,8 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp build_df(module, lazy) do
-    args = if lazy, do: [[lazy: true]], else: []
-    %{args: args, field: :new, module: module, name: :new}
+  defp build_df(module) do
+    %{args: [[lazy: true]], field: :new, module: module, name: :new}
   end
 
   defp build_lazy(module) do
