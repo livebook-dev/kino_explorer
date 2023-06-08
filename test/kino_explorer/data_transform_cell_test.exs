@@ -664,8 +664,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
-             |> Explorer.DataFrame.group_by("weekdays")\
+             |> Explorer.DataFrame.group_by("weekdays")
+             |> Explorer.DataFrame.collect()\
              """
     end
 
@@ -687,8 +687,8 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
-             |> Explorer.DataFrame.group_by(["hour", "day"])\
+             |> Explorer.DataFrame.group_by(["hour", "day"])
+             |> Explorer.DataFrame.collect()\
              """
     end
 
@@ -718,9 +718,9 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
              |> Explorer.DataFrame.group_by("weekdays")
-             |> Explorer.DataFrame.summarise(hour_max: max(hour))\
+             |> Explorer.DataFrame.summarise(hour_max: max(hour))
+             |> Explorer.DataFrame.collect()\
              """
     end
 
@@ -750,9 +750,9 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
              |> Explorer.DataFrame.group_by("weekdays")
-             |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))\
+             |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))
+             |> Explorer.DataFrame.collect()\
              """
     end
 
@@ -788,13 +788,13 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
              |> Explorer.DataFrame.group_by("weekdays")
              |> Explorer.DataFrame.summarise(
                hour_max: max(hour),
                hour_min: min(hour),
                day_min: min(day)
-             )\
+             )
+             |> Explorer.DataFrame.collect()\
              """
     end
 
@@ -815,10 +815,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             teams
-             |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
-             |> Explorer.DataFrame.pivot_wider("weekdays", "hour")\
+             teams |> Explorer.DataFrame.pivot_wider("weekdays", "hour")\
              """
     end
 
@@ -839,10 +836,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             teams
-             |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.collect()
-             |> Explorer.DataFrame.pivot_wider("weekdays", ["hour", "day"])\
+             teams |> Explorer.DataFrame.pivot_wider("weekdays", ["hour", "day"])\
              """
     end
 
@@ -1146,40 +1140,7 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
-    test "source for a lazy data frame with collect" do
-      operations = %{
-        sorting: [
-          %{
-            "direction" => "asc",
-            "sort_by" => "full name",
-            "active" => true,
-            "operation_type" => "sorting"
-          }
-        ],
-        filters: [
-          %{
-            "column" => "full name",
-            "filter" => "equal",
-            "type" => "string",
-            "value" => "Ana",
-            "active" => true,
-            "operation_type" => "filters"
-          }
-        ]
-      }
-
-      attrs = build_attrs(operations)
-
-      assert DataTransformCell.to_source(attrs) == """
-             people
-             |> Explorer.DataFrame.to_lazy()
-             |> Explorer.DataFrame.filter(col("full name") == "Ana")
-             |> Explorer.DataFrame.arrange(asc: col("full name"))
-             |> Explorer.DataFrame.collect()\
-             """
-    end
-
-    test "source for a lazy data frame without collect" do
+    test "source for a data frame without collect" do
       root = %{"collect" => false}
 
       operations = %{
@@ -1213,12 +1174,8 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
-    test "source for a lazy data with collect" do
-      root = %{
-        "data_frame" => "simple_data",
-        "is_data_frame" => false,
-        "collect" => true
-      }
+    test "source for a data without collect" do
+      root = %{"data_frame" => "simple_data", "is_data_frame" => false, "collect" => false}
 
       operations = %{
         sorting: [
@@ -1247,72 +1204,22 @@ defmodule KinoExplorer.DataTransformCellTest do
              simple_data
              |> Explorer.DataFrame.new(lazy: true)
              |> Explorer.DataFrame.filter(col("full name") == "Ana")
-             |> Explorer.DataFrame.arrange(asc: col("full name"))
-             |> Explorer.DataFrame.collect()\
+             |> Explorer.DataFrame.arrange(asc: col("full name"))\
              """
     end
 
-    test "source for a lazy data without collect" do
-      root = %{"data_frame" => "simple_data", "is_data_frame" => false}
+    test "auto collect before a pivot_wider" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF, "collect" => false}
 
       operations = %{
-        sorting: [
-          %{
-            "direction" => "asc",
-            "sort_by" => "full name",
-            "active" => true,
-            "operation_type" => "sorting"
-          }
-        ],
         filters: [
           %{
-            "column" => "full name",
+            "column" => "weekdays",
             "filter" => "equal",
             "type" => "string",
-            "value" => "Ana",
+            "value" => "Monday",
             "active" => true,
             "operation_type" => "filters"
-          }
-        ]
-      }
-
-      attrs = build_attrs(root, operations)
-
-      assert DataTransformCell.to_source(attrs) == """
-             simple_data
-             |> Explorer.DataFrame.new(lazy: true)
-             |> Explorer.DataFrame.filter(col("full name") == "Ana")
-             |> Explorer.DataFrame.arrange(asc: col("full name"))
-             |> Explorer.DataFrame.collect()\
-             """
-    end
-
-    test "source for a lazy data frame without operations" do
-      attrs = build_attrs(%{}, %{})
-
-      assert DataTransformCell.to_source(attrs) == """
-             people\
-             """
-    end
-
-    test "source for a lazy data without operations" do
-      root = %{"data_frame" => "simple_data", "is_data_frame" => false}
-      attrs = build_attrs(root, %{})
-
-      assert DataTransformCell.to_source(attrs) == """
-             simple_data |> Explorer.DataFrame.new(lazy: true) |> Explorer.DataFrame.collect()\
-             """
-    end
-
-    test "auto collect before a group_by" do
-      root = %{"data_frame" => "teams", "data_frame_alias" => DF}
-
-      operations = %{
-        group_by: [
-          %{
-            "columns" => "weekdays",
-            "active" => true,
-            "operation_type" => "group_by"
           }
         ],
         pivot_wider: [
@@ -1330,9 +1237,41 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              teams
              |> DF.to_lazy()
+             |> DF.filter(weekdays == "Monday")
              |> DF.collect()
-             |> DF.group_by("weekdays")
              |> DF.pivot_wider("weekdays", "hour")\
+             """
+    end
+
+    test "auto collect after a group followed by an operation other than summarise" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF, "collect" => false}
+
+      operations = %{
+        group_by: [
+          %{
+            "columns" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        sort: [
+          %{
+            "sort_by" => "weekdays",
+            "direction" => "asc",
+            "active" => true,
+            "operation_type" => "sorting"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> DF.to_lazy()
+             |> DF.group_by("weekdays")
+             |> DF.collect()
+             |> DF.arrange(asc: weekdays)\
              """
     end
   end
