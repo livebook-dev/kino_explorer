@@ -1274,6 +1274,75 @@ defmodule KinoExplorer.DataTransformCellTest do
              |> DF.arrange(asc: weekdays)\
              """
     end
+
+    test "does not auto collect after a group followed by a summarise" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF, "collect" => false}
+
+      operations = %{
+        group_by: [
+          %{
+            "columns" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ],
+        summarise: [
+          %{
+            "columns" => ["hour"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> DF.to_lazy() |> DF.group_by("weekdays") |> DF.summarise(hour_max: max(hour))\
+             """
+    end
+
+    test "does not auto collect after a group when it's the last operation" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF, "collect" => false}
+
+      operations = %{
+        group_by: [
+          %{
+            "columns" => "weekdays",
+            "active" => true,
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> DF.to_lazy() |> DF.group_by("weekdays")\
+             """
+    end
+
+    test "does not generate noop lazy and collect when a pivot_wider is the only operation" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF}
+
+      operations = %{
+        pivot_wider: [
+          %{
+            "names_from" => "weekdays",
+            "values_from" => "hour",
+            "active" => true,
+            "operation_type" => "pivot_wider"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> DF.pivot_wider("weekdays", "hour")\
+             """
+    end
   end
 
   describe "operation events" do
