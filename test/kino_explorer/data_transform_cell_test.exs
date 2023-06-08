@@ -164,7 +164,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, %{})
 
       assert DataTransformCell.to_source(attrs) == """
-             simple_data |> Explorer.DataFrame.new(lazy: true) |> Explorer.DataFrame.collect()\
+             simple_data |> Explorer.DataFrame.new()\
              """
     end
 
@@ -1341,6 +1341,27 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams |> DF.pivot_wider("weekdays", "hour")\
+             """
+    end
+
+    test "does not generate noop for data when a pivot_wider is the only operation" do
+      root = %{"data_frame" => "teams", "data_frame_alias" => DF, "is_data_frame" => false}
+
+      operations = %{
+        pivot_wider: [
+          %{
+            "names_from" => "weekdays",
+            "values_from" => "hour",
+            "active" => true,
+            "operation_type" => "pivot_wider"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams |> DF.new() |> DF.pivot_wider("weekdays", "hour")\
              """
     end
   end

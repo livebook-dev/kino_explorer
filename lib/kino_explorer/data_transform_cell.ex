@@ -543,7 +543,10 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp maybe_collect(nodes, _, _), do: nodes
 
-  defp maybe_clean_up(nodes, %{is_data_frame: false}), do: nodes
+  defp maybe_clean_up([%{args: [[lazy: true]]} = new, %{field: :collect} | nodes], _) do
+    [%{new | args: []} | nodes]
+  end
+
   defp maybe_clean_up([%{field: :to_lazy}, %{field: :collect} | nodes], _), do: nodes
 
   defp maybe_clean_up(nodes, _) do
