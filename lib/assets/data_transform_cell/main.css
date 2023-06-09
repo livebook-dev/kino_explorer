@@ -163,6 +163,12 @@ input[type="number"] {
   flex-grow: 1;
   margin-bottom: 0;
   max-width: 350px;
+  min-width: auto;
+}
+
+.root-group {
+  display: flex;
+  gap: 16px;
 }
 
 .special-field {
@@ -799,7 +805,7 @@ select option {
 
 .switch-button-checkbox:disabled {
   background: white;
-  border-color: var(--blue-100);
+  border-color: var(--blue-200);
 }
 
 .switch-button-checkbox.filters:disabled {
@@ -838,7 +844,7 @@ select option {
 }
 
 .switch-button-checkbox:disabled + .switch-button-bg {
-  background-color: var(--blue-100);
+  background-color: var(--blue-200);
 }
 
 .switch-button-checkbox.filters:disabled + .switch-button-bg {

@@ -91,7 +91,12 @@ defmodule KinoExplorer.DataTransformCell do
 
   @impl true
   def init(attrs, ctx) do
-    root_fields = %{"data_frame" => attrs["data_frame"], "assign_to" => attrs["assign_to"]}
+    root_fields = %{
+      "data_frame" => attrs["data_frame"],
+      "assign_to" => attrs["assign_to"],
+      "collect" => if(Map.has_key?(attrs, "collect"), do: attrs["collect"], else: true)
+    }
+
     operations = attrs["operations"]
     operations = if operations, do: normalize_operations(operations), else: default_operations()
 
@@ -308,7 +313,12 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp updates_for_data_frame(data_frame, ctx) do
     %{
-      root_fields: %{"data_frame" => data_frame, "assign_to" => nil},
+      root_fields: %{
+        "data_frame" => data_frame,
+        "assign_to" => nil,
+        "lazy" => true,
+        "collect" => false
+      },
       operations: default_operations() |> update_data_options(ctx, data_frame)
     }
   end
@@ -415,8 +425,16 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.map(&Map.new(&1, fn {k, v} -> convert_field(k, v) end))
       |> Enum.chunk_by(& &1.operation_type)
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
+      |> Enum.filter(& &1.args)
 
-    nodes = if attrs.is_data_frame, do: nodes, else: [build_df(attrs.data_frame_alias) | nodes]
+    idx = collect_index(nodes, length(nodes), 0)
+
+    nodes =
+      nodes
+      |> maybe_build_df(attrs)
+      |> lazy(attrs)
+      |> maybe_collect(attrs, idx)
+      |> maybe_clean_up(attrs)
 
     root = build_root(df)
 
@@ -496,6 +514,35 @@ defmodule KinoExplorer.DataTransformCell do
     %{field: :pivot_wider, name: :pivot_wider, args: pivot_wider_args}
   end
 
+  defp maybe_build_df(nodes, %{is_data_frame: true}), do: nodes
+  defp maybe_build_df(nodes, attrs), do: [build_df(attrs.data_frame_alias) | nodes]
+
+  defp lazy(nodes, %{is_data_frame: false}), do: nodes
+  defp lazy(nodes, attrs), do: [build_lazy(attrs.data_frame_alias) | nodes]
+
+  defp maybe_collect(nodes, %{collect: false}, nil), do: nodes
+
+  defp maybe_collect(nodes, %{collect: true} = attrs, nil) do
+    nodes ++ [build_collect(attrs.data_frame_alias)]
+  end
+
+  defp maybe_collect(nodes, %{data_frame_alias: data_frame_alias}, idx) do
+    {lazy, collected} = Enum.split(nodes, idx + 1)
+    lazy ++ [build_collect(data_frame_alias)] ++ collected
+  end
+
+  defp maybe_collect(nodes, _, _), do: nodes
+
+  defp maybe_clean_up([%{args: [[lazy: true]]} = new, %{field: :collect} | nodes], _) do
+    [%{new | args: []} | nodes]
+  end
+
+  defp maybe_clean_up([%{field: :to_lazy}, %{field: :collect} | nodes], _), do: nodes
+
+  defp maybe_clean_up(nodes, _) do
+    if Enum.all?(nodes, &(!&1.args || &1.args == [])), do: [], else: nodes
+  end
+
   defp build_root(df) do
     quote do
       unquote(Macro.var(String.to_atom(df), nil))
@@ -503,7 +550,15 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp build_df(module) do
-    %{args: [], field: :new, module: module, name: :new}
+    %{args: [[lazy: true]], field: :new, module: module, name: :new}
+  end
+
+  defp build_lazy(module) do
+    %{args: [], field: :to_lazy, module: module, name: :to_lazy}
+  end
+
+  defp build_collect(module) do
+    %{args: [], field: :collect, module: module, name: :collect}
   end
 
   defp build_var(acc, nil), do: acc
@@ -852,4 +907,13 @@ defmodule KinoExplorer.DataTransformCell do
     df = ctx.assigns.root_fields["data_frame"]
     Map.get(ctx.assigns.data_frame_variables, df)
   end
+
+  defp collect_index([%{name: :group_by}, %{name: :summarise} | rest], size, idx) do
+    collect_index(rest, size, idx + 2)
+  end
+
+  defp collect_index([%{name: :group_by} | _], size, idx), do: if(idx < size - 1, do: idx + 1)
+  defp collect_index([%{name: :pivot_wider}], _size, idx), do: idx
+  defp collect_index([_ | rest], size, idx), do: collect_index(rest, size, idx + 1)
+  defp collect_index([], _size, _idx), do: nil
 end
