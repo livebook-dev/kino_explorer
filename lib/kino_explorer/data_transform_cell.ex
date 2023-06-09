@@ -427,17 +427,7 @@ defmodule KinoExplorer.DataTransformCell do
       |> Enum.map(&(to_quoted(&1) |> Map.merge(%{module: attrs.data_frame_alias})))
       |> Enum.filter(& &1.args)
 
-    pivot_wider = Enum.find_index(nodes, &(&1.name == :pivot_wider))
-
-    group =
-      nodes
-      |> Enum.with_index()
-      |> Enum.map(fn {v, i} -> if v.name == :group_by, do: i end)
-      |> Enum.reject(&(!&1 or &1 >= length(nodes) - 1))
-      |> Enum.map(&if Map.get(Enum.at(nodes, &1 + 1), :name) != :summarise, do: &1)
-      |> List.first()
-
-    idx = if group, do: group + 1, else: pivot_wider
+    idx = collect_index(nodes, length(nodes), 0)
 
     nodes =
       nodes
@@ -917,4 +907,13 @@ defmodule KinoExplorer.DataTransformCell do
     df = ctx.assigns.root_fields["data_frame"]
     Map.get(ctx.assigns.data_frame_variables, df)
   end
+
+  defp collect_index([%{name: :group_by}, %{name: :summarise} | rest], size, idx) do
+    collect_index(rest, size, idx + 2)
+  end
+
+  defp collect_index([%{name: :group_by} | _], size, idx), do: if(idx < size - 1, do: idx + 1)
+  defp collect_index([%{name: :pivot_wider}], _size, idx), do: idx
+  defp collect_index([_ | rest], size, idx), do: collect_index(rest, size, idx + 1)
+  defp collect_index([], _size, _idx), do: nil
 end

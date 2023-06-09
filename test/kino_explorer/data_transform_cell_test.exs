@@ -1323,6 +1323,82 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "collect only after the first group" do
+      attrs = %{
+        "assign_to" => nil,
+        "collect" => true,
+        "data_frame" => "fuels",
+        "data_frame_alias" => DF,
+        "is_data_frame" => true,
+        "missing_require" => nil,
+        "operations" => [
+          %{
+            "active" => true,
+            "columns" => ["cement", "country", "bunker_fuels"],
+            "operation_type" => "group_by"
+          },
+          %{
+            "active" => true,
+            "direction" => "asc",
+            "operation_type" => "sorting",
+            "sort_by" => "bunker_fuels"
+          },
+          %{
+            "active" => true,
+            "columns" => ["cement"],
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      assert DataTransformCell.to_source(attrs) == """
+             fuels
+             |> DF.to_lazy()
+             |> DF.group_by(["cement", "country", "bunker_fuels"])
+             |> DF.collect()
+             |> DF.arrange(asc: bunker_fuels)
+             |> DF.group_by("cement")\
+             """
+    end
+
+    test "auto collect only after the first group" do
+      attrs = %{
+        "assign_to" => nil,
+        "collect" => false,
+        "data_frame" => "fuels",
+        "data_frame_alias" => DF,
+        "is_data_frame" => true,
+        "missing_require" => nil,
+        "operations" => [
+          %{
+            "active" => true,
+            "columns" => ["cement", "country", "bunker_fuels"],
+            "operation_type" => "group_by"
+          },
+          %{
+            "active" => true,
+            "direction" => "asc",
+            "operation_type" => "sorting",
+            "sort_by" => "bunker_fuels"
+          },
+          %{
+            "active" => true,
+            "columns" => ["cement"],
+            "operation_type" => "group_by"
+          }
+        ]
+      }
+
+      assert DataTransformCell.to_source(attrs) == """
+             fuels
+             |> DF.to_lazy()
+             |> DF.group_by(["cement", "country", "bunker_fuels"])
+             |> DF.collect()
+             |> DF.arrange(asc: bunker_fuels)
+             |> DF.group_by("cement")\
+             """
+    end
+
     test "does not generate noop lazy and collect when a pivot_wider is the only operation" do
       root = %{"data_frame" => "teams", "data_frame_alias" => DF}
 
