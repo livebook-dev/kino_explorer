@@ -1254,7 +1254,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "operation_type" => "group_by"
           }
         ],
-        sort: [
+        sorting: [
           %{
             "sort_by" => "weekdays",
             "direction" => "asc",
