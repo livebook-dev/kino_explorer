@@ -1,7 +1,7 @@
 defmodule KinoExplorer.MixProject do
   use Mix.Project
 
-  @version "0.1.7"
+  @version "0.1.8"
   @description "Explorer integration with Livebook"
 
   def project do
@@ -30,7 +30,7 @@ defmodule KinoExplorer.MixProject do
       {:kino, "~> 0.9.4"},
       {:explorer, "~> 0.6.1"},
       {:rustler, "~> 0.29.0", optional: true},
-      {:ex_doc, "~> 0.29", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.30.0", only: :dev, runtime: false}
     ]
   end
 

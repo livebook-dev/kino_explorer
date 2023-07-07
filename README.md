@@ -1,6 +1,6 @@
 # KinoExplorer
 
-[Explorer](https://github.com/elixir-nx/explorer) integration with
+[Explorer](https://github.com/elixir-explorer/explorer) integration with
 [Kino](https://github.com/livebook-dev/kino) for
 [Livebook](https://github.com/livebook-dev/livebook).
 
@@ -10,7 +10,7 @@ To bring KinoExplorer to Livebook all you need to do is Mix.install/2:
 
 ```elixir
 Mix.install([
-  {:kino_explorer, "~> 0.1.7"}
+  {:kino_explorer, "~> 0.1.8"}
 ])
 ```
 
