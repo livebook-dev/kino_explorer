@@ -798,6 +798,54 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with summarise without group_by" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        summarise: [
+          %{
+            "columns" => ["hour"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.summarise(hour_max: max(hour))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
+    test "source for a data frame with summarise with multiple columns without group_by" do
+      root = %{"data_frame" => "teams"}
+
+      operations = %{
+        summarise: [
+          %{
+            "columns" => ["hour", "day"],
+            "query" => "max",
+            "active" => true,
+            "operation_type" => "summarise"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             teams
+             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
     test "source for a data frame with pivot wider" do
       root = %{"data_frame" => "teams"}
 
@@ -1990,33 +2038,6 @@ defmodule KinoExplorer.DataTransformCellTest do
   end
 
   describe "invalid operations" do
-    test "doesn't crash the smart cell when there're invalid operations" do
-      operations = [
-        %{
-          "active" => true,
-          "columns" => ["hour"],
-          "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
-          },
-          "operation_type" => "summarise",
-          "query" => "max"
-        }
-      ]
-
-      attrs = Map.put(@base_attrs, "operations", operations)
-      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
-      connect(kino)
-      teams = teams_df()
-      env = Code.env_for_eval([])
-      DataTransformCell.scan_binding(kino.pid, binding(), env)
-
-      push_event(kino, "add_operation", %{"operation_type" => "filters"})
-      updated_operations = operations ++ @base_operations.filters
-      assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
-    end
-
     test "allows user to recover from invalid operations" do
       operations = [
         %{
