@@ -164,7 +164,16 @@ defmodule Kino.Explorer do
   end
 
   defp type_of(dtype, _) when dtype in [:integer, :float], do: "number"
-  defp type_of(dtype, _) when dtype in [:date, :datetime], do: "date"
+
+  defp type_of(dtype, _)
+       when dtype in [
+              :date,
+              {:datetime, :nanosecond},
+              {:datetime, :microsecond},
+              {:datetime, :millisecond}
+            ],
+       do: "date"
+
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(_, _), do: "text"

@@ -100,7 +100,7 @@ defmodule KinoExplorer.DataTransformCellTest do
           %{
             "active" => true,
             "column" => nil,
-            "data_options" => %{"id" => :integer, "name" => :string},
+            "data_options" => %{"id" => "integer", "name" => "string"},
             "datalist" => [],
             "filter" => nil,
             "operation_type" => "filters",
@@ -134,9 +134,9 @@ defmodule KinoExplorer.DataTransformCellTest do
             "active" => true,
             "column" => nil,
             "data_options" => %{
-              "id" => :integer,
-              "name" => :string,
-              "website" => :string
+              "id" => "integer",
+              "name" => "string",
+              "website" => "string"
             },
             "datalist" => [],
             "filter" => nil,
@@ -1670,7 +1670,7 @@ defmodule KinoExplorer.DataTransformCellTest do
         %{
           "active" => true,
           "column" => "team",
-          "data_options" => %{"hour" => :integer, "team" => :string, "weekday" => :string},
+          "data_options" => %{"hour" => "integer", "team" => "string", "weekday" => "string"},
           "datalist" => ["A", "B", "C"],
           "filter" => "equal",
           "message" => nil,
@@ -1689,9 +1689,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "column" => "team",
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "datalist" => ["A", "B", "C"],
           "filter" => "equal",
@@ -1703,9 +1703,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         %{
           "active" => true,
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "columns" => ["weekday"],
           "operation_type" => "group_by"
@@ -1714,9 +1714,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "columns" => ["hour"],
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "operation_type" => "summarise",
           "query" => "max"
@@ -1735,7 +1735,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       synced_filter =
         @base_operations.filters
         |> hd()
-        |> Map.put("data_options", %{"hour_max" => :integer, "weekday" => :string})
+        |> Map.put("data_options", %{"hour_max" => "integer", "weekday" => "string"})
 
       updated_operations = operations ++ [synced_filter]
 
@@ -1748,9 +1748,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "column" => "team",
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "datalist" => ["A", "B", "C"],
           "filter" => "equal",
@@ -1762,9 +1762,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         %{
           "active" => true,
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "columns" => ["weekday"],
           "operation_type" => "group_by"
@@ -1773,9 +1773,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "columns" => ["hour"],
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "operation_type" => "summarise",
           "query" => "max"
@@ -1794,7 +1794,11 @@ defmodule KinoExplorer.DataTransformCellTest do
       synced_summarise =
         @base_operations.summarise
         |> hd()
-        |> Map.put("data_options", %{"hour" => :integer, "team" => :string, "weekday" => :string})
+        |> Map.put("data_options", %{
+          "hour" => "integer",
+          "team" => "string",
+          "weekday" => "string"
+        })
 
       updated_operations = operations ++ [synced_summarise]
 
@@ -1809,9 +1813,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "column" => "team",
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "datalist" => ["A", "B", "C"],
           "filter" => "equal",
@@ -1849,9 +1853,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         "active" => true,
         "column" => "team",
         "data_options" => %{
-          "hour" => :integer,
-          "team" => :string,
-          "weekday" => :string
+          "hour" => "integer",
+          "team" => "string",
+          "weekday" => "string"
         },
         "datalist" => ["A"],
         "filter" => "equal",
@@ -1872,9 +1876,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "column" => "team",
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "datalist" => ["A", "B", "C"],
           "filter" => "equal",
@@ -1887,9 +1891,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "column" => "team",
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "datalist" => ["A"],
           "filter" => "equal",
@@ -1961,9 +1965,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         Enum.map(
           operations,
           &Map.put(&1, "data_options", %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           })
         )
 
@@ -2016,14 +2020,14 @@ defmodule KinoExplorer.DataTransformCellTest do
         Enum.map(
           operations,
           &Map.put(&1, "data_options", %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           })
         )
 
       updated_sort =
-        Map.put(sort, "data_options", %{"hour_max" => :integer, "weekday" => :string})
+        Map.put(sort, "data_options", %{"hour_max" => "integer", "weekday" => "string"})
 
       updated_operations = updated_operations ++ [updated_sort]
 
@@ -2044,9 +2048,9 @@ defmodule KinoExplorer.DataTransformCellTest do
           "active" => true,
           "columns" => ["hour"],
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "operation_type" => "summarise",
           "query" => "max"
@@ -2054,9 +2058,9 @@ defmodule KinoExplorer.DataTransformCellTest do
         %{
           "active" => true,
           "data_options" => %{
-            "hour" => :integer,
-            "team" => :string,
-            "weekday" => :string
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
           },
           "columns" => ["weekday"],
           "operation_type" => "group_by"
@@ -2085,7 +2089,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       operations = List.insert_at(operations, 0, operation)
 
       synced_filter =
-        Map.put(filter, "data_options", %{"hour_max" => :integer, "weekday" => :string})
+        Map.put(filter, "data_options", %{"hour_max" => "integer", "weekday" => "string"})
 
       updated_operations = operations ++ [synced_filter]
 
@@ -2096,7 +2100,12 @@ defmodule KinoExplorer.DataTransformCellTest do
   defp people_df() do
     Explorer.DataFrame.new(%{
       id: [3, 1, 2],
-      name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]
+      name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords"],
+      start: [
+        ~N[2023-12-12 12:12:12.121212],
+        ~N[2023-12-01 02:03:04.050607],
+        ~N[2023-11-11 11:11:11.111111]
+      ]
     })
   end
 

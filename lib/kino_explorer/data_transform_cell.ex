@@ -13,40 +13,46 @@ defmodule KinoExplorer.DataTransformCell do
     "boolean",
     "category",
     "date",
-    "datetime",
+    "datetime[ms]",
+    "datetime[μs]",
+    "datetime[ns]",
     "float",
     "integer",
     "string",
     "time"
   ]
   @filter_options %{
-    binary: ["equal", "contains", "not equal"],
-    boolean: ["equal", "not equal"],
-    category: ["equal", "contains", "not equal"],
-    date: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    datetime: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    float: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    integer: ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    string: ["equal", "contains", "not equal"],
-    time: ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
+    "binary" => ["equal", "contains", "not equal"],
+    "boolean" => ["equal", "not equal"],
+    "category" => ["equal", "contains", "not equal"],
+    "date" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "datetime[ms]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "datetime[μs]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "datetime[ns]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "float" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "string" => ["equal", "contains", "not equal"],
+    "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
   }
   @fill_missing_options %{
-    binary: ["forward", "backward", "max", "min", "scalar"],
-    boolean: ["forward", "backward", "max", "min", "scalar"],
-    category: ["forward", "backward", "max", "min", "scalar"],
-    date: ["forward", "backward", "max", "min", "mean", "scalar"],
-    datetime: ["forward", "backward", "max", "min", "mean", "scalar"],
-    float: ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
-    integer: ["forward", "backward", "max", "min", "mean", "scalar"],
-    string: ["forward", "backward", "max", "min", "scalar"],
-    time: ["forward", "backward", "max", "min", "mean", "scalar"]
+    "binary" => ["forward", "backward", "max", "min", "scalar"],
+    "boolean" => ["forward", "backward", "max", "min", "scalar"],
+    "category" => ["forward", "backward", "max", "min", "scalar"],
+    "date" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "datetime[ms]" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "datetime[μs]" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "datetime[ns]" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "float" => ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
+    "integer" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "string" => ["forward", "backward", "max", "min", "scalar"],
+    "time" => ["forward", "backward", "max", "min", "mean", "scalar"]
   }
   @summarise_options %{
     count: @column_types,
-    max: ["integer", "float", "date", "time", "datetime"],
+    max: ["integer", "float", "date", "time", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
     mean: ["integer", "float"],
     median: ["integer", "float"],
-    min: ["integer", "float", "date", "time", "datetime"],
+    min: ["integer", "float", "date", "time", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
     n_distinct: @column_types,
     nil_count: @column_types,
     standard_deviation: ["integer", "float"],
@@ -55,7 +61,16 @@ defmodule KinoExplorer.DataTransformCell do
   }
   @pivot_wider_types %{
     names_from: @column_types,
-    values_from: ["date", "datetime", "float", "integer", "time", "category"]
+    values_from: [
+      "date",
+      "datetime[ms]",
+      "datetime[μs]",
+      "datetime[ns]",
+      "float",
+      "integer",
+      "time",
+      "category"
+    ]
   }
   @queried_filter_options [
     "mean",
@@ -69,11 +84,11 @@ defmodule KinoExplorer.DataTransformCell do
     "quantile(80)",
     "quantile(90)"
   ]
-  @queried_filter_types [:integer, :float]
+  @queried_filter_types ["integer", "float"]
 
   @grouped_fields_operations ["filters", "fill_missing", "summarise"]
   @validation_by_type [:filters, :fill_missing]
-  @as_atom ["direction", "type", "operation_type", "strategy", "query"]
+  @as_atom ["direction", "operation_type", "strategy", "query"]
   @filters %{
     "less" => "<",
     "less equal" => "<=",
@@ -333,8 +348,8 @@ defmodule KinoExplorer.DataTransformCell do
     current_fill = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_fill["column"]
     data_options = current_fill["data_options"] || %{}
-    type = Map.get(data_options, column) || :string
-    default_scalar = if type == :boolean, do: "true"
+    type = Map.get(data_options, column) || "string"
+    default_scalar = if type == "boolean", do: "true"
 
     message = if field == "scalar", do: validation_message(:fill_missing, type, value)
 
@@ -343,7 +358,7 @@ defmodule KinoExplorer.DataTransformCell do
         "column" => column,
         "strategy" => "forward",
         "scalar" => default_scalar,
-        "type" => Atom.to_string(type),
+        "type" => type,
         "active" => current_fill["active"],
         "operation_type" => "fill_missing",
         "message" => message,
@@ -358,7 +373,7 @@ defmodule KinoExplorer.DataTransformCell do
     current_filter = get_in(ctx.assigns.operations, [Access.at(idx)])
     column = if field == "column", do: value, else: current_filter["column"]
     data_options = current_filter["data_options"] || %{}
-    type = Map.get(data_options, column) || :string
+    type = Map.get(data_options, column) || "string"
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
 
@@ -367,7 +382,7 @@ defmodule KinoExplorer.DataTransformCell do
         "filter" => "equal",
         "column" => column,
         "value" => default_value,
-        "type" => Atom.to_string(type),
+        "type" => type,
         "message" => message,
         "active" => current_filter["active"],
         "operation_type" => "filters",
@@ -592,7 +607,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp build_filter([column, filter, "quantile(" <> <<value::bytes-size(2)>> <> ")", _] = args) do
     with true <- Enum.all?(args, &(&1 != nil)),
-         {:ok, filter_value} <- cast_typed_value(:integer, value) do
+         {:ok, filter_value} <- cast_typed_value("integer", value) do
       {String.to_atom(filter), [],
        [
          quoted_column(column),
@@ -720,36 +735,39 @@ defmodule KinoExplorer.DataTransformCell do
     %{"columns" => [], "active" => true, "operation_type" => "discard"}
   end
 
-  defp cast_typed_value(:boolean, "true"), do: {:ok, true}
-  defp cast_typed_value(:boolean, "false"), do: {:ok, false}
-  defp cast_typed_value(:boolean, _), do: nil
+  defp cast_typed_value("boolean", "true"), do: {:ok, true}
+  defp cast_typed_value("boolean", "false"), do: {:ok, false}
+  defp cast_typed_value("boolean", _), do: nil
 
-  defp cast_typed_value(:integer, value) do
+  defp cast_typed_value("integer", value) do
     case Integer.parse(value) do
       {value, _} -> {:ok, value}
       _ -> nil
     end
   end
 
-  defp cast_typed_value(:float, value) do
+  defp cast_typed_value("float", value) do
     case Float.parse(value) do
       {value, _} -> {:ok, value}
       _ -> nil
     end
   end
 
-  defp cast_typed_value(type, value) when type in [:date, :datetime], do: to_date(type, value)
-  defp cast_typed_value(:time, value), do: to_time(value)
+  defp cast_typed_value(type, value)
+       when type in ["date", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
+       do: to_date(type, value)
+
+  defp cast_typed_value("time", value), do: to_time(value)
   defp cast_typed_value(_, value), do: {:ok, value}
 
-  defp to_date(:date, value) do
+  defp to_date("date", value) do
     case Date.from_iso8601(value) do
       {:ok, date} -> {:ok, date}
       _ -> nil
     end
   end
 
-  defp to_date(:datetime, value) do
+  defp to_date("datetime" <> _, value) do
     case NaiveDateTime.from_iso8601(value) do
       {:ok, date} -> {:ok, date}
       _ -> nil
@@ -765,7 +783,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp validation_message(:filters, _type, "quantile" <> _rest = quantile) do
     with %{"value" => value} <- Regex.named_captures(~r/quantile\((?<value>\d+)\)/, quantile),
-         {:ok, value} <- cast_typed_value(:integer, value),
+         {:ok, value} <- cast_typed_value("integer", value),
          true <- value >= 0 and value <= 100 do
       nil
     else
@@ -824,8 +842,8 @@ defmodule KinoExplorer.DataTransformCell do
     data_options =
       case df do
         nil -> nil
-        %DataFrame{} -> DataFrame.dtypes(df)
-        _ -> df |> DataFrame.new() |> DataFrame.dtypes()
+        %DataFrame{} -> DataFrame.dtypes(df) |> normalize_dtypes()
+        _ -> df |> DataFrame.new() |> DataFrame.dtypes() |> normalize_dtypes()
       end
 
     [Map.put(operation, "data_options", data_options)]
@@ -857,7 +875,7 @@ defmodule KinoExplorer.DataTransformCell do
             |> Code.eval_string(binding)
             |> elem(0)
 
-          data_options = DataFrame.dtypes(df)
+          data_options = DataFrame.dtypes(df) |> normalize_dtypes()
 
           Map.put(operation, "data_options", data_options)
           |> maybe_update_datalist(df)
@@ -916,4 +934,15 @@ defmodule KinoExplorer.DataTransformCell do
   defp collect_index([%{name: :pivot_wider}], _size, idx), do: idx
   defp collect_index([_ | rest], size, idx), do: collect_index(rest, size, idx + 1)
   defp collect_index([], _size, _idx), do: nil
+
+  defp normalize_dtypes(map) do
+    map
+    |> Enum.map(fn
+      {k, {:datetime, :millisecond}} -> {k, "datetime[ms]"}
+      {k, {:datetime, :microsecond}} -> {k, "datetime[μs]"}
+      {k, {:datetime, :nanosecond}} -> {k, "datetime[ns]"}
+      {k, v} -> {k, Atom.to_string(v)}
+    end)
+    |> Enum.into(%{})
+  end
 end
