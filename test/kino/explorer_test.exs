@@ -8,7 +8,12 @@ defmodule Kino.ExplorerTest do
   defp people_df() do
     Explorer.DataFrame.new(%{
       id: [3, 1, 2],
-      name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]
+      name: ["Amy Santiago", "Jake Peralta", "Terry Jeffords"],
+      start: [
+        ~N[2023-12-12 12:12:12.121212],
+        ~N[2023-12-01 02:03:04.050607],
+        ~N[2023-11-11 11:11:11.111111]
+      ]
     })
   end
 
@@ -21,7 +26,8 @@ defmodule Kino.ExplorerTest do
              content: %{
                columns: [
                  %{key: "0", label: "id", type: "number"},
-                 %{key: "1", label: "name", type: "text"}
+                 %{key: "1", label: "name", type: "text"},
+                 %{key: "2", label: "start", type: "date"}
                ]
              }
            } = data
@@ -33,7 +39,15 @@ defmodule Kino.ExplorerTest do
 
     assert %{
              content: %{
-               data: [["3", "1", "2"], ["Amy Santiago", "Jake Peralta", "Terry Jeffords"]],
+               data: [
+                 ["3", "1", "2"],
+                 ["Amy Santiago", "Jake Peralta", "Terry Jeffords"],
+                 [
+                   "2023-12-12 12:12:12.121212",
+                   "2023-12-01 02:03:04.050607",
+                   "2023-11-11 11:11:11.111111"
+                 ]
+               ],
                total_rows: 3
              }
            } = data
@@ -49,9 +63,14 @@ defmodule Kino.ExplorerTest do
     assert_broadcast_event(widget, "update_content", %{
       columns: [
         %{key: "0", label: "id", type: "number"},
-        %{key: "1", label: "name", type: "text"}
+        %{key: "1", label: "name", type: "text"},
+        %{key: "2", label: "start", type: "date"}
       ],
-      data: [["2", "1", "3"], ["Terry Jeffords", "Jake Peralta", "Amy Santiago"]],
+      data: [
+        ["2", "1", "3"],
+        ["Terry Jeffords", "Jake Peralta", "Amy Santiago"],
+        ["2023-11-11 11:11:11.111111", "2023-12-01 02:03:04.050607", "2023-12-12 12:12:12.121212"]
+      ],
       order: %{direction: :desc, key: "1"}
     })
   end

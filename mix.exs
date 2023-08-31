@@ -28,7 +28,7 @@ defmodule KinoExplorer.MixProject do
   defp deps do
     [
       {:kino, "~> 0.9.4 or ~> 0.10"},
-      {:explorer, "~> 0.6.1"},
+      {:explorer, "~> 0.7"},
       {:rustler, "~> 0.29.0", optional: true},
       {:ex_doc, "~> 0.30.0", only: :dev, runtime: false}
     ]
