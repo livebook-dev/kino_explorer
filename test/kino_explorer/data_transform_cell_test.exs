@@ -1036,6 +1036,37 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source with export to an invalid var" do
+      root = %{"data_frame_alias" => DF, "assign_to" => "exported_df invalid"}
+
+      operations = %{
+        filters: [
+          %{
+            "column" => "name",
+            "filter" => "equal",
+            "type" => "string",
+            "value" => "Ana",
+            "active" => true,
+            "operation_type" => "filters"
+          },
+          %{
+            "column" => "id",
+            "filter" => "less",
+            "type" => "integer",
+            "value" => "2",
+            "active" => true,
+            "operation_type" => "filters"
+          }
+        ]
+      }
+
+      attrs = build_attrs(root, operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             people |> DF.to_lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
+             """
+    end
+
     test "source with inactive operations" do
       root = %{"data_frame_alias" => DF, "assign_to" => "exported_df"}
 

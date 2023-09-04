@@ -434,6 +434,7 @@ defmodule KinoExplorer.DataTransformCell do
   defp to_quoted(%{"data_frame" => df, "assign_to" => variable} = attrs) do
     attrs = Map.new(attrs, fn {k, v} -> convert_field(k, v) end)
     missing_require = attrs.missing_require
+    variable = if variable && Kino.SmartCell.valid_variable_name?(variable), do: variable
 
     nodes =
       attrs.operations
