@@ -166,9 +166,14 @@ defmodule KinoExplorer.DataTransformCell do
     data_frames =
       for {key, val} <- binding do
         case valid_data(val) do
-          true -> %{variable: Atom.to_string(key), data: val, data_frame: true}
-          {data, false} -> %{variable: Atom.to_string(key), data: data, data_frame: false}
-          _ -> false
+          {dtypes, true} ->
+            %{variable: Atom.to_string(key), data: val, data_frame: true, dtypes: dtypes}
+
+          {dtypes, false} ->
+            %{variable: Atom.to_string(key), data: val, data_frame: false, dtypes: dtypes}
+
+          _ ->
+            false
         end
       end
       |> Enum.filter(& &1)
@@ -838,13 +843,8 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
-    df = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :data)))
-
-    data_options =
-      case df do
-        nil -> nil
-        %DataFrame{} -> DataFrame.dtypes(df) |> normalize_dtypes()
-      end
+    dtypes = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :dtypes)))
+    data_options = if dtypes, do: normalize_dtypes(dtypes)
 
     [Map.put(operation, "data_options", data_options)]
   end
@@ -907,17 +907,25 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp maybe_update_datalist(operation, _df), do: operation
 
-  defp valid_data(%DataFrame{}), do: true
+  defp valid_data(%DataFrame{} = df), do: {DataFrame.dtypes(df), true}
 
   defp valid_data(data) do
-    try do
-      data = DataFrame.new(data)
-      {data, false}
-    rescue
-      _ ->
-        false
+    with true <- implements?(Table.Reader, data),
+         {_, %{columns: [_ | _] = columns}, _} <- Table.Reader.init(data),
+         true <- Enum.all?(columns, &implements?(String.Chars, &1)) do
+      try do
+        dtypes = DataFrame.new(data) |> DataFrame.dtypes()
+        {dtypes, false}
+      rescue
+        _ ->
+          false
+      end
+    else
+      _ -> false
     end
   end
+
+  defp implements?(protocol, value), do: protocol.impl_for(value) != nil
 
   defp is_data_frame?(ctx) do
     df = ctx.assigns.root_fields["data_frame"]
