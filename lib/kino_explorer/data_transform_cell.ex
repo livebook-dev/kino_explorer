@@ -164,13 +164,14 @@ defmodule KinoExplorer.DataTransformCell do
   @impl true
   def handle_info({:scan_binding_result, binding, data_frame_alias, missing_require}, ctx) do
     data_frames =
-      for {key, val} <- binding,
-          valid_data(val),
-          do: %{
-            variable: Atom.to_string(key),
-            data: val,
-            data_frame: is_struct(val, DataFrame)
-          }
+      for {key, val} <- binding do
+        case valid_data(val) do
+          true -> %{variable: Atom.to_string(key), data: val, data_frame: true}
+          {data, false} -> %{variable: Atom.to_string(key), data: data, data_frame: false}
+          _ -> false
+        end
+      end
+      |> Enum.filter(& &1)
 
     data_frame_variables = Enum.map(data_frames, &{&1.variable, &1.data_frame}) |> Enum.into(%{})
 
@@ -843,7 +844,6 @@ defmodule KinoExplorer.DataTransformCell do
       case df do
         nil -> nil
         %DataFrame{} -> DataFrame.dtypes(df) |> normalize_dtypes()
-        _ -> df |> DataFrame.new() |> DataFrame.dtypes() |> normalize_dtypes()
       end
 
     [Map.put(operation, "data_options", data_options)]
@@ -911,8 +911,8 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp valid_data(data) do
     try do
-      DataFrame.new(data)
-      true
+      data = DataFrame.new(data)
+      {data, false}
     rescue
       _ ->
         false
