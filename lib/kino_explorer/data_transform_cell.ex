@@ -910,16 +910,14 @@ defmodule KinoExplorer.DataTransformCell do
   defp valid_data(%DataFrame{}), do: true
 
   defp valid_data(data) do
-    with true <- implements?(Table.Reader, data),
-         {_, %{columns: [_ | _] = columns}, _} <- Table.Reader.init(data),
-         true <- Enum.all?(columns, &implements?(String.Chars, &1)) do
+    try do
+      DataFrame.new(data)
       true
-    else
-      _ -> false
+    rescue
+      _ ->
+        false
     end
   end
-
-  defp implements?(protocol, value), do: protocol.impl_for(value) != nil
 
   defp is_data_frame?(ctx) do
     df = ctx.assigns.root_fields["data_frame"]

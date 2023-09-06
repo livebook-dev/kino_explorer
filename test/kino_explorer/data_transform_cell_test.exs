@@ -87,6 +87,7 @@ defmodule KinoExplorer.DataTransformCellTest do
     ]
 
     invalid_data = %{self() => [1, 2], :y => [1, 2]}
+    invalid__but_tabular_data = [website: [%{"_id" => "#BSON.ObjectId<000000000>"}]]
 
     env = Code.env_for_eval([])
     DataTransformCell.scan_binding(kino.pid, binding(), env)
