@@ -167,10 +167,10 @@ defmodule KinoExplorer.DataTransformCell do
       for {key, val} <- binding do
         case valid_data(val) do
           {dtypes, true} ->
-            %{variable: Atom.to_string(key), data: val, data_frame: true, dtypes: dtypes}
+            %{variable: Atom.to_string(key), data_frame: true, dtypes: dtypes}
 
           {dtypes, false} ->
-            %{variable: Atom.to_string(key), data: val, data_frame: false, dtypes: dtypes}
+            %{variable: Atom.to_string(key), data_frame: false, dtypes: dtypes}
 
           _ ->
             false
@@ -843,7 +843,7 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp update_data_options([operation], ctx, data_frame) do
     data_frames = ctx.assigns.data_frames
-    dtypes = Enum.find_value(data_frames, &(&1.variable == data_frame && Map.get(&1, :dtypes)))
+    dtypes = Enum.find_value(data_frames, &(&1.variable == data_frame && &1.dtypes))
     data_options = if dtypes, do: normalize_dtypes(dtypes)
 
     [Map.put(operation, "data_options", data_options)]
@@ -941,8 +941,8 @@ defmodule KinoExplorer.DataTransformCell do
   defp collect_index([_ | rest], size, idx), do: collect_index(rest, size, idx + 1)
   defp collect_index([], _size, _idx), do: nil
 
-  defp normalize_dtypes(map) do
-    map
+  defp normalize_dtypes(dtypes) do
+    dtypes
     |> Enum.map(fn
       {k, {:datetime, :millisecond}} -> {k, "datetime[ms]"}
       {k, {:datetime, :microsecond}} -> {k, "datetime[μs]"}
