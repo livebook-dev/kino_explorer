@@ -844,7 +844,7 @@ defmodule KinoExplorer.DataTransformCell do
       case df do
         nil -> nil
         %DataFrame{} -> DataFrame.dtypes(df) |> normalize_dtypes()
-        _ -> df |> DataFrame.new() |> DataFrame.dtypes() |> normalize_dtypes()
+        _ -> maybe_data_options(df)
       end
 
     [Map.put(operation, "data_options", data_options)]
@@ -945,5 +945,14 @@ defmodule KinoExplorer.DataTransformCell do
       {k, v} -> {k, Atom.to_string(v)}
     end)
     |> Enum.into(%{})
+  end
+
+  defp maybe_data_options(df) do
+    try do
+      df |> DataFrame.new() |> DataFrame.dtypes() |> normalize_dtypes()
+    rescue
+      _ ->
+        nil
+    end
   end
 end
