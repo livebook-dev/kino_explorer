@@ -334,4 +334,72 @@ defmodule Kino.ExplorerTest do
              name: "Lazy - DataFrame"
            } = data
   end
+
+  test "supports export" do
+    df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             features: [:export, :pagination, :sorting],
+             content: %{
+               page: 1,
+               max_page: 3,
+               data: [["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]]
+             }
+           } = data
+
+    for format <- ["CSV", "NDJSON", "Parquet"] do
+      extension = ".#{String.downcase(format)}"
+      push_event(widget, "download", %{"format" => format})
+      assert_receive({:event, "download_content", {:binary, exported, data}, _})
+      assert %{format: ^extension} = exported
+      assert is_binary(data)
+    end
+  end
+
+  test "supports export for lazy data frames" do
+    df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             features: [:export, :pagination, :sorting],
+             content: %{
+               page: 1,
+               max_page: nil,
+               data: [["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]]
+             }
+           } = data
+
+    for format <- ["CSV", "NDJSON", "Parquet"] do
+      extension = ".#{String.downcase(format)}"
+      push_event(widget, "download", %{"format" => format})
+      assert_receive({:event, "download_content", {:binary, exported, data}, _})
+      assert %{format: ^extension} = exported
+      assert is_binary(data)
+    end
+  end
+
+  test "export to" do
+    df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
+
+    for format <- ["CSV", "NDJSON", "Parquet"] do
+      exported = Kino.Explorer.export_data(%{df: df}, format)
+      extension = ".#{String.downcase(format)}"
+      assert %{extension: ^extension} = exported
+    end
+  end
+
+  test "export to for lazy data frames" do
+    df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
+
+    for format <- ["CSV", "NDJSON", "Parquet"] do
+      exported = Kino.Explorer.export_data(%{df: df}, format)
+      extension = ".#{String.downcase(format)}"
+      assert %{extension: ^extension} = exported
+    end
+  end
 end
