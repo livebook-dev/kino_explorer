@@ -23,16 +23,34 @@ defmodule Kino.Explorer do
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
 
-  def new(%DataFrame{} = df, opts) do
-    name = Keyword.get(opts, :name, "DataFrame")
-    Kino.Table.new(__MODULE__, {df, name})
-  end
+  # TODO: remove the fallback once we require Kino v0.11.0
+  if Code.ensure_loaded?(Kino.Table) and function_exported?(Kino.Table, :new, 3) do
+    def new(%DataFrame{} = df, opts) do
+      name = Keyword.get(opts, :name, "DataFrame")
+      Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df)} end)
+    end
 
-  def new(%Series{} = s, opts) do
-    name = Keyword.get(opts, :name, "Series")
-    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
-    df = DataFrame.new([{column_name, s}])
-    Kino.Table.new(__MODULE__, {df, name})
+    def new(%Series{} = s, opts) do
+      name = Keyword.get(opts, :name, "Series")
+      column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+      df = DataFrame.new([{column_name, s}])
+
+      Kino.Table.new(__MODULE__, {df, name},
+        export: fn state -> {"text", inspect(state.df[0])} end
+      )
+    end
+  else
+    def new(%DataFrame{} = df, opts) do
+      name = Keyword.get(opts, :name, "DataFrame")
+      Kino.Table.new(__MODULE__, {df, name})
+    end
+
+    def new(%Series{} = s, opts) do
+      name = Keyword.get(opts, :name, "Series")
+      column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+      df = DataFrame.new([{column_name, s}])
+      Kino.Table.new(__MODULE__, {df, name})
+    end
   end
 
   @impl true
