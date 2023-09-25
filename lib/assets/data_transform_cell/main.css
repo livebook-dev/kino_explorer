@@ -571,7 +571,7 @@ select option {
   display: flex;
   font-size: 0.875rem;
   justify-content: space-between;
-  padding: 9px 6px 9px 12px;
+  padding: 9px 12px;
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
 }
