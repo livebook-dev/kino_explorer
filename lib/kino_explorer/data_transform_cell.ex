@@ -553,7 +553,7 @@ defmodule KinoExplorer.DataTransformCell do
     [%{new | args: []} | nodes]
   end
 
-  defp maybe_clean_up([%{field: :to_lazy}, %{field: :collect} | nodes], _), do: nodes
+  defp maybe_clean_up([%{field: :lazy}, %{field: :collect} | nodes], _), do: nodes
 
   defp maybe_clean_up(nodes, _) do
     if Enum.all?(nodes, &(!&1.args || &1.args == [])), do: [], else: nodes
@@ -570,7 +570,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp build_lazy(module) do
-    %{args: [], field: :to_lazy, module: module, name: :to_lazy}
+    %{args: [], field: :lazy, module: module, name: :lazy}
   end
 
   defp build_collect(module) do

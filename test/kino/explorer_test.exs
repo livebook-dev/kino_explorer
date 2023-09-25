@@ -290,7 +290,7 @@ defmodule Kino.ExplorerTest do
   end
 
   test "supports lazy data frames" do
-    df = Explorer.Datasets.iris() |> Explorer.DataFrame.to_lazy()
+    df = Explorer.Datasets.iris() |> Explorer.DataFrame.lazy()
     widget = Kino.Explorer.new(df)
     data = connect(widget)
 
