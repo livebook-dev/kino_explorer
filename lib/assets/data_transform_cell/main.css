@@ -123,6 +123,7 @@ input[type="number"] {
   position: relative;
   left: 85%;
   bottom: 47%;
+  font-size: 20px;
 }
 
 .validation-message {
