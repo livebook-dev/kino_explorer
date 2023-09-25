@@ -387,7 +387,6 @@ select option {
   display: flex;
   justify-content: flex-end;
   position: relative;
-  bottom: -6px;
 }
 
 .card-controls > .button--sm {
@@ -400,7 +399,7 @@ select option {
 
 .operation-controls {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   position: relative;
   top: -6px;
 }
@@ -572,7 +571,7 @@ select option {
   display: flex;
   font-size: 0.875rem;
   justify-content: space-between;
-  padding: 9px 12px;
+  padding: 9px 6px 9px 12px;
   border-top-right-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
 }
