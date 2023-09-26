@@ -83,7 +83,7 @@ pre {
   margin-bottom: 6px;
   border-radius: 0.5rem 0.5rem 0 0;
   border-bottom: solid 1px var(--gray-200);
-  gap: 12px;
+  justify-content: space-between;
 }
 
 .input {
@@ -123,6 +123,7 @@ input[type="number"] {
   position: relative;
   left: 85%;
   bottom: 47%;
+  font-size: 20px;
 }
 
 .validation-message {
@@ -386,7 +387,6 @@ select option {
   display: flex;
   justify-content: flex-end;
   position: relative;
-  bottom: -6px;
 }
 
 .card-controls > .button--sm {
@@ -399,7 +399,7 @@ select option {
 
 .operation-controls {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   position: relative;
   top: -6px;
 }
@@ -873,6 +873,17 @@ select option {
 
 .switch-button-checkbox.discard:disabled + .switch-button-bg {
   background-color: var(--crimson-200);
+}
+
+.switch-lg .switch-button {
+  width: 42px;
+  height: 21px;
+  margin-top: 5px;
+}
+
+.switch-lg .switch-button-checkbox {
+  width: 21px;
+  height: 21px;
 }
 
 .tag-button {
