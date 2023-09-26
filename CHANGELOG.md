@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.11](https://github.com/livebook-dev/kino_explorer/tree/v0.1.11) (2023-09-26)
+
+### Added
+
+- Export the dataframe inspected representation ([#109](https://github.com/livebook-dev/kino_explorer/pull/109))
+
+### Fixed
+
+- Use DF.lazy instead of DF.to_lazy ([#111](https://github.com/livebook-dev/kino_explorer/pull/111))
+- Small UI adjustments ([#110](https://github.com/livebook-dev/kino_explorer/pull/110))
+- Do not crash on invalid tabular data ([#106](https://github.com/livebook-dev/kino_explorer/pull/106))
+
 ## [v0.1.10](https://github.com/livebook-dev/kino_explorer/tree/v0.1.10) (2023-09-01)
 
 ### Fixed
