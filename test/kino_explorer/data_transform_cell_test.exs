@@ -183,7 +183,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.arrange(asc: name)
              |> Explorer.DataFrame.collect()\
              """
@@ -210,7 +210,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.arrange(asc: name, desc: id)
              |> Explorer.DataFrame.collect()\
              """
@@ -233,7 +233,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(name == "Ana")
              |> Explorer.DataFrame.collect()\
              """
@@ -264,7 +264,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(name == "Ana" and id < 2)
              |> Explorer.DataFrame.collect()\
              """
@@ -295,7 +295,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(name == "Ana")
              |> Explorer.DataFrame.collect()\
              """
@@ -318,7 +318,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id > mean(id))
              |> Explorer.DataFrame.collect()\
              """
@@ -349,7 +349,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id < median(id) and id > mean(id))
              |> Explorer.DataFrame.collect()\
              """
@@ -396,7 +396,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id < median(id) and id > mean(id))
              |> Explorer.DataFrame.collect()\
              """
@@ -419,7 +419,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id > quantile(id, 0.1))
              |> Explorer.DataFrame.collect()\
              """
@@ -450,7 +450,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id < quantile(id, 0.5) and id > quantile(id, 0.1))
              |> Explorer.DataFrame.collect()\
              """
@@ -505,7 +505,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(id < quantile(id, 0.5) and id > quantile(id, 0.1))
              |> Explorer.DataFrame.collect()\
              """
@@ -528,7 +528,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.mutate(name: fill_missing(name, :forward))
              |> Explorer.DataFrame.collect()\
              """
@@ -559,7 +559,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.mutate(name: fill_missing(name, :forward), id: fill_missing(id, 4))
              |> Explorer.DataFrame.collect()\
              """
@@ -590,7 +590,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.mutate(name: fill_missing(name, "Ana"))
              |> Explorer.DataFrame.collect()\
              """
@@ -639,7 +639,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              new_df =
                df
-               |> Explorer.DataFrame.to_lazy()
+               |> Explorer.DataFrame.lazy()
                |> Explorer.DataFrame.filter(col("full name") == "Ana" and id < 2)
                |> Explorer.DataFrame.arrange(asc: col("full name"), desc: id)
                |> Explorer.DataFrame.collect()\
@@ -663,7 +663,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.group_by("weekdays")
              |> Explorer.DataFrame.collect()\
              """
@@ -686,7 +686,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.group_by(["hour", "day"])
              |> Explorer.DataFrame.collect()\
              """
@@ -717,7 +717,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.group_by("weekdays")
              |> Explorer.DataFrame.summarise(hour_max: max(hour))
              |> Explorer.DataFrame.collect()\
@@ -749,7 +749,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.group_by("weekdays")
              |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))
              |> Explorer.DataFrame.collect()\
@@ -787,7 +787,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.group_by("weekdays")
              |> Explorer.DataFrame.summarise(
                hour_max: max(hour),
@@ -816,7 +816,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.summarise(hour_max: max(hour))
              |> Explorer.DataFrame.collect()\
              """
@@ -840,7 +840,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.summarise(hour_max: max(hour), day_max: max(day))
              |> Explorer.DataFrame.collect()\
              """
@@ -905,7 +905,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.discard("weekdays")
              |> Explorer.DataFrame.collect()\
              """
@@ -928,7 +928,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.discard(["hour", "day"])
              |> Explorer.DataFrame.collect()\
              """
@@ -961,7 +961,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> DF.to_lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
+             people |> DF.lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
              """
     end
 
@@ -1031,8 +1031,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             exported_df =
-               people |> DF.to_lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
+             exported_df = people |> DF.lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
              """
     end
 
@@ -1063,7 +1062,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             people |> DF.to_lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
+             people |> DF.lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
              """
     end
 
@@ -1118,7 +1117,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              exported_df =
                people
-               |> DF.to_lazy()
+               |> DF.lazy()
                |> DF.filter(name == "Ana")
                |> DF.arrange(asc: col("full name"))
                |> DF.collect()\
@@ -1173,7 +1172,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              exported_df =
                people
-               |> DF.to_lazy()
+               |> DF.lazy()
                |> DF.filter(name == "Ana" and id < 2)
                |> DF.arrange(asc: col("full name"))
                |> DF.filter(contains(surname, "Santiago"))
@@ -1213,9 +1212,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              require Explorer.DataFrame
-
-             exported_df =
-               people |> DF.to_lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
+             exported_df = people |> DF.lazy() |> DF.filter(name == "Ana" and id < 2) |> DF.collect()\
              """
     end
 
@@ -1247,7 +1244,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              people
-             |> Explorer.DataFrame.to_lazy()
+             |> Explorer.DataFrame.lazy()
              |> Explorer.DataFrame.filter(col("full name") == "Ana")
              |> Explorer.DataFrame.arrange(asc: col("full name"))\
              """
@@ -1315,7 +1312,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              teams
-             |> DF.to_lazy()
+             |> DF.lazy()
              |> DF.filter(weekdays == "Monday")
              |> DF.collect()
              |> DF.pivot_wider("weekdays", "hour")\
@@ -1346,11 +1343,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             teams
-             |> DF.to_lazy()
-             |> DF.group_by("weekdays")
-             |> DF.collect()
-             |> DF.arrange(asc: weekdays)\
+             teams |> DF.lazy() |> DF.group_by("weekdays") |> DF.collect() |> DF.arrange(asc: weekdays)\
              """
     end
 
@@ -1378,7 +1371,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             teams |> DF.to_lazy() |> DF.group_by("weekdays") |> DF.summarise(hour_max: max(hour))\
+             teams |> DF.lazy() |> DF.group_by("weekdays") |> DF.summarise(hour_max: max(hour))\
              """
     end
 
@@ -1398,7 +1391,7 @@ defmodule KinoExplorer.DataTransformCellTest do
       attrs = build_attrs(root, operations)
 
       assert DataTransformCell.to_source(attrs) == """
-             teams |> DF.to_lazy() |> DF.group_by("weekdays")\
+             teams |> DF.lazy() |> DF.group_by("weekdays")\
              """
     end
 
@@ -1432,7 +1425,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              fuels
-             |> DF.to_lazy()
+             |> DF.lazy()
              |> DF.group_by(["cement", "country", "bunker_fuels"])
              |> DF.collect()
              |> DF.arrange(asc: bunker_fuels)
@@ -1470,7 +1463,7 @@ defmodule KinoExplorer.DataTransformCellTest do
 
       assert DataTransformCell.to_source(attrs) == """
              fuels
-             |> DF.to_lazy()
+             |> DF.lazy()
              |> DF.group_by(["cement", "country", "bunker_fuels"])
              |> DF.collect()
              |> DF.arrange(asc: bunker_fuels)
