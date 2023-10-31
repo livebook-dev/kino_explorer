@@ -124,7 +124,18 @@ defmodule Kino.Explorer do
   end
 
   defp records_to_data(columns, records) do
-    Enum.map(columns, fn column -> Map.fetch!(records, column.key) |> Enum.map(&to_string/1) end)
+    Enum.map(columns, fn column ->
+      records |> Map.fetch!(column.key) |> Enum.map(&value_to_string/1)
+    end)
+  end
+
+  defp value_to_string(value) when is_binary(value) do
+    inspect_opts = Inspect.Opts.new([])
+    if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
+  end
+
+  defp value_to_string(value) do
+    to_string(value)
   end
 
   defp summaries(df, groups) do
