@@ -125,16 +125,16 @@ defmodule Kino.Explorer do
 
   defp records_to_data(columns, records) do
     Enum.map(columns, fn column ->
-      records |> Map.fetch!(column.key) |> Enum.map(&value_to_string/1)
+      records |> Map.fetch!(column.key) |> Enum.map(&value_to_string(column.type, &1))
     end)
   end
 
-  defp value_to_string(value) when is_binary(value) do
+  defp value_to_string("binary", value) do
     inspect_opts = Inspect.Opts.new([])
     if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
   end
 
-  defp value_to_string(value) do
+  defp value_to_string(_type, value) do
     to_string(value)
   end
 
@@ -205,6 +205,7 @@ defmodule Kino.Explorer do
 
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
+  defp type_of(:binary, _), do: "binary"
   defp type_of(_, _), do: "text"
 
   defp type_of_sample("http" <> _rest), do: "uri"
