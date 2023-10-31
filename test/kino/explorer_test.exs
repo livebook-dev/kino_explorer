@@ -289,6 +289,21 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "correctly data frames with binary non-utf8 column values" do
+    df =
+      Explorer.DataFrame.new([x: [1, 2], y: [<<110, 120>>, <<200, 210>>]], dtypes: [y: :binary])
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             features: [:export, :pagination, :sorting],
+             content: %{
+               data: [["1", "2"], ["nx", "<<200, 210>>"]]
+             }
+           } = data
+  end
+
   test "supports lazy data frames" do
     df = Explorer.Datasets.iris() |> Explorer.DataFrame.lazy()
     widget = Kino.Explorer.new(df)
