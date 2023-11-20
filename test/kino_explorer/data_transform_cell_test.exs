@@ -1180,6 +1180,35 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "not contains" do
+      root = %{
+        "data_frame" => "people",
+        "assign_to" => "exported_df",
+        "data_frame_alias" => DF,
+        "missing_require" => nil,
+        "is_data_frame" => true,
+        "collect" => true
+      }
+
+      operations = [
+        %{
+          "column" => "surname",
+          "filter" => "not contains",
+          "type" => "string",
+          "value" => "Santiago",
+          "active" => true,
+          "operation_type" => "filters"
+        }
+      ]
+
+      attrs = Map.put(root, "operations", operations)
+
+      assert DataTransformCell.to_source(attrs) == """
+             exported_df =
+               people |> DF.lazy() |> DF.filter(not contains(surname, "Santiago")) |> DF.collect()\
+             """
+    end
+
     test "source with an auto generated require" do
       root = %{
         "data_frame_alias" => DF,

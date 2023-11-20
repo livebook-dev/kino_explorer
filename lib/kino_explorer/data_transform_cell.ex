@@ -22,16 +22,16 @@ defmodule KinoExplorer.DataTransformCell do
     "time"
   ]
   @filter_options %{
-    "binary" => ["equal", "contains", "not equal"],
+    "binary" => ["equal", "contains", "not contains", "not equal"],
     "boolean" => ["equal", "not equal"],
-    "category" => ["equal", "contains", "not equal"],
+    "category" => ["equal", "contains", "not contains", "not equal"],
     "date" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "datetime[ms]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "datetime[μs]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "datetime[ns]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "float" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "string" => ["equal", "contains", "not equal"],
+    "string" => ["equal", "contains", "not contains", "not equal"],
     "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
   }
   @fill_missing_options %{
@@ -96,7 +96,8 @@ defmodule KinoExplorer.DataTransformCell do
     "not equal" => "!=",
     "greater equal" => ">=",
     "greater" => ">",
-    "contains" => "contains"
+    "contains" => "contains",
+    "not contains" => "not contains"
   }
 
   @multiselect_operations [:discard, :group_by]
