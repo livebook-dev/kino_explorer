@@ -100,7 +100,7 @@ defmodule KinoExplorer.DataTransformCell do
     "not contains" => "not contains"
   }
 
-  @multiselect_operations [:discard, :group_by]
+  @multiselect_operations [:select, :discard, :group_by]
 
   defguard is_queried(type, value)
            when type in @queried_filter_types and value in @queried_filter_options
@@ -735,6 +735,10 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp default_operation(:discard) do
     %{"columns" => [], "active" => true, "operation_type" => "discard"}
+  end
+
+  defp default_operation(:select) do
+    %{"columns" => [], "active" => true, "operation_type" => "select"}
   end
 
   defp cast_typed_value("boolean", "true"), do: {:ok, true}
