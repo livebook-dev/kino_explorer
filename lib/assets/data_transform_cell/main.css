@@ -56,9 +56,9 @@
   --beige-200: #F8EBE4;
   --beige-600: #EDCDBB;
 
-  --indigo-100: #e0e7ff;
-  --indigo-200: #c7d2fe;
-  --indigo-600: #4e46e5;
+  --emerald-100: #d1fae5;
+  --emerald-200: #a7f3d0;
+  --emerald-600: #059669;
 }
 
 p,
@@ -544,7 +544,7 @@ select option {
 }
 
 .card.select:before {
-  background-color: var(--indigo-600);
+  background-color: var(--emerald-600);
 }
 
 .operations.filters {
@@ -576,7 +576,7 @@ select option {
 }
 
 .operations.select {
-  border-left: solid 3px var(--indigo-600);
+  border-left: solid 3px var(--emerald-600);
 }
 
 .card {
@@ -618,7 +618,7 @@ select option {
 }
 
 .card.select{
-  background-color: var(--indigo-100);
+  background-color: var(--emerald-100);
 }
 
 .dndrop-draggable-wrapper:last-child > .operations {
@@ -789,7 +789,7 @@ select option {
 
 .switch-button-checkbox.select:checked {
   background: white;
-  border-color: var(--indigo-600);
+  border-color: var(--emerald-600);
   transform: translateX(100%);
 }
 
@@ -826,7 +826,7 @@ select option {
 }
 
 .switch-button-checkbox.select:checked + .switch-button-bg {
-  background-color: var(--indigo-600);
+  background-color: var(--emerald-600);
 }
 
 .switch-button-checkbox:disabled {
@@ -871,7 +871,7 @@ select option {
 
 .switch-button-checkbox.select:disabled {
   background: white;
-  border-color: var(--indigo-100);
+  border-color: var(--emerald-100);
 }
 
 .switch-button-checkbox:disabled + .switch-button-bg {
@@ -907,7 +907,7 @@ select option {
 }
 
 .switch-button-checkbox.select:disabled + .switch-button-bg {
-  background-color: var(--indigo-200);
+  background-color: var(--emerald-200);
 }
 
 .switch-lg .switch-button {
