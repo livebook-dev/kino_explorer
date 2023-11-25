@@ -52,13 +52,13 @@
   --purple-200: #d2cbef;
   --purple-600: #957fef;
 
-  --beige-100: #FBF5F1;
-  --beige-200: #F8EBE4;
-  --beige-600: #EDCDBB;
+  --beige-100: #fbf5f1;
+  --beige-200: #f8ebe4;
+  --beige-600: #edcdbb;
 
-  --emerald-100: #d1fae5;
-  --emerald-200: #a7f3d0;
-  --emerald-600: #059669;
+  --emerald-100: #e5f3f2;
+  --emerald-200: #b5e2e0;
+  --emerald-600: #7fc5be;
 }
 
 p,
@@ -617,7 +617,7 @@ select option {
   background-color: var(--crimson-100);
 }
 
-.card.select{
+.card.select {
   background-color: var(--emerald-100);
 }
 
