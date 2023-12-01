@@ -17,8 +17,6 @@ defmodule Kino.Explorer do
 
   @type t :: Kino.JS.Live.t()
 
-  @numeric_types [{:f, 64}, :integer]
-
   @doc """
   Creates a new kino displaying a given data frame or series.
   """
@@ -187,14 +185,12 @@ defmodule Kino.Explorer do
   end
 
   defp summary_type(data) do
-    if Series.dtype(data) in @numeric_types, do: :numeric, else: :categorical
+    if numeric_type?(Series.dtype(data)), do: :numeric, else: :categorical
   end
 
   defp count_unique(data) do
     data |> Series.distinct() |> Series.count() |> to_string()
   end
-
-  defp type_of(dtype, _) when dtype in @numeric_types, do: "number"
 
   defp type_of(dtype, _)
        when dtype in [
@@ -208,10 +204,16 @@ defmodule Kino.Explorer do
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(:binary, _), do: "binary"
-  defp type_of(_, _), do: "text"
+  defp type_of(dtype, _), do: if(numeric_type?(dtype), do: "number", else: "text")
 
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
 
-  def lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
+  defp numeric_type?({:s, _}), do: true
+  defp numeric_type?({:u, _}), do: true
+  defp numeric_type?({:f, _}), do: true
+  # For backwards compatibility
+  defp numeric_type?(other), do: other in [:float, :integer]
+
+  defp lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
 end
