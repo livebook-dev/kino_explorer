@@ -17,6 +17,8 @@ defmodule Kino.Explorer do
 
   @type t :: Kino.JS.Live.t()
 
+  @numeric_types [{:f, 64}, :integer]
+
   @doc """
   Creates a new kino displaying a given data frame or series.
   """
@@ -185,14 +187,14 @@ defmodule Kino.Explorer do
   end
 
   defp summary_type(data) do
-    if Series.dtype(data) in [:float, :integer], do: :numeric, else: :categorical
+    if Series.dtype(data) in @numeric_types, do: :numeric, else: :categorical
   end
 
   defp count_unique(data) do
     data |> Series.distinct() |> Series.count() |> to_string()
   end
 
-  defp type_of(dtype, _) when dtype in [:integer, :float], do: "number"
+  defp type_of(dtype, _) when dtype in @numeric_types, do: "number"
 
   defp type_of(dtype, _)
        when dtype in [
