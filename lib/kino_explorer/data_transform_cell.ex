@@ -61,16 +61,7 @@ defmodule KinoExplorer.DataTransformCell do
   }
   @pivot_wider_types %{
     names_from: @column_types,
-    values_from: [
-      "date",
-      "datetime[ms]",
-      "datetime[μs]",
-      "datetime[ns]",
-      "float",
-      "integer",
-      "time",
-      "category"
-    ]
+    values_from: @column_types
   }
   @queried_filter_options [
     "mean",
