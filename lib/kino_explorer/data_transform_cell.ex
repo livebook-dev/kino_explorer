@@ -17,9 +17,19 @@ defmodule KinoExplorer.DataTransformCell do
     "datetime[μs]",
     "datetime[ns]",
     "float",
+    "f[32]",
+    "f[64]",
     "integer",
     "string",
-    "time"
+    "s[8]",
+    "s[16]",
+    "s[32]",
+    "s[64]",
+    "time",
+    "u[8]",
+    "u[16]",
+    "u[32]",
+    "u[64]"
   ]
   @filter_options %{
     "binary" => ["equal", "contains", "not contains", "not equal"],
@@ -30,9 +40,19 @@ defmodule KinoExplorer.DataTransformCell do
     "datetime[μs]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "datetime[ns]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "float" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "f[32]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "f[64]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "string" => ["equal", "contains", "not contains", "not equal"],
-    "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
+    "s8" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "s16" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "s32" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "s64" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "u8" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "u16" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "u32" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "u64" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"]
   }
   @fill_missing_options %{
     "binary" => ["forward", "backward", "max", "min", "scalar"],
@@ -43,21 +63,133 @@ defmodule KinoExplorer.DataTransformCell do
     "datetime[μs]" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "datetime[ns]" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "float" => ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
+    "f[32]" => ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
+    "f[64]" => ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
     "integer" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "string" => ["forward", "backward", "max", "min", "scalar"],
-    "time" => ["forward", "backward", "max", "min", "mean", "scalar"]
+    "s8" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "s16" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "s32" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "s64" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "time" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "u8" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "u16" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "u32" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "u64" => ["forward", "backward", "max", "min", "mean", "scalar"]
   }
   @summarise_options %{
     count: @column_types,
-    max: ["integer", "float", "date", "time", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
-    mean: ["integer", "float"],
-    median: ["integer", "float"],
-    min: ["integer", "float", "date", "time", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
+    max: [
+      "date",
+      "datetime[ms]",
+      "datetime[μs]",
+      "datetime[ns]",
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "time",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
+    mean: [
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
+    median: [
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
+    min: [
+      "date",
+      "datetime[ms]",
+      "datetime[μs]",
+      "datetime[ns]",
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "time",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
     n_distinct: @column_types,
     nil_count: @column_types,
-    standard_deviation: ["integer", "float"],
-    sum: ["integer", "float", "boolean"],
-    variance: ["integer", "float"]
+    standard_deviation: [
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
+    sum: [
+      "boolean",
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ],
+    variance: [
+      "float",
+      "f[32]",
+      "f[64]",
+      "integer",
+      "s8",
+      "s16",
+      "s32",
+      "s64",
+      "u8",
+      "u16",
+      "u32",
+      "u64"
+    ]
   }
   @pivot_wider_types %{
     names_from: @column_types,
@@ -75,7 +207,20 @@ defmodule KinoExplorer.DataTransformCell do
     "quantile(80)",
     "quantile(90)"
   ]
-  @queried_filter_types ["integer", "float"]
+  @queried_filter_types [
+    "float",
+    "f[32]",
+    "f[64]",
+    "integer",
+    "s8",
+    "s16",
+    "s32",
+    "s64",
+    "u8",
+    "u16",
+    "u32",
+    "u64"
+  ]
 
   @grouped_fields_operations ["filters", "fill_missing", "summarise"]
   @validation_by_type [:filters, :fill_missing]
@@ -938,6 +1083,16 @@ defmodule KinoExplorer.DataTransformCell do
       {k, {:datetime, :millisecond}} -> {k, "datetime[ms]"}
       {k, {:datetime, :microsecond}} -> {k, "datetime[μs]"}
       {k, {:datetime, :nanosecond}} -> {k, "datetime[ns]"}
+      {k, {:f, 32}} -> {k, "f[32]"}
+      {k, {:f, 64}} -> {k, "f[64]"}
+      {k, {:s, 8}} -> {k, "s[8]"}
+      {k, {:s, 16}} -> {k, "s[16]"}
+      {k, {:s, 32}} -> {k, "s[32]"}
+      {k, {:s, 64}} -> {k, "s[64]"}
+      {k, {:u, 8}} -> {k, "u[8]"}
+      {k, {:u, 16}} -> {k, "u[16]"}
+      {k, {:u, 32}} -> {k, "u[32]"}
+      {k, {:u, 64}} -> {k, "u[64]"}
       {k, v} -> {k, Atom.to_string(v)}
     end)
     |> Enum.into(%{})
