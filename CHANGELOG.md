@@ -5,11 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.13](https://github.com/livebook-dev/kino_explorer/tree/v0.1.13) (2023-12-03)
+
+### Added
+
+- Add support for `not contains` in `filter_by` operation ([#115](https://github.com/livebook-dev/kino_explorer/pull/115))
+- Add `select` operation ([#116](https://github.com/livebook-dev/kino_explorer/pull/116))
+- Supports new `Explorer` types ([#119](https://github.com/livebook-dev/kino_explorer/pull/119))
+
+### Changed
+
+- Remove the restriction on `pivot_wider` dtypes ([#114](https://github.com/livebook-dev/kino_explorer/pull/114))
+
 ## [v0.1.12](https://github.com/livebook-dev/kino_explorer/tree/v0.1.12) (2023-10-31)
 
 ### Fixed
 
-* Showing non-utf8 binaries ([#112](https://github.com/livebook-dev/kino_explorer/pull/112))
+- Showing non-utf8 binaries ([#112](https://github.com/livebook-dev/kino_explorer/pull/112))
 
 ## [v0.1.11](https://github.com/livebook-dev/kino_explorer/tree/v0.1.11) (2023-09-26)
 
