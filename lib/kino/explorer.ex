@@ -148,7 +148,7 @@ defmodule Kino.Explorer do
         nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
       cond do
-        summary_type == :numeric -> 
+        summary_type == :numeric ->
           mean = Series.mean(series)
           mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
           min = Series.min(series) |> to_string()
@@ -160,6 +160,7 @@ defmodule Kino.Explorer do
           values = if has_groups, do: values ++ [grouped], else: values
 
           {column, %{keys: keys, values: values}}
+
         summary_type == :categorical and compute_frequencies?(series) ->
           %{"counts" => top_freq, "values" => top} = most_frequent(series)
           top_freq = top_freq |> List.first() |> to_string()
@@ -172,6 +173,7 @@ defmodule Kino.Explorer do
           values = if has_groups, do: values ++ [grouped], else: values
 
           {column, %{keys: keys, values: values}}
+
         true ->
           {column, %{keys: [], values: []}}
       end
@@ -189,9 +191,10 @@ defmodule Kino.Explorer do
 
   defp compute_frequencies?(series) do
     case Series.dtype(series) do
-      {:list, dtype} -> 
+      {:list, dtype} ->
         numeric_type?(dtype)
-      _ -> 
+
+      _ ->
         true
     end
   end
