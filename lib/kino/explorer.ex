@@ -147,30 +147,33 @@ defmodule Kino.Explorer do
         grouped = (column in groups) |> to_string(),
         nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
-      if summary_type == :numeric do
-        mean = Series.mean(series)
-        mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
-        min = Series.min(series) |> to_string()
-        max = Series.max(series) |> to_string()
-        keys = ["min", "max", "mean", "nulls"]
-        values = [min, max, mean, nulls]
+      cond do
+        summary_type == :numeric -> 
+          mean = Series.mean(series)
+          mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
+          min = Series.min(series) |> to_string()
+          max = Series.max(series) |> to_string()
+          keys = ["min", "max", "mean", "nulls"]
+          values = [min, max, mean, nulls]
 
-        keys = if has_groups, do: keys ++ ["grouped"], else: keys
-        values = if has_groups, do: values ++ [grouped], else: values
+          keys = if has_groups, do: keys ++ ["grouped"], else: keys
+          values = if has_groups, do: values ++ [grouped], else: values
 
-        {column, %{keys: keys, values: values}}
-      else
-        %{"counts" => top_freq, "values" => top} = most_frequent(series)
-        top_freq = top_freq |> List.first() |> to_string()
-        top = List.first(top) |> to_string()
-        unique = count_unique(series)
-        keys = ["unique", "top", "top freq", "nulls"]
-        values = [unique, top, top_freq, nulls]
+          {column, %{keys: keys, values: values}}
+        summary_type == :categorical and compute_frequencies?(series) ->
+          %{"counts" => top_freq, "values" => top} = most_frequent(series)
+          top_freq = top_freq |> List.first() |> to_string()
+          top = List.first(top) |> to_string()
+          unique = count_unique(series)
+          keys = ["unique", "top", "top freq", "nulls"]
+          values = [unique, top, top_freq, nulls]
 
-        keys = if has_groups, do: keys ++ ["grouped"], else: keys
-        values = if has_groups, do: values ++ [grouped], else: values
+          keys = if has_groups, do: keys ++ ["grouped"], else: keys
+          values = if has_groups, do: values ++ [grouped], else: values
 
-        {column, %{keys: keys, values: values}}
+          {column, %{keys: keys, values: values}}
+        true ->
+          {column, %{keys: [], values: []}}
       end
     end
   end
@@ -182,6 +185,15 @@ defmodule Kino.Explorer do
     |> DataFrame.filter(Series.is_not_nil(values))
     |> DataFrame.head(1)
     |> DataFrame.to_columns()
+  end
+
+  defp compute_frequencies?(series) do
+    case Series.dtype(series) do
+      {:list, dtype} -> 
+        numeric_type?(dtype)
+      _ -> 
+        true
+    end
   end
 
   defp summary_type(data) do
