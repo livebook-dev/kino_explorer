@@ -141,6 +141,9 @@ defmodule Kino.Explorer do
   defp summaries(df, groups) do
     df_series = DataFrame.to_series(df)
     has_groups = length(groups) > 0
+    # hacky way to provide backward compatibility for {:list, numeric} error 
+    # https://github.com/elixir-explorer/explorer/issues/787
+    exp_ver_0_7_2_gte? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
 
     for {column, series} <- df_series,
         summary_type = summary_type(series),
@@ -161,7 +164,7 @@ defmodule Kino.Explorer do
 
           {column, %{keys: keys, values: values}}
 
-        summary_type == :categorical and compute_frequencies?(series) ->
+        summary_type == :categorical and compute_summaries?(series, exp_ver_0_7_2_gte?) ->
           %{"counts" => top_freq, "values" => top} = most_frequent(series)
           top_freq = top_freq |> List.first() |> to_string()
           top = List.first(top) |> to_string()
@@ -189,10 +192,10 @@ defmodule Kino.Explorer do
     |> DataFrame.to_columns()
   end
 
-  defp compute_frequencies?(series) do
+  defp compute_summaries?(series, exp_ver_0_7_2_gte?) do
     case Series.dtype(series) do
       {:list, dtype} ->
-        numeric_type?(dtype)
+        exp_ver_0_7_2_gte? && numeric_type?(dtype)
 
       _ ->
         true
