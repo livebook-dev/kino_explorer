@@ -134,6 +134,10 @@ defmodule Kino.Explorer do
     if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
   end
 
+  defp value_to_string("list", value) do
+    inspect(value)
+  end
+
   defp value_to_string(_type, value) do
     to_string(value)
   end
@@ -141,7 +145,7 @@ defmodule Kino.Explorer do
   defp summaries(df, groups) do
     df_series = DataFrame.to_series(df)
     has_groups = length(groups) > 0
-    # hacky way to provide backward compatibility for {:list, numeric} error 
+    # hacky way to provide backward compatibility for {:list, numeric} error
     # https://github.com/elixir-explorer/explorer/issues/787
     exp_ver_0_7_2_gte? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
 
@@ -222,6 +226,7 @@ defmodule Kino.Explorer do
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(:binary, _), do: "binary"
+  defp type_of({:list, _}, _), do: "list"
   defp type_of(dtype, _), do: if(numeric_type?(dtype), do: "number", else: "text")
 
   defp type_of_sample("http" <> _rest), do: "uri"
