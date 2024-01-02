@@ -134,6 +134,10 @@ defmodule Kino.Explorer do
     if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
   end
 
+  defp value_to_string(_type, value) when is_list(value) do
+    inspect(value)
+  end
+
   defp value_to_string(_type, value) do
     to_string(value)
   end
