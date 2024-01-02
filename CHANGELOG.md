@@ -7,14 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.1.14](https://github.com/livebook-dev/kino_explorer/tree/v0.1.14) (2024-01-02)
 
+### Added
+
+- Supports `Explorer` type of `:list` ([#126](https://github.com/livebook-dev/kino_explorer/pull/126))
+
 ### Fixed
 
 - Fix for nif_panicked error for categorical data ([#123](https://github.com/livebook-dev/kino_explorer/pull/123))
 - Remove lists from unsupported operations ([#127](https://github.com/livebook-dev/kino_explorer/pull/127))
 
-### Added
-
-- Supports `Explorer` type of `:list` ([#126](https://github.com/livebook-dev/kino_explorer/pull/126))
 
 ## [v0.1.13](https://github.com/livebook-dev/kino_explorer/tree/v0.1.13) (2023-12-03)
 
