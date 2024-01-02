@@ -888,7 +888,10 @@ defmodule KinoExplorer.DataTransformCell do
             |> Code.eval_string(binding)
             |> elem(0)
 
-          data_options = DataFrame.dtypes(df) |> normalize_dtypes()
+          data_options =
+            DataFrame.dtypes(df)
+            |> normalize_dtypes()
+            |> Map.reject(fn {_k, v} -> v == "list" end)
 
           Map.put(operation, "data_options", data_options)
           |> maybe_update_datalist(df)
@@ -964,6 +967,7 @@ defmodule KinoExplorer.DataTransformCell do
       {k, {:u, 16}} -> {k, "integer"}
       {k, {:u, 32}} -> {k, "integer"}
       {k, {:u, 64}} -> {k, "integer"}
+      {k, {:list, _}} -> {k, "list"}
       {k, v} -> {k, Atom.to_string(v)}
     end)
     |> Enum.into(%{})
