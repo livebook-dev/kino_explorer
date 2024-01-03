@@ -74,10 +74,19 @@ defmodule Kino.Explorer do
         }
       end
 
+    has_list_column? = Enum.any?(columns, fn x -> x.type == "list" end)
+
+    export =
+      if has_list_column? do
+        %{formats: ["NDJSON", "Parquet"]}
+      else
+        %{formats: ["CSV", "NDJSON", "Parquet"]}
+      end
+
     info = %{
       name: name,
       features: [:export, :pagination, :sorting],
-      export: %{formats: ["CSV", "NDJSON", "Parquet"]}
+      export: export
     }
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups}}
