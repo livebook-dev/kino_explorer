@@ -168,10 +168,7 @@ defmodule Kino.ExplorerTest do
   end
 
   test "support data summary for all nils" do
-    df =
-      Explorer.DataFrame.new(%{
-        id: [nil, nil, nil, nil]
-      })
+    df = Explorer.DataFrame.new(%{id: [nil, nil, nil, nil]})
 
     widget = Kino.Explorer.new(df)
     data = connect(widget)
@@ -188,6 +185,21 @@ defmodule Kino.ExplorerTest do
                    },
                    type: "number"
                  }
+               ]
+             }
+           } = data
+  end
+
+  test "does not compute summary for unsupported lists" do
+    df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{key: "0", label: "list", summary: %{keys: [], values: []}, type: "list"}
                ]
              }
            } = data
@@ -255,15 +267,21 @@ defmodule Kino.ExplorerTest do
   test "supports types" do
     df =
       Explorer.DataFrame.new(
-        a: ["a", "b"],
-        b: [1, 2],
-        c: ["https://elixir-lang.org", "https://www.erlang.org"]
+        [
+          a: ["a", "b"],
+          b: [1, 2],
+          c: ["https://elixir-lang.org", "https://www.erlang.org"],
+          d: [<<110, 120>>, <<200, 210>>],
+          e: [[1, 2], [3, 4]]
+        ],
+        dtypes: [d: :binary]
       )
 
     widget = Kino.Explorer.new(df)
     data = connect(widget)
+    types = ["text", "number", "uri", "binary", "list"]
 
-    assert get_in(data.content.columns, [Access.all(), :type]) == ["text", "number", "uri"]
+    assert get_in(data.content.columns, [Access.all(), :type]) == types
   end
 
   test "correctly handles empty data frames with string columns" do
@@ -289,7 +307,7 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
-  test "correctly data frames with binary non-utf8 column values" do
+  test "correctly handles data frames with binary non-utf8 column values" do
     df =
       Explorer.DataFrame.new([x: [1, 2], y: [<<110, 120>>, <<200, 210>>]], dtypes: [y: :binary])
 
@@ -357,6 +375,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
+             export: %{formats: ["CSV", "NDJSON", "Parquet"]},
              features: [:export, :pagination, :sorting],
              content: %{
                page: 1,
@@ -381,6 +400,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
+             export: %{formats: ["CSV", "NDJSON", "Parquet"]},
              features: [:export, :pagination, :sorting],
              content: %{
                page: 1,
@@ -412,6 +432,21 @@ defmodule Kino.ExplorerTest do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
+      exported = Kino.Explorer.export_data(%{df: df}, format)
+      extension = ".#{String.downcase(format)}"
+      assert %{extension: ^extension} = exported
+    end
+  end
+
+  test "export to for data frames with list-type columns" do
+    df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{export: %{formats: ["NDJSON", "Parquet"]}} = data
+
+    for format <- ["NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(%{df: df}, format)
       extension = ".#{String.downcase(format)}"
       assert %{extension: ^extension} = exported

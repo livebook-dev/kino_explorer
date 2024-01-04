@@ -34,14 +34,14 @@ defmodule Kino.Explorer do
 
   def new(%DataFrame{} = df, opts) do
     name = Keyword.get(opts, :name, "DataFrame")
-    Kino.Table.new(__MODULE__, {df, name})
+    Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df)} end)
   end
 
   def new(%Series{} = s, opts) do
     name = Keyword.get(opts, :name, "Series")
     column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
     df = DataFrame.new([{column_name, s}])
-    Kino.Table.new(__MODULE__, {df, name})
+    Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df[0])} end)
   end
 
   @impl true

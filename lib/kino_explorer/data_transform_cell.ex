@@ -855,7 +855,7 @@ defmodule KinoExplorer.DataTransformCell do
     data_options =
       case df do
         nil -> nil
-        %DataFrame{} -> DataFrame.dtypes(df) |> normalize_dtypes()
+        %DataFrame{} -> build_data_options(df)
         _ -> maybe_data_options(df)
       end
 
@@ -888,10 +888,7 @@ defmodule KinoExplorer.DataTransformCell do
             |> Code.eval_string(binding)
             |> elem(0)
 
-          data_options =
-            DataFrame.dtypes(df)
-            |> normalize_dtypes()
-            |> Map.reject(fn {_k, v} -> v == "list" end)
+          data_options = build_data_options(df)
 
           Map.put(operation, "data_options", data_options)
           |> maybe_update_datalist(df)
@@ -975,10 +972,14 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp maybe_data_options(df) do
     try do
-      df |> DataFrame.new() |> DataFrame.dtypes() |> normalize_dtypes()
+      df |> DataFrame.new() |> build_data_options()
     rescue
       _ ->
         nil
     end
+  end
+
+  defp build_data_options(df) do
+    df |> DataFrame.dtypes() |> normalize_dtypes() |> Map.reject(fn {_k, v} -> v == "list" end)
   end
 end
