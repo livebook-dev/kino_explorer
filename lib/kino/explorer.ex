@@ -17,40 +17,31 @@ defmodule Kino.Explorer do
 
   @type t :: Kino.JS.Live.t()
 
+  @date_types [
+    :date,
+    {:datetime, :nanosecond},
+    {:datetime, :microsecond},
+    {:datetime, :millisecond}
+  ]
+
+  @legacy_numeric_types [:float, :integer]
+
   @doc """
   Creates a new kino displaying a given data frame or series.
   """
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
 
-  # TODO: remove the fallback once we require Kino v0.11.0
-  if Code.ensure_loaded?(Kino.Table) and function_exported?(Kino.Table, :new, 3) do
-    def new(%DataFrame{} = df, opts) do
-      name = Keyword.get(opts, :name, "DataFrame")
-      Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df)} end)
-    end
+  def new(%DataFrame{} = df, opts) do
+    name = Keyword.get(opts, :name, "DataFrame")
+    Kino.Table.new(__MODULE__, {df, name})
+  end
 
-    def new(%Series{} = s, opts) do
-      name = Keyword.get(opts, :name, "Series")
-      column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
-      df = DataFrame.new([{column_name, s}])
-
-      Kino.Table.new(__MODULE__, {df, name},
-        export: fn state -> {"text", inspect(state.df[0])} end
-      )
-    end
-  else
-    def new(%DataFrame{} = df, opts) do
-      name = Keyword.get(opts, :name, "DataFrame")
-      Kino.Table.new(__MODULE__, {df, name})
-    end
-
-    def new(%Series{} = s, opts) do
-      name = Keyword.get(opts, :name, "Series")
-      column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
-      df = DataFrame.new([{column_name, s}])
-      Kino.Table.new(__MODULE__, {df, name})
-    end
+  def new(%Series{} = s, opts) do
+    name = Keyword.get(opts, :name, "Series")
+    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+    df = DataFrame.new([{column_name, s}])
+    Kino.Table.new(__MODULE__, {df, name})
   end
 
   @impl true
@@ -59,35 +50,8 @@ defmodule Kino.Explorer do
     groups = df.groups
     df = DataFrame.ungroup(df)
     total_rows = if !lazy, do: DataFrame.n_rows(df)
-    dtypes = DataFrame.dtypes(df)
-    sample_data = df |> DataFrame.head(1) |> DataFrame.collect() |> DataFrame.to_columns()
-    summaries = if !lazy, do: summaries(df, groups)
-    name = if lazy, do: "Lazy - #{name}", else: name
-
-    columns =
-      for name <- df.names, dtype = Map.fetch!(dtypes, name) do
-        %{
-          key: name,
-          label: to_string(name),
-          type: type_of(dtype, sample_data[name]),
-          summary: summaries[name]
-        }
-      end
-
-    has_list_column? = Enum.any?(columns, fn x -> x.type == "list" end)
-
-    export =
-      if has_list_column? do
-        %{formats: ["NDJSON", "Parquet"]}
-      else
-        %{formats: ["CSV", "NDJSON", "Parquet"]}
-      end
-
-    info = %{
-      name: name,
-      features: [:export, :pagination, :sorting],
-      export: export
-    }
+    columns = columns(df, lazy, groups)
+    info = info(columns, lazy, name)
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups}}
   end
@@ -114,6 +78,29 @@ defmodule Kino.Explorer do
   def export_data(%{df: df}, "Parquet") do
     data = df |> DataFrame.collect() |> DataFrame.dump_parquet!()
     %{data: data, extension: ".parquet", type: "application/x-parquet"}
+  end
+
+  defp columns(df, lazy, groups) do
+    dtypes = DataFrame.dtypes(df)
+    sample_data = df |> DataFrame.head(1) |> DataFrame.collect() |> DataFrame.to_columns()
+    summaries = if !lazy, do: summaries(df, groups)
+
+    for name <- df.names, dtype = Map.fetch!(dtypes, name) do
+      %{
+        key: name,
+        label: to_string(name),
+        type: type_of(dtype, sample_data[name]),
+        summary: summaries[name]
+      }
+    end
+  end
+
+  defp info(columns, lazy, name) do
+    name = if lazy, do: "Lazy - #{name}", else: name
+    has_list_column? = Enum.any?(columns, fn x -> x.type == "list" end)
+    formats = if has_list_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
+
+    %{name: name, features: [:export, :pagination, :sorting], export: %{formats: formats}}
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do
@@ -143,56 +130,51 @@ defmodule Kino.Explorer do
     if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
   end
 
-  defp value_to_string("list", value) do
-    inspect(value)
-  end
-
-  defp value_to_string(_type, value) do
-    to_string(value)
-  end
+  defp value_to_string("list", value), do: inspect(value)
+  defp value_to_string(_type, value), do: to_string(value)
 
   defp summaries(df, groups) do
     df_series = DataFrame.to_series(df)
     has_groups = length(groups) > 0
-    # hacky way to provide backward compatibility for {:list, numeric} error
-    # https://github.com/elixir-explorer/explorer/issues/787
-    exp_ver_0_7_2_gte? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
 
     for {column, series} <- df_series,
-        summary_type = summary_type(series),
+        type = if(numeric_type?(Series.dtype(series)), do: :numeric, else: :categorical),
         grouped = (column in groups) |> to_string(),
         nulls = Series.nil_count(series) |> to_string(),
         into: %{} do
-      cond do
-        summary_type == :numeric ->
-          mean = Series.mean(series)
-          mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
-          min = Series.min(series) |> to_string()
-          max = Series.max(series) |> to_string()
-          keys = ["min", "max", "mean", "nulls"]
-          values = [min, max, mean, nulls]
+      build_summary(type, column, series, has_groups, grouped, nulls)
+    end
+  end
 
-          keys = if has_groups, do: keys ++ ["grouped"], else: keys
-          values = if has_groups, do: values ++ [grouped], else: values
+  defp build_summary(:numeric, column, series, has_groups, grouped, nulls) do
+    mean = Series.mean(series)
+    mean = if is_float(mean), do: Float.round(mean, 2) |> to_string(), else: to_string(mean)
+    min = Series.min(series) |> to_string()
+    max = Series.max(series) |> to_string()
+    keys = ["min", "max", "mean", "nulls"]
+    values = [min, max, mean, nulls]
 
-          {column, %{keys: keys, values: values}}
+    keys = if has_groups, do: keys ++ ["grouped"], else: keys
+    values = if has_groups, do: values ++ [grouped], else: values
 
-        summary_type == :categorical and compute_summaries?(series, exp_ver_0_7_2_gte?) ->
-          %{"counts" => top_freq, "values" => top} = most_frequent(series)
-          top_freq = top_freq |> List.first() |> to_string()
-          top = List.first(top) |> to_string()
-          unique = count_unique(series)
-          keys = ["unique", "top", "top freq", "nulls"]
-          values = [unique, top, top_freq, nulls]
+    {column, %{keys: keys, values: values}}
+  end
 
-          keys = if has_groups, do: keys ++ ["grouped"], else: keys
-          values = if has_groups, do: values ++ [grouped], else: values
+  defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
+    if compute_summaries?(series) do
+      %{"counts" => top_freq, "values" => top} = most_frequent(series)
+      top_freq = top_freq |> List.first() |> to_string()
+      top = List.first(top) |> to_string()
+      unique = series |> Series.distinct() |> Series.count() |> to_string()
+      keys = ["unique", "top", "top freq", "nulls"]
+      values = [unique, top, top_freq, nulls]
 
-          {column, %{keys: keys, values: values}}
+      keys = if has_groups, do: keys ++ ["grouped"], else: keys
+      values = if has_groups, do: values ++ [grouped], else: values
 
-        true ->
-          {column, %{keys: [], values: []}}
-      end
+      {column, %{keys: keys, values: values}}
+    else
+      {column, %{keys: [], values: []}}
     end
   end
 
@@ -205,7 +187,11 @@ defmodule Kino.Explorer do
     |> DataFrame.to_columns()
   end
 
-  defp compute_summaries?(series, exp_ver_0_7_2_gte?) do
+  defp compute_summaries?(series) do
+    # hacky way to provide backward compatibility for {:list, numeric} error
+    # https://github.com/elixir-explorer/explorer/issues/787
+    exp_ver_0_7_2_gte? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
+
     case Series.dtype(series) do
       {:list, dtype} ->
         exp_ver_0_7_2_gte? && numeric_type?(dtype)
@@ -215,23 +201,7 @@ defmodule Kino.Explorer do
     end
   end
 
-  defp summary_type(data) do
-    if numeric_type?(Series.dtype(data)), do: :numeric, else: :categorical
-  end
-
-  defp count_unique(data) do
-    data |> Series.distinct() |> Series.count() |> to_string()
-  end
-
-  defp type_of(dtype, _)
-       when dtype in [
-              :date,
-              {:datetime, :nanosecond},
-              {:datetime, :microsecond},
-              {:datetime, :millisecond}
-            ],
-       do: "date"
-
+  defp type_of(dtype, _) when dtype in @date_types, do: "date"
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(:binary, _), do: "binary"
@@ -245,7 +215,7 @@ defmodule Kino.Explorer do
   defp numeric_type?({:u, _}), do: true
   defp numeric_type?({:f, _}), do: true
   # For backwards compatibility
-  defp numeric_type?(other), do: other in [:float, :integer]
+  defp numeric_type?(other), do: other in @legacy_numeric_types
 
   defp lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
 end
