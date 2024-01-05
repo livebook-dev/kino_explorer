@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.15](https://github.com/livebook-dev/kino_explorer/tree/v0.1.15) (2024-01-05)
+
+## Fixed
+
+- Remove unsupported csv export ([#130](https://github.com/livebook-dev/kino_explorer/pull/130))
+- Fixes for list-type columns ([#131](https://github.com/livebook-dev/kino_explorer/pull/131))
+
 ## [v0.1.14](https://github.com/livebook-dev/kino_explorer/tree/v0.1.14) (2024-01-02)
 
 ### Added
