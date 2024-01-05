@@ -190,7 +190,7 @@ defmodule Kino.Explorer do
   defp compute_summaries?(series) do
     # hacky way to provide backward compatibility for {:list, numeric} error
     # https://github.com/elixir-explorer/explorer/issues/787
-    #TODO: remove the check once we require Explorer v0.8
+    # TODO: remove the check once we require Explorer v0.8
     exp_ver_0_7_2_gt? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
 
     case Series.dtype(series) do
