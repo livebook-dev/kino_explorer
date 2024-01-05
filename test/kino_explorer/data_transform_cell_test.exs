@@ -150,6 +150,51 @@ defmodule KinoExplorer.DataTransformCellTest do
     })
   end
 
+  test "removes list-type columns from data options" do
+    {kino, _source} = start_smart_cell!(DataTransformCell, %{})
+
+    df =
+      Explorer.DataFrame.new(
+        [
+          a: ["a", "b"],
+          b: [1, 2],
+          c: ["https://elixir-lang.org", "https://www.erlang.org"],
+          d: [<<110, 120>>, <<200, 210>>],
+          e: [[1, 2], [3, 4]]
+        ],
+        dtypes: [d: :binary]
+      )
+
+    env = Code.env_for_eval([])
+    DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+    data_frame_variables = %{"df" => true}
+
+    assert_broadcast_event(kino, "set_available_data", %{
+      "data_frame_variables" => ^data_frame_variables,
+      "fields" => %{
+        operations: [
+          %{
+            "active" => true,
+            "column" => nil,
+            "data_options" => %{
+              "a" => "string",
+              "b" => "integer",
+              "c" => "string",
+              "d" => "binary"
+            },
+            "datalist" => [],
+            "filter" => nil,
+            "operation_type" => "filters",
+            "type" => "string",
+            "value" => nil
+          }
+        ],
+        root_fields: %{"assign_to" => nil, "data_frame" => "df"}
+      }
+    })
+  end
+
   describe "code generation" do
     test "source for a data frame without operations" do
       attrs = build_attrs(%{})
