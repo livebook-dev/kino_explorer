@@ -28,7 +28,7 @@ defmodule KinoExplorer.MixProject do
   defp deps do
     [
       {:kino, "~> 0.12.2"},
-      {:explorer, "~> 0.7.2 or ~> 0.8"},
+      {:explorer, github: "elixir-explorer/explorer"},
       {:rustler, "~> 0.29.0", optional: true},
       {:ex_doc, "~> 0.31.0", only: :dev, runtime: false}
     ]

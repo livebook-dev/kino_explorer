@@ -190,7 +190,7 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
-  test "does not compute summary for unsupported lists" do
+  test "support data summary for lists" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
 
     widget = Kino.Explorer.new(df)
@@ -199,7 +199,15 @@ defmodule Kino.ExplorerTest do
     assert %{
              content: %{
                columns: [
-                 %{key: "0", label: "list", summary: %{keys: [], values: []}, type: "list"}
+                 %{
+                   key: "0",
+                   label: "list",
+                   summary: %{
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["2", <<1, 2>>, "1", "0"]
+                   },
+                   type: "list"
+                 }
                ]
              }
            } = data
