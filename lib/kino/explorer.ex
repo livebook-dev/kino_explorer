@@ -116,7 +116,7 @@ defmodule Kino.Explorer do
   defp order_by(df, nil), do: df
 
   defp order_by(df, %{key: column, direction: direction}) do
-    DataFrame.arrange_with(df, &[{direction, &1[column]}])
+    DataFrame.sort_with(df, &[{direction, &1[column]}])
   end
 
   defp records_to_data(columns, records) do

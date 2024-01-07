@@ -500,7 +500,7 @@ defmodule KinoExplorer.DataTransformCell do
       end
       |> then(fn args -> if args != [], do: [args] end)
 
-    %{field: :sorting, name: :arrange, args: sorting_args}
+    %{field: :sorting, name: :sort_by, args: sorting_args}
   end
 
   defp to_quoted([%{operation_type: :summarise} | _] = summarization) do
