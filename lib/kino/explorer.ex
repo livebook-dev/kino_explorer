@@ -161,7 +161,7 @@ defmodule Kino.Explorer do
   end
 
   defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
-    if compute_summaries?(series) do
+    try do
       %{"counts" => top_freq, "values" => top} = most_frequent(series)
       top_freq = top_freq |> List.first() |> to_string()
       top = List.first(top) |> build_top()
@@ -173,8 +173,8 @@ defmodule Kino.Explorer do
       values = if has_groups, do: values ++ [grouped], else: values
 
       {column, %{keys: keys, values: values}}
-    else
-      {column, %{keys: [], values: []}}
+    rescue
+      _ -> {column, %{keys: [], values: []}}
     end
   end
 
@@ -185,21 +185,6 @@ defmodule Kino.Explorer do
     |> DataFrame.filter(Series.is_not_nil(values))
     |> DataFrame.head(1)
     |> DataFrame.to_columns()
-  end
-
-  defp compute_summaries?(series) do
-    # hacky way to provide backward compatibility for {:list, numeric} error
-    # https://github.com/elixir-explorer/explorer/issues/787
-    # TODO: remove the check once we require Explorer v0.8
-    exp_ver_0_7_2_gt? = Explorer.Shared.dtypes() |> Enum.member?({:s, 8})
-
-    case Series.dtype(series) do
-      {:list, dtype} ->
-        exp_ver_0_7_2_gt? && numeric_type?(dtype)
-
-      _ ->
-        true
-    end
   end
 
   defp type_of(dtype, _) when dtype in @date_types, do: "date"
