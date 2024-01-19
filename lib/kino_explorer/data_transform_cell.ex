@@ -21,7 +21,7 @@ defmodule KinoExplorer.DataTransformCell do
     "string",
     "time"
   ]
-  @special_column_types ["list"]
+  @composite_column_types ["list"]
   @filter_options %{
     "binary" => ["equal", "contains", "not contains", "not equal"],
     "boolean" => ["equal", "not equal"],
@@ -51,7 +51,7 @@ defmodule KinoExplorer.DataTransformCell do
     "list" => ["forward", "backward"]
   }
   @summarise_options %{
-    count: @column_types ++ @special_column_types,
+    count: @column_types ++ @composite_column_types,
     max: [
       "date",
       "datetime[ms]",
@@ -72,15 +72,15 @@ defmodule KinoExplorer.DataTransformCell do
       "integer",
       "time"
     ],
-    n_distinct: @column_types ++ @special_column_types,
-    nil_count: @column_types ++ @special_column_types,
+    n_distinct: @column_types ++ @composite_column_types,
+    nil_count: @column_types ++ @composite_column_types,
     standard_deviation: ["float", "integer"],
     sum: ["boolean", "float", "integer"],
     variance: ["float", "integer"]
   }
   @pivot_wider_types %{
     names_from: @column_types,
-    values_from: @column_types ++ @special_column_types
+    values_from: @column_types ++ @composite_column_types
   }
   @sort_types @column_types
   @queried_filter_options [
