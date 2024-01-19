@@ -204,7 +204,7 @@ defmodule Kino.ExplorerTest do
                    label: "list",
                    summary: %{
                      keys: ["unique", "top", "top freq", "nulls"],
-                     values: ["2", <<1, 2>>, "1", "0"]
+                     values: ["2", "[1, 2]", "1", "0"]
                    },
                    type: "list"
                  }

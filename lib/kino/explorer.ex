@@ -164,7 +164,7 @@ defmodule Kino.Explorer do
     if compute_summaries?(series) do
       %{"counts" => top_freq, "values" => top} = most_frequent(series)
       top_freq = top_freq |> List.first() |> to_string()
-      top = List.first(top) |> to_string()
+      top = List.first(top) |> build_top()
       unique = series |> Series.distinct() |> Series.count() |> to_string()
       keys = ["unique", "top", "top freq", "nulls"]
       values = [unique, top, top_freq, nulls]
@@ -219,4 +219,7 @@ defmodule Kino.Explorer do
   defp numeric_type?(other), do: other in @legacy_numeric_types
 
   defp lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
+
+  defp build_top(top) when is_list(top), do: inspect(top)
+  defp build_top(top), do: to_string(top)
 end
