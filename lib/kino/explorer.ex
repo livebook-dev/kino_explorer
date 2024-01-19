@@ -161,6 +161,8 @@ defmodule Kino.Explorer do
   end
 
   defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
+    # The main case that makes us need to use try/rescue here is when there are internal nils in a list
+    # For example: Series.from_list([[1, 2], [2, nil]]) will break on most_frequent and unique
     try do
       %{"counts" => top_freq, "values" => top} = most_frequent(series)
       top_freq = top_freq |> List.first() |> to_string()
