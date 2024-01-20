@@ -511,6 +511,99 @@ defmodule KinoExplorer.DataTransformCellTest do
              """
     end
 
+    test "source for a data frame with filter for lists" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "list_column",
+              "filter" => "contains",
+              "type" => "list",
+              "value" => "3",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.lazy()
+             |> Explorer.DataFrame.filter(member?(list_column, 3))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
+    test "source for a data frame with multiple filter for lists" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "list_column",
+              "filter" => "contains",
+              "type" => "list",
+              "value" => "3",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "list_column",
+              "filter" => "not contains",
+              "type" => "list",
+              "value" => "5",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.lazy()
+             |> Explorer.DataFrame.filter(member?(list_column, 3) and not member?(list_column, 5))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
+    test "do not generate code for invalid filter for lists" do
+      attrs =
+        build_attrs(%{
+          filters: [
+            %{
+              "column" => "list_column",
+              "filter" => "contains",
+              "type" => "list",
+              "value" => "3",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "list_column",
+              "filter" => "not contains",
+              "type" => "list",
+              "value" => "5",
+              "active" => true,
+              "operation_type" => "filters"
+            },
+            %{
+              "column" => "list_column",
+              "filter" => "not contains",
+              "type" => "list",
+              "value" => "cat",
+              "active" => true,
+              "operation_type" => "filters"
+            }
+          ]
+        })
+
+      assert DataTransformCell.to_source(attrs) == """
+             people
+             |> Explorer.DataFrame.lazy()
+             |> Explorer.DataFrame.filter(member?(list_column, 3) and not member?(list_column, 5))
+             |> Explorer.DataFrame.collect()\
+             """
+    end
+
     test "source for a data frame with fill_missing" do
       attrs =
         build_attrs(%{

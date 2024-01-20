@@ -34,7 +34,7 @@ defmodule KinoExplorer.DataTransformCell do
     "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "string" => ["equal", "contains", "not contains", "not equal"],
     "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "list" => []
+    "list" => ["contains", "not contains"]
   }
   @fill_missing_options %{
     "binary" => ["forward", "backward", "max", "min", "scalar"],
@@ -389,10 +389,11 @@ defmodule KinoExplorer.DataTransformCell do
     type = Map.get(data_options, column) || "string"
     default_value = if type == "boolean", do: "true"
     message = if field == "value", do: validation_message(:filters, type, value)
+    filter = if type == "list", do: "contains", else: "equal"
 
     if field == "column" do
       %{
-        "filter" => "equal",
+        "filter" => filter,
         "column" => column,
         "value" => default_value,
         "type" => type,
@@ -615,6 +616,15 @@ defmodule KinoExplorer.DataTransformCell do
   defp build_multiselect([columns]), do: [columns]
   defp build_multiselect(columns), do: [columns]
 
+  defp build_filter([column, filter, value, "list"] = args) do
+    with true <- Enum.all?(args, &(&1 != nil)),
+         {:ok, filter_value} <- cast_typed_value("list", value) do
+      build_filter_for_list(column, filter, filter_value)
+    else
+      _ -> nil
+    end
+  end
+
   defp build_filter([column, filter, "quantile(" <> <<value::bytes-size(1)>> <> ")", type]) do
     build_filter([column, filter, "quantile(0#{value})", type])
   end
@@ -768,6 +778,20 @@ defmodule KinoExplorer.DataTransformCell do
     case Float.parse(value) do
       {value, _} -> {:ok, value}
       _ -> nil
+    end
+  end
+
+  defp cast_typed_value("list", value) do
+    case Integer.parse(value) do
+      {int, rest} ->
+        if rest == ".0" or rest == "" do
+          {:ok, int}
+        else
+          cast_typed_value("float", value)
+        end
+
+      _ ->
+        nil
     end
   end
 
@@ -986,5 +1010,13 @@ defmodule KinoExplorer.DataTransformCell do
 
   defp build_data_options(df) do
     df |> DataFrame.dtypes() |> normalize_dtypes()
+  end
+
+  defp build_filter_for_list(column, "contains", value) do
+    {String.to_atom("member?"), [], [quoted_column(column), value]}
+  end
+
+  defp build_filter_for_list(column, "not contains", value) do
+    {String.to_atom("not member?"), [], [quoted_column(column), value]}
   end
 end
