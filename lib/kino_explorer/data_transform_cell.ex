@@ -333,8 +333,10 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   def handle_event("remove_operation", %{"idx" => idx}, ctx) do
-    updated_operations = if idx, do: List.delete_at(ctx.assigns.operations, idx), else: []
-    ctx = assign(ctx, operations: updated_operations)
+    updated_operations =
+      if idx, do: List.delete_at(ctx.assigns.operations, idx) |> update_data_options(ctx)
+
+    ctx = assign(ctx, operations: updated_operations || [])
     broadcast_event(ctx, "set_operations", %{"operations" => updated_operations})
 
     {:noreply, ctx}
