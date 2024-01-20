@@ -161,20 +161,21 @@ defmodule Kino.Explorer do
   end
 
   defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
-    if most_frequent = most_frequent(series) do
-      %{"counts" => top_freq, "values" => top} = most_frequent
-      top_freq = top_freq |> List.first() |> to_string()
-      top = List.first(top) |> build_top()
-      unique = series |> Series.distinct() |> Series.count() |> to_string()
-      keys = ["unique", "top", "top freq", "nulls"]
-      values = [unique, top, top_freq, nulls]
+    case most_frequent(series) do
+      %{"counts" => top_freq, "values" => top} ->
+        top_freq = top_freq |> List.first() |> to_string()
+        top = List.first(top) |> build_top()
+        unique = series |> Series.distinct() |> Series.count() |> to_string()
+        keys = ["unique", "top", "top freq", "nulls"]
+        values = [unique, top, top_freq, nulls]
 
-      keys = if has_groups, do: keys ++ ["grouped"], else: keys
-      values = if has_groups, do: values ++ [grouped], else: values
+        keys = if has_groups, do: keys ++ ["grouped"], else: keys
+        values = if has_groups, do: values ++ [grouped], else: values
 
-      {column, %{keys: keys, values: values}}
-    else
-      {column, %{keys: [], values: []}}
+        {column, %{keys: keys, values: values}}
+
+      _ ->
+        {column, %{keys: [], values: []}}
     end
   end
 
