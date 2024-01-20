@@ -213,6 +213,44 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "support data summary for lists with nil" do
+    df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1], nil])})
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{
+                   key: "0",
+                   label: "list",
+                   summary: %{
+                     keys: ["unique", "top", "top freq", "nulls"],
+                     values: ["3", "[1, 2]", "1", "1"]
+                   },
+                   type: "list"
+                 }
+               ]
+             }
+           } = data
+  end
+
+  test "does not break on lists with internal nulls" do
+    df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1, nil]])})
+
+    widget = Kino.Explorer.new(df)
+    data = connect(widget)
+
+    assert %{
+             content: %{
+               columns: [
+                 %{key: "0", label: "list", summary: %{keys: [], values: []}, type: "list"}
+               ]
+             }
+           } = data
+  end
+
   test "shows if a column is in a group when there are groups" do
     df =
       Explorer.DataFrame.new(%{
