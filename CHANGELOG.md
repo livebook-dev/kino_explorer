@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Supports operations for `:list` ([#136](https://github.com/livebook-dev/kino_explorer/pull/136))
-_ Supports filters for `:list` ([#142](https://github.com/livebook-dev/kino_explorer/pull/142))
+- Supports filters for `:list` ([#142](https://github.com/livebook-dev/kino_explorer/pull/142))
 - Initial support for `Explorer` `:struct` ([#143](https://github.com/livebook-dev/kino_explorer/pull/143))
 
 ### Fixed
