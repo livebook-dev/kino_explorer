@@ -1,7 +1,7 @@
 defmodule KinoExplorer.MixProject do
   use Mix.Project
 
-  @version "0.1.15"
+  @version "0.1.16"
   @description "Explorer integration with Livebook"
 
   def project do

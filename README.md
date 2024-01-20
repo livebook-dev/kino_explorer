@@ -10,7 +10,7 @@ To bring KinoExplorer to Livebook all you need to do is Mix.install/2:
 
 ```elixir
 Mix.install([
-  {:kino_explorer, "~> 0.1.10"}
+  {:kino_explorer, "~> 0.1.16"}
 ])
 ```
 
