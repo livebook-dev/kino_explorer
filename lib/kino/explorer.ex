@@ -161,33 +161,39 @@ defmodule Kino.Explorer do
   end
 
   defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
-    # TODO: Remove this when possible
-    # The main case that makes us need to use try/rescue here is when there are internal nils in a list
-    # For example: Series.from_list([[1, 2], [2, nil]]) will break on most_frequent and unique
-    try do
-      %{"counts" => top_freq, "values" => top} = most_frequent(series)
-      top_freq = top_freq |> List.first() |> to_string()
-      top = List.first(top) |> build_top()
-      unique = series |> Series.distinct() |> Series.count() |> to_string()
-      keys = ["unique", "top", "top freq", "nulls"]
-      values = [unique, top, top_freq, nulls]
+    case most_frequent(series) do
+      %{"counts" => top_freq, "values" => top} ->
+        top_freq = top_freq |> List.first() |> to_string()
+        top = List.first(top) |> build_top()
+        unique = series |> Series.distinct() |> Series.count() |> to_string()
+        keys = ["unique", "top", "top freq", "nulls"]
+        values = [unique, top, top_freq, nulls]
 
-      keys = if has_groups, do: keys ++ ["grouped"], else: keys
-      values = if has_groups, do: values ++ [grouped], else: values
+        keys = if has_groups, do: keys ++ ["grouped"], else: keys
+        values = if has_groups, do: values ++ [grouped], else: values
 
-      {column, %{keys: keys, values: values}}
-    rescue
-      _ -> {column, %{keys: [], values: []}}
+        {column, %{keys: keys, values: values}}
+
+      _ ->
+        {column, %{keys: [], values: []}}
     end
   end
 
   defp most_frequent(data) do
-    data
-    |> Series.frequencies()
-    |> DataFrame.head(2)
-    |> DataFrame.filter(Series.is_not_nil(values))
-    |> DataFrame.head(1)
-    |> DataFrame.to_columns()
+    # TODO: Remove this when possible
+    # The main case that makes us need to use try/rescue is when there are internal nils in a list
+    # For example: Series.from_list([[1, 2], [2, nil]]) will break on most_frequent and unique
+    # Since all cases break first on Series.frequencies(), we can isolate the try/rescue here
+    try do
+      data
+      |> Series.frequencies()
+      |> DataFrame.head(2)
+      |> DataFrame.filter(Series.is_not_nil(values))
+      |> DataFrame.head(1)
+      |> DataFrame.to_columns()
+    rescue
+      _ -> nil
+    end
   end
 
   defp type_of(dtype, _) when dtype in @date_types, do: "date"
