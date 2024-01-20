@@ -21,7 +21,7 @@ defmodule KinoExplorer.DataTransformCell do
     "string",
     "time"
   ]
-  @composite_column_types ["list"]
+  @composite_column_types ["list", "struct"]
   @filter_options %{
     "binary" => ["equal", "contains", "not contains", "not equal"],
     "boolean" => ["equal", "not equal"],
@@ -34,7 +34,8 @@ defmodule KinoExplorer.DataTransformCell do
     "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "string" => ["equal", "contains", "not contains", "not equal"],
     "time" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "list" => ["contains", "not contains"]
+    "list" => ["contains", "not contains"],
+    "struct" => []
   }
   @fill_missing_options %{
     "binary" => ["forward", "backward", "max", "min", "scalar"],
@@ -82,7 +83,7 @@ defmodule KinoExplorer.DataTransformCell do
     names_from: @column_types,
     values_from: @column_types ++ @composite_column_types
   }
-  @sort_types @column_types
+  @sort_types @column_types ++ ["struct"]
   @queried_filter_options [
     "mean",
     "median",
@@ -1010,7 +1011,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp build_data_options(df) do
-    df |> DataFrame.dtypes() |> normalize_dtypes() |> Map.reject(fn {_k, v} -> v == "struct" end)
+    df |> DataFrame.dtypes() |> normalize_dtypes()
   end
 
   defp build_filter_for_list(column, "contains", value) do
