@@ -131,6 +131,7 @@ defmodule Kino.Explorer do
   end
 
   defp value_to_string("list", value), do: inspect(value)
+  defp value_to_string("struct", value), do: inspect(value)
   defp value_to_string(_type, value), do: to_string(value)
 
   defp summaries(df, groups) do
@@ -201,6 +202,7 @@ defmodule Kino.Explorer do
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(:binary, _), do: "binary"
   defp type_of({:list, _}, _), do: "list"
+  defp type_of({:struct, _}, _), do: "struct"
   defp type_of(dtype, _), do: if(numeric_type?(dtype), do: "number", else: "text")
 
   defp type_of_sample("http" <> _rest), do: "uri"
@@ -214,6 +216,6 @@ defmodule Kino.Explorer do
 
   defp lazy?(%DataFrame{data: %struct{}}), do: struct.lazy() == struct
 
-  defp build_top(top) when is_list(top), do: inspect(top)
+  defp build_top(top) when is_list(top) or is_map(top), do: inspect(top)
   defp build_top(top), do: to_string(top)
 end

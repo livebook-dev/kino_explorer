@@ -994,6 +994,7 @@ defmodule KinoExplorer.DataTransformCell do
       {k, {:u, 32}} -> {k, "integer"}
       {k, {:u, 64}} -> {k, "integer"}
       {k, {:list, _}} -> {k, "list"}
+      {k, {:struct, _}} -> {k, "struct"}
       {k, v} -> {k, Atom.to_string(v)}
     end)
     |> Enum.into(%{})
@@ -1009,7 +1010,7 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp build_data_options(df) do
-    df |> DataFrame.dtypes() |> normalize_dtypes()
+    df |> DataFrame.dtypes() |> normalize_dtypes() |> Map.reject(fn {_k, v} -> v == "struct" end)
   end
 
   defp build_filter_for_list(column, "contains", value) do
