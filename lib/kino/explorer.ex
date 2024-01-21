@@ -97,8 +97,10 @@ defmodule Kino.Explorer do
 
   defp info(columns, lazy, name) do
     name = if lazy, do: "Lazy - #{name}", else: name
-    has_list_column? = Enum.any?(columns, fn x -> x.type == "list" end)
-    formats = if has_list_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
+    has_composite_type_column? = Enum.any?(columns, &(&1.type == "list" || &1.type == "struct"))
+
+    formats =
+      if has_composite_type_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
 
     %{name: name, features: [:export, :pagination, :sorting], export: %{formats: formats}}
   end
