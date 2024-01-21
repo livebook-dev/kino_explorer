@@ -432,7 +432,7 @@ defmodule Kino.ExplorerTest do
       extension = ".#{String.downcase(format)}"
       push_event(widget, "download", %{"format" => format})
       assert_receive({:event, "download_content", {:binary, exported, data}, _})
-      assert {:ok, %{format: ^extension}} = exported
+      assert %{format: ^extension} = exported
       assert is_binary(data)
     end
   end
@@ -457,7 +457,7 @@ defmodule Kino.ExplorerTest do
       extension = ".#{String.downcase(format)}"
       push_event(widget, "download", %{"format" => format})
       assert_receive({:event, "download_content", {:binary, exported, data}, _})
-      assert {:ok, %{format: ^extension}} = exported
+      assert %{format: ^extension} = exported
       assert is_binary(data)
     end
   end
