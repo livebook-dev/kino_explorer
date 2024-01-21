@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# [v0.1.17](https://github.com/livebook-dev/kino_explorer/tree/v0.1.17) (2024-01-21)
+
+### Added
+
+- Supports operations for `:struct` ([#147](https://github.com/livebook-dev/kino_explorer/pull/147))
+
+### Fixed
+
+- Update `data_options` after deleting an operation ([#148](https://github.com/livebook-dev/kino_explorer/pull/148))
+
 ## [v0.1.16](https://github.com/livebook-dev/kino_explorer/tree/v0.1.16) (2024-01-20)
 
 ### Added
