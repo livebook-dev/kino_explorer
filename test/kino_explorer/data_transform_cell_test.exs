@@ -1829,7 +1829,7 @@ defmodule KinoExplorer.DataTransformCellTest do
   end
 
   describe "synced data options" do
-    test "update data_options after a summarise" do
+    test "update data_options after adding an operation" do
       operations = [
         %{
           "active" => true,
@@ -1886,6 +1886,96 @@ defmodule KinoExplorer.DataTransformCellTest do
       updated_operations = operations ++ [synced_filter]
 
       assert_broadcast_event(kino, "set_operations", %{"operations" => ^updated_operations})
+    end
+
+    test "update data_options after moving an operation" do
+      operations = [
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        },
+        %{
+          "active" => true,
+          "data_options" => %{
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
+          },
+          "columns" => ["weekday"],
+          "operation_type" => "discard"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "move_operation", %{"removedIndex" => 1, "addedIndex" => 0})
+      assert_broadcast_event(kino, "set_operations", %{"operations" => [discard, synced_filter]})
+      assert discard == Enum.at(operations, 1)
+      assert synced_filter["data_options"] == %{"hour" => "integer", "team" => "string"}
+      refute Map.has_key?(synced_filter["data_options"], "weekday")
+    end
+
+    test "update data_options after deleting an operation" do
+      operations = [
+        %{
+          "active" => true,
+          "data_options" => %{
+            "hour" => "integer",
+            "team" => "string",
+            "weekday" => "string"
+          },
+          "columns" => ["weekday"],
+          "operation_type" => "discard"
+        },
+        %{
+          "active" => true,
+          "column" => "team",
+          "data_options" => %{
+            "hour" => "integer",
+            "team" => "string"
+          },
+          "datalist" => ["A", "B", "C"],
+          "filter" => "equal",
+          "message" => nil,
+          "operation_type" => "filters",
+          "type" => "string",
+          "value" => "A"
+        }
+      ]
+
+      attrs = Map.put(@base_attrs, "operations", operations)
+      {kino, _source} = start_smart_cell!(DataTransformCell, attrs)
+      connect(kino)
+      teams = teams_df()
+      env = Code.env_for_eval([])
+      DataTransformCell.scan_binding(kino.pid, binding(), env)
+
+      push_event(kino, "remove_operation", %{"idx" => 0})
+      assert_broadcast_event(kino, "set_operations", %{"operations" => [synced_filter]})
+
+      assert Map.has_key?(synced_filter["data_options"], "weekday")
+
+      assert synced_filter["data_options"] == %{
+               "hour" => "integer",
+               "team" => "string",
+               "weekday" => "string"
+             }
     end
 
     test "synced data_options respect grouped operations" do
