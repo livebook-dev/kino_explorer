@@ -49,7 +49,8 @@ defmodule KinoExplorer.DataTransformCell do
     "integer" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "string" => ["forward", "backward", "max", "min", "scalar"],
     "time" => ["forward", "backward", "max", "min", "mean", "scalar"],
-    "list" => ["forward", "backward"]
+    "list" => ["forward", "backward"],
+    "struct" => []
   }
   @summarise_options %{
     count: @column_types ++ @composite_column_types,
