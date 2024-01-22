@@ -468,7 +468,7 @@ defmodule Kino.ExplorerTest do
     for format <- ["CSV", "NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(%{df: df}, format)
       extension = ".#{String.downcase(format)}"
-      assert %{extension: ^extension} = exported
+      assert {:ok, %{extension: ^extension}} = exported
     end
   end
 
@@ -478,7 +478,7 @@ defmodule Kino.ExplorerTest do
     for format <- ["CSV", "NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(%{df: df}, format)
       extension = ".#{String.downcase(format)}"
-      assert %{extension: ^extension} = exported
+      assert {:ok, %{extension: ^extension}} = exported
     end
   end
 
@@ -493,7 +493,7 @@ defmodule Kino.ExplorerTest do
     for format <- ["NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(%{df: df}, format)
       extension = ".#{String.downcase(format)}"
-      assert %{extension: ^extension} = exported
+      assert {:ok, %{extension: ^extension}} = exported
     end
   end
 end

@@ -67,17 +67,17 @@ defmodule Kino.Explorer do
   @impl true
   def export_data(%{df: df}, "CSV") do
     data = df |> DataFrame.collect() |> DataFrame.dump_csv!()
-    %{data: data, extension: ".csv", type: "text/csv"}
+    {:ok, %{data: data, extension: ".csv", type: "text/csv"}}
   end
 
   def export_data(%{df: df}, "NDJSON") do
     data = df |> DataFrame.collect() |> DataFrame.dump_ndjson!()
-    %{data: data, extension: ".ndjson", type: "application/x-ndjson"}
+    {:ok, %{data: data, extension: ".ndjson", type: "application/x-ndjson"}}
   end
 
   def export_data(%{df: df}, "Parquet") do
     data = df |> DataFrame.collect() |> DataFrame.dump_parquet!()
-    %{data: data, extension: ".parquet", type: "application/x-parquet"}
+    {:ok, %{data: data, extension: ".parquet", type: "application/x-parquet"}}
   end
 
   defp columns(df, lazy, groups) do
