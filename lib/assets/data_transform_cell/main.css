@@ -167,8 +167,9 @@ input[type="number"] {
   align-items: center;
   flex-grow: 1;
   margin-bottom: 0;
-  max-width: 350px;
+  max-width: 345px;
   min-width: auto;
+  margin-right: 8px;
 }
 
 .root-group {
@@ -467,6 +468,7 @@ select option {
   gap: 16px;
   margin-left: 16px;
   padding-top: 6px;
+  flex-wrap: wrap;
 }
 
 .data-frame-title {
