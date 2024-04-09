@@ -123,7 +123,8 @@ defmodule KinoExplorer.DataTransformCell do
     root_fields = %{
       "data_frame" => attrs["data_frame"],
       "assign_to" => attrs["assign_to"],
-      "collect" => if(Map.has_key?(attrs, "collect"), do: attrs["collect"], else: true)
+      "collect" => Map.get(attrs, "collect", true),
+      "is_data_frame" => Map.get(attrs, "is_data_frame", false)
     }
 
     operations = attrs["operations"]
@@ -205,7 +206,7 @@ defmodule KinoExplorer.DataTransformCell do
 
         _ ->
           %{
-            root_fields: ctx.assigns.root_fields,
+            root_fields: update_is_data_frame(ctx.assigns.root_fields, ctx),
             operations: update_data_options(ctx.assigns.operations, ctx)
           }
       end
@@ -347,12 +348,19 @@ defmodule KinoExplorer.DataTransformCell do
     %{
       root_fields: %{
         "data_frame" => data_frame,
+        "is_data_frame" => Map.get(ctx.assigns.data_frame_variables, data_frame, false),
         "assign_to" => nil,
-        "lazy" => true,
         "collect" => false
       },
       operations: default_operations() |> update_data_options(ctx, data_frame)
     }
+  end
+
+  defp update_is_data_frame(%{"data_frame" => data_frame} = root_fields, ctx) do
+    case ctx.assigns.data_frame_variables do
+      %{^data_frame => is_data_frame} -> %{root_fields | "is_data_frame" => is_data_frame}
+      %{} -> root_fields
+    end
   end
 
   defp updates_for_grouped_fields(:summarise, field, value, idx, ctx) do
@@ -434,7 +442,6 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", ctx.assigns.operations)
     |> Map.put("data_frame_alias", ctx.assigns.data_frame_alias)
     |> Map.put("missing_require", ctx.assigns.missing_require)
-    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   @impl true
@@ -939,7 +946,6 @@ defmodule KinoExplorer.DataTransformCell do
     |> Map.put("operations", partial_operations)
     |> Map.put("data_frame_alias", Explorer.DataFrame)
     |> Map.put("missing_require", Explorer.DataFrame)
-    |> Map.put("is_data_frame", is_data_frame?(ctx))
   end
 
   defp maybe_update_datalist(%{"operation_type" => "filters"} = operation, df) do
@@ -966,11 +972,6 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   defp implements?(protocol, value), do: protocol.impl_for(value) != nil
-
-  defp is_data_frame?(ctx) do
-    df = ctx.assigns.root_fields["data_frame"]
-    Map.get(ctx.assigns.data_frame_variables, df)
-  end
 
   defp collect_index([%{name: :group_by}, %{name: :summarise} | rest], size, idx) do
     collect_index(rest, size, idx + 2)
