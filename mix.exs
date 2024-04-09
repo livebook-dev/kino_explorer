@@ -28,8 +28,8 @@ defmodule KinoExplorer.MixProject do
   defp deps do
     [
       {:kino, "~> 0.12.3"},
-      {:explorer, "~> 0.8.0"},
-      {:rustler, "~> 0.29.0", optional: true},
+      {:explorer, "~> 0.8.1"},
+      {:rustler, "~> 0.31.0", optional: true},
       {:ex_doc, "~> 0.31.0", only: :dev, runtime: false}
     ]
   end

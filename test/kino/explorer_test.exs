@@ -149,7 +149,7 @@ defmodule Kino.ExplorerTest do
                    label: "name",
                    summary: %{
                      keys: ["unique", "top", "top freq", "nulls"],
-                     values: ["4", "Jake Peralta", "2", "3"]
+                     values: ["3", "Jake Peralta", "2", "3"]
                    },
                    type: "text"
                  },
@@ -158,7 +158,7 @@ defmodule Kino.ExplorerTest do
                    label: "woman",
                    summary: %{
                      keys: ["unique", "top", "top freq", "nulls"],
-                     values: ["3", "false", "3", "3"]
+                     values: ["2", "false", "3", "3"]
                    },
                    type: "boolean"
                  }
@@ -225,7 +225,7 @@ defmodule Kino.ExplorerTest do
                    label: "list",
                    summary: %{
                      keys: ["unique", "top", "top freq", "nulls"],
-                     values: ["3", "[1, 2]", "1", "1"]
+                     values: ["2", "[1, 2]", "1", "1"]
                    },
                    type: "list"
                  }
