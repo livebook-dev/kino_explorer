@@ -63,6 +63,7 @@ defmodule KinoExplorer.DataTransformCellTest do
   @base_attrs %{
     "assign_to" => nil,
     "data_frame" => "teams",
+    "is_data_frame" => true,
     "collect" => true,
     "data_frame_alias" => Explorer.DataFrame,
     "missing_require" => nil,
@@ -73,6 +74,12 @@ defmodule KinoExplorer.DataTransformCellTest do
     {_kino, source} = start_smart_cell!(DataTransformCell, %{})
 
     assert source == ""
+  end
+
+  test "if the variable is unknown, relies on attributse for is-dataframe check" do
+    {_kino, source} = start_smart_cell!(DataTransformCell, @base_attrs)
+
+    assert source == "teams"
   end
 
   test "finds valid data in binding and sends the data options to the client" do
@@ -108,7 +115,7 @@ defmodule KinoExplorer.DataTransformCellTest do
             "value" => nil
           }
         ],
-        root_fields: %{"assign_to" => nil, "data_frame" => "people"}
+        root_fields: %{"assign_to" => nil, "data_frame" => "people", "is_data_frame" => true}
       }
     })
   end
