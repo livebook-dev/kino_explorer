@@ -991,3 +991,11 @@ select option {
 select.input.tag-input:disabled {
   display: none;
 }
+
+.dndrop-container.horizontal > .dndrop-draggable-wrapper {
+  height: auto;
+}
+
+.dndrop-container.horizontal {
+  display: flex;
+}
