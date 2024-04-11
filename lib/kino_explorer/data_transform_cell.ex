@@ -281,16 +281,14 @@ defmodule KinoExplorer.DataTransformCell do
   end
 
   def handle_event("move_inner_value", fields, ctx) do
-    {field, idx, remove, add} =
-      {fields["field"], fields["idx"], fields["removedIndex"], fields["addedIndex"]}
-
-    {value, values} =
-      get_in(ctx.assigns.operations, [Access.at(idx), field]) |> List.pop_at(remove)
-
-    updated_value = List.insert_at(values, add, value)
+    %{"field" => field, "idx" => idx, "removedIndex" => remove, "addedIndex" => add} = fields
 
     updated_operations =
-      put_in(ctx.assigns.operations, [Access.at(idx), field], updated_value)
+      ctx.assigns.operations
+      |> update_in([Access.at(idx), field], fn values ->
+        {value, values} = List.pop_at(values, remove)
+        List.insert_at(values, add, value)
+      end)
       |> update_data_options(ctx)
 
     ctx = assign(ctx, operations: updated_operations)
