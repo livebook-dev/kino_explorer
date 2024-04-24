@@ -464,9 +464,10 @@ defmodule Kino.ExplorerTest do
 
   test "export to" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
+    rows_spec = %{order: nil}
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
-      exported = Kino.Explorer.export_data(%{df: df}, format)
+      exported = Kino.Explorer.export_data(rows_spec, %{df: df}, format)
       extension = ".#{String.downcase(format)}"
       assert {:ok, %{extension: ^extension}} = exported
     end
@@ -474,9 +475,10 @@ defmodule Kino.ExplorerTest do
 
   test "export to for lazy data frames" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
+    rows_spec = %{order: nil}
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
-      exported = Kino.Explorer.export_data(%{df: df}, format)
+      exported = Kino.Explorer.export_data(rows_spec, %{df: df}, format)
       extension = ".#{String.downcase(format)}"
       assert {:ok, %{extension: ^extension}} = exported
     end
@@ -484,6 +486,7 @@ defmodule Kino.ExplorerTest do
 
   test "export to for data frames with list-type columns" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
+    rows_spec = %{order: nil}
 
     widget = Kino.Explorer.new(df)
     data = connect(widget)
@@ -491,7 +494,7 @@ defmodule Kino.ExplorerTest do
     assert %{export: %{formats: ["NDJSON", "Parquet"]}} = data
 
     for format <- ["NDJSON", "Parquet"] do
-      exported = Kino.Explorer.export_data(%{df: df}, format)
+      exported = Kino.Explorer.export_data(rows_spec, %{df: df}, format)
       extension = ".#{String.downcase(format)}"
       assert {:ok, %{extension: ^extension}} = exported
     end

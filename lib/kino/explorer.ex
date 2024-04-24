@@ -65,18 +65,18 @@ defmodule Kino.Explorer do
   end
 
   @impl true
-  def export_data(%{df: df}, "CSV") do
-    data = df |> DataFrame.collect() |> DataFrame.dump_csv!()
+  def export_data(rows_spec, %{df: df}, "CSV") do
+    data = df |> df_to_export(rows_spec) |> DataFrame.dump_csv!()
     {:ok, %{data: data, extension: ".csv", type: "text/csv"}}
   end
 
-  def export_data(%{df: df}, "NDJSON") do
-    data = df |> DataFrame.collect() |> DataFrame.dump_ndjson!()
+  def export_data(rows_spec, %{df: df}, "NDJSON") do
+    data = df |> df_to_export(rows_spec) |> DataFrame.dump_ndjson!()
     {:ok, %{data: data, extension: ".ndjson", type: "application/x-ndjson"}}
   end
 
-  def export_data(%{df: df}, "Parquet") do
-    data = df |> DataFrame.collect() |> DataFrame.dump_parquet!()
+  def export_data(rows_spec, %{df: df}, "Parquet") do
+    data = df |> df_to_export(rows_spec) |> DataFrame.dump_parquet!()
     {:ok, %{data: data, extension: ".parquet", type: "application/x-parquet"}}
   end
 
@@ -215,4 +215,8 @@ defmodule Kino.Explorer do
 
   defp build_top(top) when is_list(top) or is_map(top), do: inspect(top)
   defp build_top(top), do: to_string(top)
+
+  defp df_to_export(df, rows_spec) do
+    df |> order_by(rows_spec[:order]) |> DataFrame.collect()
+  end
 end
