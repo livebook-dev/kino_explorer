@@ -58,8 +58,8 @@ defmodule Kino.Explorer do
 
   @impl true
   def get_data(rows_spec, state) do
-    {records, total_rows, summaries} = get_records(state, rows_spec)
-    columns = Enum.map(state.columns, &%{&1 | summary: summaries[&1.key]})
+    {columns, records, total_rows, summaries} = get_records(state, rows_spec)
+    columns = Enum.map(columns, &%{&1 | summary: summaries[&1.key]})
     data = records_to_data(columns, records)
     {:ok, %{columns: columns, data: {:columns, data}, total_rows: total_rows}, state}
   end
@@ -98,27 +98,37 @@ defmodule Kino.Explorer do
   defp info(columns, lazy, name) do
     name = if lazy, do: "Lazy - #{name}", else: name
     has_composite_type_column? = Enum.any?(columns, &(&1.type == "list" || &1.type == "struct"))
+    features = [:export, :pagination, :sorting, :relocate]
 
     formats =
       if has_composite_type_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
 
-    %{name: name, features: [:export, :pagination, :sorting], export: %{formats: formats}}
+    %{name: name, features: features, export: %{formats: formats}}
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do
     lazy = lazy?(df)
-    df = order_by(df, rows_spec[:order])
+    df = df |> relocate(rows_spec[:relocates]) |> order_by(rows_spec[:order])
+    columns = columns(df, lazy, groups)
     total_rows = if !lazy, do: DataFrame.n_rows(df)
     summaries = if total_rows && total_rows > 0, do: summaries(df, groups)
     df = DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
     records = df |> DataFrame.collect() |> DataFrame.to_columns()
-    {records, total_rows, summaries}
+    {columns, records, total_rows, summaries}
   end
 
   defp order_by(df, nil), do: df
 
   defp order_by(df, %{key: column, direction: direction}) do
     DataFrame.sort_with(df, &[{direction, &1[column]}])
+  end
+
+  defp relocate(df, []), do: df
+
+  defp relocate(df, [%{from_index: from_index, to_index: to_index} | relocate]) do
+    position = if from_index > to_index, do: :before, else: :after
+    df = DataFrame.relocate(df, from_index, [{position, to_index}])
+    relocate(df, relocate)
   end
 
   defp records_to_data(columns, records) do
@@ -217,6 +227,6 @@ defmodule Kino.Explorer do
   defp build_top(top), do: to_string(top)
 
   defp df_to_export(df, rows_spec) do
-    df |> order_by(rows_spec[:order]) |> DataFrame.collect()
+    df |> relocate(rows_spec[:relocates]) |> order_by(rows_spec[:order]) |> DataFrame.collect()
   end
 end
