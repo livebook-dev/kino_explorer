@@ -22,7 +22,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                columns: [
                  %{key: "0", label: "id", type: "number"},
@@ -118,6 +118,28 @@ defmodule Kino.ExplorerTest do
       page: 1,
       max_page: 2,
       data: [["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]]
+    })
+  end
+
+  test "supports relocate" do
+    widget = Kino.Explorer.new(people_df())
+
+    connect(widget)
+
+    push_event(widget, "relocate", %{"from_index" => 1, "to_index" => 0})
+
+    assert_broadcast_event(widget, "update_content", %{
+      columns: [
+        %{key: "1", label: "name", type: "text"},
+        %{key: "0", label: "id", type: "number"},
+        %{key: "2", label: "start", type: "date"}
+      ],
+      data: [
+        ["Amy Santiago", "Jake Peralta", "Terry Jeffords"],
+        ["3", "1", "2"],
+        ["2023-12-12 12:12:12.121212", "2023-12-01 02:03:04.050607", "2023-11-11 11:11:11.111111"]
+      ],
+      relocates: [%{from_index: 1, to_index: 0}]
     })
   end
 
@@ -337,7 +359,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                columns: [
                  %{key: "0", label: "sepal_length", summary: nil, type: "number"},
@@ -359,7 +381,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                data: [["1", "2"], ["nx", "<<200, 210>>"]]
              }
@@ -372,7 +394,7 @@ defmodule Kino.ExplorerTest do
     data = connect(widget)
 
     assert %{
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                total_rows: nil,
                columns: [
@@ -420,7 +442,7 @@ defmodule Kino.ExplorerTest do
 
     assert %{
              export: %{formats: ["CSV", "NDJSON", "Parquet"]},
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                page: 1,
                max_page: 3,
@@ -445,7 +467,7 @@ defmodule Kino.ExplorerTest do
 
     assert %{
              export: %{formats: ["CSV", "NDJSON", "Parquet"]},
-             features: [:export, :pagination, :sorting],
+             features: [:export, :pagination, :sorting, :relocate],
              content: %{
                page: 1,
                max_page: nil,
@@ -464,7 +486,7 @@ defmodule Kino.ExplorerTest do
 
   test "export to" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
-    rows_spec = %{order: nil}
+    rows_spec = %{order: nil, relocates: []}
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(rows_spec, %{df: df}, format)
@@ -475,7 +497,7 @@ defmodule Kino.ExplorerTest do
 
   test "export to for lazy data frames" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
-    rows_spec = %{order: nil}
+    rows_spec = %{order: nil, relocates: []}
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
       exported = Kino.Explorer.export_data(rows_spec, %{df: df}, format)
@@ -486,7 +508,7 @@ defmodule Kino.ExplorerTest do
 
   test "export to for data frames with list-type columns" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
-    rows_spec = %{order: nil}
+    rows_spec = %{order: nil, relocates: []}
 
     widget = Kino.Explorer.new(df)
     data = connect(widget)
