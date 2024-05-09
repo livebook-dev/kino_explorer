@@ -27,7 +27,12 @@ defmodule Kino.Explorer do
   @legacy_numeric_types [:float, :integer]
 
   @doc """
-  Creates a new kino displaying a given data frame or series.
+  Creates a new kino displaying a given data frame or series as a rich table.
+
+  ## Options
+
+    * `:name` - The displayed name of the table. Defaults to `"DataFrame"` or `"Series"`,
+      depending on the given data
   """
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
@@ -39,21 +44,37 @@ defmodule Kino.Explorer do
 
   def new(%Series{} = s, opts) do
     name = Keyword.get(opts, :name, "Series")
-    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
-    df = DataFrame.new([{column_name, s}])
-    Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df[0])} end)
+    Kino.Table.new(__MODULE__, {s, name}, export: fn state -> {"text", inspect(state.df[0])} end)
   end
+
+  @doc """
+  Updates the table to display a new data frame.
+
+  ## Examples
+
+      df = Explorer.Datasets.iris()
+      kino = Kino.Explorer.new(data)
+
+  Once created, you can update the table to display new data:
+
+      new_df = Explorer.Datasets.fossil_fuels()
+      Kino.Explorer.update(kino, new_df)
+  """
+  def update(kino, df), do: Kino.Table.update(kino, df)
 
   @impl true
   def init({df, name}) do
-    lazy = lazy?(df)
-    groups = df.groups
-    df = DataFrame.ungroup(df)
-    total_rows = if !lazy, do: DataFrame.n_rows(df)
-    columns = columns(df, lazy, groups)
+    {lazy, groups, df, total_rows, columns} = prepare_data(df, name)
     info = info(columns, lazy, name)
 
-    {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups}}
+    {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups, name: name}}
+  end
+
+  @impl true
+  def on_update(df, state) do
+    {_lazy, groups, df, total_rows, columns} = prepare_data(df, state.name)
+
+    {:ok, %{state | df: df, total_rows: total_rows, columns: columns, groups: groups}}
   end
 
   @impl true
@@ -228,5 +249,23 @@ defmodule Kino.Explorer do
 
   defp df_to_export(df, rows_spec) do
     df |> relocate(rows_spec[:relocates]) |> order_by(rows_spec[:order]) |> DataFrame.collect()
+  end
+
+  defp prepare_data(%DataFrame{} = df, _name), do: prepare_data(df)
+
+  defp prepare_data(%Series{} = s, name) do
+    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+    df = DataFrame.new([{column_name, s}])
+    prepare_data(df)
+  end
+
+  defp prepare_data(df) do
+    lazy = lazy?(df)
+    groups = df.groups
+    df = DataFrame.ungroup(df)
+    total_rows = if !lazy, do: DataFrame.n_rows(df)
+    columns = columns(df, lazy, groups)
+
+    {lazy, groups, df, total_rows, columns}
   end
 end

@@ -18,8 +18,8 @@ defmodule Kino.ExplorerTest do
   end
 
   test "column definitions include type" do
-    widget = Kino.Explorer.new(people_df())
-    data = connect(widget)
+    kino = Kino.Explorer.new(people_df())
+    data = connect(kino)
 
     assert %{
              features: [:export, :pagination, :sorting, :relocate],
@@ -34,8 +34,8 @@ defmodule Kino.ExplorerTest do
   end
 
   test "rows order matches the given data frame by default" do
-    widget = Kino.Explorer.new(people_df())
-    data = connect(widget)
+    kino = Kino.Explorer.new(people_df())
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -54,13 +54,13 @@ defmodule Kino.ExplorerTest do
   end
 
   test "supports sorting by other columns" do
-    widget = Kino.Explorer.new(people_df())
+    kino = Kino.Explorer.new(people_df())
 
-    connect(widget)
+    connect(kino)
 
-    push_event(widget, "order_by", %{"key" => "1", "direction" => "desc"})
+    push_event(kino, "order_by", %{"key" => "1", "direction" => "desc"})
 
-    assert_broadcast_event(widget, "update_content", %{
+    assert_broadcast_event(kino, "update_content", %{
       columns: [
         %{key: "0", label: "id", type: "number"},
         %{key: "1", label: "name", type: "text"},
@@ -78,8 +78,8 @@ defmodule Kino.ExplorerTest do
   test "supports pagination" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -89,9 +89,9 @@ defmodule Kino.ExplorerTest do
              }
            } = data
 
-    push_event(widget, "show_page", %{"page" => 2})
+    push_event(kino, "show_page", %{"page" => 2})
 
-    assert_broadcast_event(widget, "update_content", %{
+    assert_broadcast_event(kino, "update_content", %{
       page: 2,
       max_page: 3,
       data: [["11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]]
@@ -101,8 +101,8 @@ defmodule Kino.ExplorerTest do
   test "supports pagination limit" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -112,9 +112,9 @@ defmodule Kino.ExplorerTest do
              }
            } = data
 
-    push_event(widget, "limit", %{"limit" => 15})
+    push_event(kino, "limit", %{"limit" => 15})
 
-    assert_broadcast_event(widget, "update_content", %{
+    assert_broadcast_event(kino, "update_content", %{
       page: 1,
       max_page: 2,
       data: [["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]]
@@ -122,13 +122,13 @@ defmodule Kino.ExplorerTest do
   end
 
   test "supports relocate" do
-    widget = Kino.Explorer.new(people_df())
+    kino = Kino.Explorer.new(people_df())
 
-    connect(widget)
+    connect(kino)
 
-    push_event(widget, "relocate", %{"from_index" => 1, "to_index" => 0})
+    push_event(kino, "relocate", %{"from_index" => 1, "to_index" => 0})
 
-    assert_broadcast_event(widget, "update_content", %{
+    assert_broadcast_event(kino, "update_content", %{
       columns: [
         %{key: "1", label: "name", type: "text"},
         %{key: "0", label: "id", type: "number"},
@@ -151,8 +151,8 @@ defmodule Kino.ExplorerTest do
         woman: [true, false, false, false, nil, nil, nil]
       })
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -193,8 +193,8 @@ defmodule Kino.ExplorerTest do
   test "support data summary for all nils" do
     df = Explorer.DataFrame.new(%{id: [nil, nil, nil, nil]})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -213,8 +213,8 @@ defmodule Kino.ExplorerTest do
   test "support data summary for lists" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -236,8 +236,8 @@ defmodule Kino.ExplorerTest do
   test "support data summary for lists with nil" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1], nil])})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -259,8 +259,8 @@ defmodule Kino.ExplorerTest do
   test "does not break on lists with internal nulls" do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1, nil]])})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -279,8 +279,8 @@ defmodule Kino.ExplorerTest do
       })
       |> Explorer.DataFrame.group_by(:name)
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -310,8 +310,8 @@ defmodule Kino.ExplorerTest do
 
   test "supports infinity" do
     df = Explorer.DataFrame.new(a: [:infinity])
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              content: %{
@@ -343,8 +343,8 @@ defmodule Kino.ExplorerTest do
         dtypes: [d: :binary]
       )
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
     types = ["text", "number", "uri", "binary", "list"]
 
     assert get_in(data.content.columns, [Access.all(), :type]) == types
@@ -355,8 +355,8 @@ defmodule Kino.ExplorerTest do
       Explorer.Datasets.iris()
       |> Explorer.DataFrame.filter_with(&Explorer.Series.equal(&1["sepal_length"], 3))
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              features: [:export, :pagination, :sorting, :relocate],
@@ -377,8 +377,8 @@ defmodule Kino.ExplorerTest do
     df =
       Explorer.DataFrame.new([x: [1, 2], y: [<<110, 120>>, <<200, 210>>]], dtypes: [y: :binary])
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              features: [:export, :pagination, :sorting, :relocate],
@@ -390,8 +390,8 @@ defmodule Kino.ExplorerTest do
 
   test "supports lazy data frames" do
     df = Explorer.Datasets.iris() |> Explorer.DataFrame.lazy()
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              features: [:export, :pagination, :sorting, :relocate],
@@ -437,8 +437,8 @@ defmodule Kino.ExplorerTest do
   test "supports export" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              export: %{formats: ["CSV", "NDJSON", "Parquet"]},
@@ -452,7 +452,7 @@ defmodule Kino.ExplorerTest do
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
       extension = ".#{String.downcase(format)}"
-      push_event(widget, "download", %{"format" => format})
+      push_event(kino, "download", %{"format" => format})
       assert_receive({:event, "download_content", {:binary, exported, data}, _})
       assert %{format: ^extension} = exported
       assert is_binary(data)
@@ -462,8 +462,8 @@ defmodule Kino.ExplorerTest do
   test "supports export for lazy data frames" do
     df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)}, lazy: true)
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{
              export: %{formats: ["CSV", "NDJSON", "Parquet"]},
@@ -477,7 +477,7 @@ defmodule Kino.ExplorerTest do
 
     for format <- ["CSV", "NDJSON", "Parquet"] do
       extension = ".#{String.downcase(format)}"
-      push_event(widget, "download", %{"format" => format})
+      push_event(kino, "download", %{"format" => format})
       assert_receive({:event, "download_content", {:binary, exported, data}, _})
       assert %{format: ^extension} = exported
       assert is_binary(data)
@@ -510,8 +510,8 @@ defmodule Kino.ExplorerTest do
     df = Explorer.DataFrame.new(%{list: Explorer.Series.from_list([[1, 2], [1]])})
     rows_spec = %{order: nil, relocates: []}
 
-    widget = Kino.Explorer.new(df)
-    data = connect(widget)
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
 
     assert %{export: %{formats: ["NDJSON", "Parquet"]}} = data
 
@@ -520,5 +520,29 @@ defmodule Kino.ExplorerTest do
       extension = ".#{String.downcase(format)}"
       assert {:ok, %{extension: ^extension}} = exported
     end
+  end
+
+  test "supports update" do
+    df = Explorer.DataFrame.new(%{n: Enum.to_list(1..25)})
+
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
+
+    assert %{
+             content: %{
+               page: 1,
+               max_page: 3,
+               data: [["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]]
+             }
+           } = data
+
+    new_df = Explorer.DataFrame.new(%{n: Enum.to_list(25..50)})
+    Kino.Explorer.update(kino, new_df)
+
+    assert_broadcast_event(kino, "update_content", %{
+      page: 1,
+      max_page: 3,
+      data: [["25", "26", "27", "28", "29", "30", "31", "32", "33", "34"]]
+    })
   end
 end
