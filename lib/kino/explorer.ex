@@ -31,7 +31,8 @@ defmodule Kino.Explorer do
 
   ## Options
 
-    * `:name` - The displayed name of the table. Defaults to `"DataFrame or Series"`
+    * `:name` - The displayed name of the table. Defaults to `"DataFrame"` or `"Series"`,
+      depending on the given data
   """
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
