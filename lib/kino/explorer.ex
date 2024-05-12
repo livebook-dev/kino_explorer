@@ -17,13 +17,6 @@ defmodule Kino.Explorer do
 
   @type t :: Kino.JS.Live.t()
 
-  @date_types [
-    :date,
-    {:datetime, :nanosecond},
-    {:datetime, :microsecond},
-    {:datetime, :millisecond}
-  ]
-
   @legacy_numeric_types [:float, :integer]
 
   @doc """
@@ -225,7 +218,10 @@ defmodule Kino.Explorer do
     |> DataFrame.to_columns()
   end
 
-  defp type_of(dtype, _) when dtype in @date_types, do: "date"
+  # TODO: {:datetime, _} is removed on v0.9+
+  defp type_of({:datetime, _}, _), do: "date"
+  defp type_of({:datetime, _, _}, _), do: "date"
+  defp type_of({:naive_datetime, _}, _), do: "date"
   defp type_of(:boolean, _), do: "boolean"
   defp type_of(:string, [data]), do: type_of_sample(data)
   defp type_of(:binary, _), do: "binary"

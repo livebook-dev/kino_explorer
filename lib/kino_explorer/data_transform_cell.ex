@@ -1001,9 +1001,13 @@ defmodule KinoExplorer.DataTransformCell do
   defp normalize_dtypes(map) do
     map
     |> Enum.map(fn
+      # TODO: {:datetime, _} is removed on v0.9+
       {k, {:datetime, :millisecond}} -> {k, "datetime[ms]"}
       {k, {:datetime, :microsecond}} -> {k, "datetime[μs]"}
       {k, {:datetime, :nanosecond}} -> {k, "datetime[ns]"}
+      {k, {:naive_datetime, :millisecond}} -> {k, "datetime[ms]"}
+      {k, {:naive_datetime, :microsecond}} -> {k, "datetime[μs]"}
+      {k, {:naive_datetime, :nanosecond}} -> {k, "datetime[ns]"}
       {k, {:f, 32}} -> {k, "float"}
       {k, {:f, 64}} -> {k, "float"}
       {k, {:s, 8}} -> {k, "integer"}
