@@ -350,6 +350,18 @@ defmodule Kino.ExplorerTest do
     assert get_in(data.content.columns, [Access.all(), :type]) == types
   end
 
+  test "supports empty data" do
+    df = Explorer.DataFrame.new([])
+
+    kino = Kino.Explorer.new(df)
+    data = connect(kino)
+
+    assert %{
+             features: [:export, :pagination, :sorting, :relocate],
+             content: %{columns: [], data: []}
+           } = data
+  end
+
   test "correctly handles empty data frames with string columns" do
     df =
       Explorer.Datasets.iris()
