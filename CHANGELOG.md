@@ -5,20 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# [v0.1.19](https://github.com/livebook-dev/kino_explorer/tree/v0.1.19) (2024-04-09)
+## [v0.1.19](https://github.com/livebook-dev/kino_explorer/tree/v0.1.19) (2024-04-09)
 
-## Fixed
+### Fixed
 
 - Disables DataTransform Cell form submission ([#157](https://github.com/livebook-dev/kino_explorer/pull/157))
 - Restore whether the variable is a dataframe on load ([#159](https://github.com/livebook-dev/kino_explorer/pull/159))
 
-# [v0.1.18](https://github.com/livebook-dev/kino_explorer/tree/v0.1.18) (2024-01-22)
+## [v0.1.18](https://github.com/livebook-dev/kino_explorer/tree/v0.1.18) (2024-01-22)
 
-## Fixed
+### Fixed
 
 - Remove unsupported csv export ([#152](https://github.com/livebook-dev/kino_explorer/pull/152))
 
-# [v0.1.17](https://github.com/livebook-dev/kino_explorer/tree/v0.1.17) (2024-01-21)
+## [v0.1.17](https://github.com/livebook-dev/kino_explorer/tree/v0.1.17) (2024-01-21)
 
 ### Added
 
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.1.15](https://github.com/livebook-dev/kino_explorer/tree/v0.1.15) (2024-01-05)
 
-## Fixed
+### Fixed
 
 - Remove unsupported csv export ([#130](https://github.com/livebook-dev/kino_explorer/pull/130))
 - Fixes for list-type columns ([#131](https://github.com/livebook-dev/kino_explorer/pull/131))
