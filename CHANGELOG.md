@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.20](https://github.com/livebook-dev/kino_explorer/tree/v0.1.20) (2024-06-17)
+
+### Added
+
+- Made multi-select fields draggable ([#161](https://github.com/livebook-dev/kino_explorer/pull/161))
+- Support for relocating columns ([#163](https://github.com/livebook-dev/kino_explorer/pull/163))
+- Added `Kino.Explorer.update/2` for updating table contents programmatically ([#164](https://github.com/livebook-dev/kino_explorer/pull/164))
+
+### Changed
+
+- Export to respect rows order ([#162](https://github.com/livebook-dev/kino_explorer/pull/162))
+
 ## [v0.1.19](https://github.com/livebook-dev/kino_explorer/tree/v0.1.19) (2024-04-09)
 
 ### Fixed
