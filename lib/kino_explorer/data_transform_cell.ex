@@ -13,9 +13,7 @@ defmodule KinoExplorer.DataTransformCell do
     "boolean",
     "category",
     "date",
-    "datetime[ms]",
-    "datetime[μs]",
-    "datetime[ns]",
+    "datetime",
     "float",
     "integer",
     "string",
@@ -27,9 +25,7 @@ defmodule KinoExplorer.DataTransformCell do
     "boolean" => ["equal", "not equal"],
     "category" => ["equal", "contains", "not contains", "not equal"],
     "date" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "datetime[ms]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "datetime[μs]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
-    "datetime[ns]" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
+    "datetime" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "float" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "integer" => ["less", "less equal", "equal", "not equal", "greater equal", "greater"],
     "string" => ["equal", "contains", "not contains", "not equal"],
@@ -42,9 +38,7 @@ defmodule KinoExplorer.DataTransformCell do
     "boolean" => ["forward", "backward", "max", "min", "scalar"],
     "category" => ["forward", "backward", "max", "min", "scalar"],
     "date" => ["forward", "backward", "max", "min", "mean", "scalar"],
-    "datetime[ms]" => ["forward", "backward", "max", "min", "mean", "scalar"],
-    "datetime[μs]" => ["forward", "backward", "max", "min", "mean", "scalar"],
-    "datetime[ns]" => ["forward", "backward", "max", "min", "mean", "scalar"],
+    "datetime" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "float" => ["forward", "backward", "max", "min", "mean", "scalar", "nan"],
     "integer" => ["forward", "backward", "max", "min", "mean", "scalar"],
     "string" => ["forward", "backward", "max", "min", "scalar"],
@@ -54,26 +48,10 @@ defmodule KinoExplorer.DataTransformCell do
   }
   @summarise_options %{
     count: @column_types ++ @composite_column_types,
-    max: [
-      "date",
-      "datetime[ms]",
-      "datetime[μs]",
-      "datetime[ns]",
-      "float",
-      "integer",
-      "time"
-    ],
+    max: ["date","datetime","float","integer","time"],
     mean: ["float", "integer"],
     median: ["float", "integer"],
-    min: [
-      "date",
-      "datetime[ms]",
-      "datetime[μs]",
-      "datetime[ns]",
-      "float",
-      "integer",
-      "time"
-    ],
+    min: ["date","datetime","float","integer","time"],
     n_distinct: @column_types ++ @composite_column_types,
     nil_count: @column_types ++ @composite_column_types,
     standard_deviation: ["float", "integer"],
@@ -822,10 +800,7 @@ defmodule KinoExplorer.DataTransformCell do
     end
   end
 
-  defp cast_typed_value(type, value)
-       when type in ["date", "datetime[ms]", "datetime[μs]", "datetime[ns]"],
-       do: to_date(type, value)
-
+  defp cast_typed_value(type, value) when type in ["date", "datetime"], do: to_date(type, value)
   defp cast_typed_value("time", value), do: to_time(value)
   defp cast_typed_value(_, value), do: {:ok, value}
 
@@ -1002,12 +977,9 @@ defmodule KinoExplorer.DataTransformCell do
     map
     |> Enum.map(fn
       # TODO: {:datetime, _} is removed on v0.9+
-      {k, {:datetime, :millisecond}} -> {k, "datetime[ms]"}
-      {k, {:datetime, :microsecond}} -> {k, "datetime[μs]"}
-      {k, {:datetime, :nanosecond}} -> {k, "datetime[ns]"}
-      {k, {:naive_datetime, :millisecond}} -> {k, "datetime[ms]"}
-      {k, {:naive_datetime, :microsecond}} -> {k, "datetime[μs]"}
-      {k, {:naive_datetime, :nanosecond}} -> {k, "datetime[ns]"}
+      {k, {:datetime, _}} -> {k, "datetime"}
+      {k, {:datetime, _, _}} -> {k, "datetime"}
+      {k, {:naive_datetime, _}} -> {k, "datetime"}
       {k, {:f, 32}} -> {k, "float"}
       {k, {:f, 64}} -> {k, "float"}
       {k, {:s, 8}} -> {k, "integer"}
