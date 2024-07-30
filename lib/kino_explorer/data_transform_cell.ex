@@ -48,10 +48,10 @@ defmodule KinoExplorer.DataTransformCell do
   }
   @summarise_options %{
     count: @column_types ++ @composite_column_types,
-    max: ["date","datetime","float","integer","time"],
+    max: ["date", "datetime", "float", "integer", "time"],
     mean: ["float", "integer"],
     median: ["float", "integer"],
-    min: ["date","datetime","float","integer","time"],
+    min: ["date", "datetime", "float", "integer", "time"],
     n_distinct: @column_types ++ @composite_column_types,
     nil_count: @column_types ++ @composite_column_types,
     standard_deviation: ["float", "integer"],
