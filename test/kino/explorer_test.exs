@@ -385,6 +385,12 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "correctly handles nil rendering when type is binary" do
+    df = Explorer.DataFrame.new([a: [nil]], dtypes: [a: :binary])
+    data = connect(Kino.Explorer.new(df))
+    assert data.content.data == [[""]]
+  end
+
   test "correctly handles data frames with binary non-utf8 column values" do
     df =
       Explorer.DataFrame.new([x: [1, 2], y: [<<110, 120>>, <<200, 210>>]], dtypes: [y: :binary])
