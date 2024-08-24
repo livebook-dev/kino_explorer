@@ -151,7 +151,7 @@ defmodule Kino.Explorer do
     end)
   end
 
-  defp value_to_string("binary", value) when is_nil(value), do: ""
+  defp value_to_string("binary", value) when is_nil(value), do: to_string(value)
 
   defp value_to_string("binary", value) do
     inspect_opts = Inspect.Opts.new([])
