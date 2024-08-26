@@ -151,6 +151,8 @@ defmodule Kino.Explorer do
     end)
   end
 
+  defp value_to_string(_, value) when is_nil(value), do: ""
+
   defp value_to_string("binary", value) do
     inspect_opts = Inspect.Opts.new([])
     if String.printable?(value, inspect_opts.limit), do: value, else: inspect(value)
