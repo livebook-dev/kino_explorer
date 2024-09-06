@@ -190,25 +190,29 @@ defmodule Kino.Explorer do
   end
 
   defp build_summary(:categorical, column, series, has_groups, grouped, nulls) do
+    %{"counts" => top_freq, "values" => top} = most_frequent(series)
+    top_freq = top_freq |> List.first() |> to_string()
+    top = List.first(top) |> build_top()
+
     # TODO: Remove this when possible
     # The main case that makes us need to use try/rescue here is when there are internal nils in a list
-    # For example: Series.from_list([[1, 2], [2, nil]]) will break on most_frequent and unique
-    # Null type is also a problem, but it only breaks on unique
-    try do
-      %{"counts" => top_freq, "values" => top} = most_frequent(series)
-      top_freq = top_freq |> List.first() |> to_string()
-      top = List.first(top) |> build_top()
-      unique = series |> Series.distinct() |> Series.count() |> to_string()
-      keys = ["unique", "top", "top freq", "nulls"]
-      values = [unique, top, top_freq, nulls]
+    # For example: Series.from_list([[1, 2], [2, nil]]) will break on most_frequent and unique (Explorer 0.8 only)
+    # Null type is also a problem, but it only breaks on unique (Explorer 0.8 and 0.9)
 
-      keys = if has_groups, do: keys ++ ["grouped"], else: keys
-      values = if has_groups, do: values ++ [grouped], else: values
+    unique =
+      try do
+        series |> Series.distinct() |> Series.count() |> to_string()
+      rescue
+        _ -> nil
+      end
 
-      {column, %{keys: keys, values: values}}
-    rescue
-      _ -> {column, %{keys: [], values: []}}
-    end
+    keys = ["unique", "top", "top freq", "nulls"]
+    values = [unique, top, top_freq, nulls]
+
+    keys = if has_groups, do: keys ++ ["grouped"], else: keys
+    values = if has_groups, do: values ++ [grouped], else: values
+
+    {column, %{keys: keys, values: values}}
   end
 
   defp most_frequent(data) do
