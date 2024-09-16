@@ -16,7 +16,7 @@ jobs:
               otp: "25.0"
             lint: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: erlef/setup-beam@v1
         with:
