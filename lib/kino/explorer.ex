@@ -126,7 +126,8 @@ defmodule Kino.Explorer do
     formats =
       if has_composite_type_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
 
-    %{name: name, features: features, export: %{formats: formats}, num_rows: num_rows}
+    info = %{name: name, features: features, export: %{formats: formats}}
+    if(num_rows, do: Map.put(info, :num_rows, num_rows), else: info)
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do
