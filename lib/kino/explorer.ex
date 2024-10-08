@@ -26,18 +26,26 @@ defmodule Kino.Explorer do
 
     * `:name` - The displayed name of the table. Defaults to `"DataFrame"` or `"Series"`,
       depending on the given data
+
+    * `:num_rows` - the number of rows to show in the table. Defaults to `10`.
   """
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
 
   def new(%DataFrame{} = df, opts) do
     name = Keyword.get(opts, :name, "DataFrame")
-    Kino.Table.new(__MODULE__, {df, name}, export: fn state -> {"text", inspect(state.df)} end)
+
+    Kino.Table.new(__MODULE__, {df, name, opts},
+      export: fn state -> {"text", inspect(state.df)} end
+    )
   end
 
   def new(%Series{} = s, opts) do
     name = Keyword.get(opts, :name, "Series")
-    Kino.Table.new(__MODULE__, {s, name}, export: fn state -> {"text", inspect(state.df[0])} end)
+
+    Kino.Table.new(__MODULE__, {s, name, opts},
+      export: fn state -> {"text", inspect(state.df[0])} end
+    )
   end
 
   @doc """
@@ -56,9 +64,10 @@ defmodule Kino.Explorer do
   def update(kino, df), do: Kino.Table.update(kino, df)
 
   @impl true
-  def init({df, name}) do
+  def init({df, name, opts}) do
     {lazy, groups, df, total_rows, columns} = prepare_data(df, name)
-    info = info(columns, lazy, name)
+    num_rows = Keyword.get(opts, :num_rows)
+    info = info(columns, lazy, name, num_rows)
 
     {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups, name: name}}
   end
@@ -109,7 +118,7 @@ defmodule Kino.Explorer do
     end
   end
 
-  defp info(columns, lazy, name) do
+  defp info(columns, lazy, name, num_rows) do
     name = if lazy, do: "Lazy - #{name}", else: name
     has_composite_type_column? = Enum.any?(columns, &(&1.type == "list" || &1.type == "struct"))
     features = [:export, :pagination, :sorting, :relocate]
@@ -117,7 +126,8 @@ defmodule Kino.Explorer do
     formats =
       if has_composite_type_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
 
-    %{name: name, features: features, export: %{formats: formats}}
+    info = %{name: name, features: features, export: %{formats: formats}}
+    if(num_rows, do: Map.put(info, :num_rows, num_rows), else: info)
   end
 
   defp get_records(%{df: df, groups: groups}, rows_spec) do

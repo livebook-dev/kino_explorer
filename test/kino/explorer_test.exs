@@ -17,6 +17,46 @@ defmodule Kino.ExplorerTest do
     })
   end
 
+  test "name as an option" do
+    kino = Kino.Explorer.new(people_df(), name: "My People")
+    data = connect(kino)
+
+    assert %{
+             content: %{
+               data: [
+                 ["3", "1", "2"],
+                 ["Amy Santiago", "Jake Peralta", "Terry Jeffords"],
+                 [
+                   "2023-12-12 12:12:12.121212",
+                   "2023-12-01 02:03:04.050607",
+                   "2023-11-11 11:11:11.111111"
+                 ]
+               ]
+             },
+             name: "My People"
+           } = data
+  end
+
+  test "num_rows as an option" do
+    kino = Kino.Explorer.new(people_df(), num_rows: 2)
+    data = connect(kino)
+
+    assert %{
+             content: %{
+               data: [
+                 ["3", "1"],
+                 ["Amy Santiago", "Jake Peralta"],
+                 [
+                   "2023-12-12 12:12:12.121212",
+                   "2023-12-01 02:03:04.050607"
+                 ]
+               ],
+               max_page: 2,
+               page: 1
+             }
+           } = data
+  end
+
   test "column definitions include type" do
     kino = Kino.Explorer.new(people_df())
     data = connect(kino)
