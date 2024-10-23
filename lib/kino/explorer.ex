@@ -248,9 +248,8 @@ defmodule Kino.Explorer do
   defp type_of_sample("http" <> _rest), do: "uri"
   defp type_of_sample(_), do: "text"
 
-  defp numeric_type?({:s, _}), do: true
-  defp numeric_type?({:u, _}), do: true
-  defp numeric_type?({:f, _}), do: true
+  defp numeric_type?({type, _}) when type in [:s, :u, :f], do: true
+  defp numeric_type?({:decimal, _, _}), do: true
   # For backwards compatibility
   defp numeric_type?(other), do: other in @legacy_numeric_types
 
@@ -266,7 +265,7 @@ defmodule Kino.Explorer do
   defp prepare_data(%DataFrame{} = df, _name), do: prepare_data(df)
 
   defp prepare_data(%Series{} = s, name) do
-    column_name = name |> String.replace(" ", "_") |> String.downcase() |> String.to_atom()
+    column_name = name |> String.replace(" ", "_") |> String.downcase()
     df = DataFrame.new([{column_name, s}])
     prepare_data(df)
   end
