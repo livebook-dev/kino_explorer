@@ -389,14 +389,15 @@ defmodule Kino.ExplorerTest do
           b: [1, 2],
           c: ["https://elixir-lang.org", "https://www.erlang.org"],
           d: [<<110, 120>>, <<200, 210>>],
-          e: [[1, 2], [3, 4]]
+          e: [[1, 2], [3, 4]],
+          f: [Decimal.new("12.45"), Decimal.new("3.14159265")]
         ],
         dtypes: [d: :binary]
       )
 
     kino = Kino.Explorer.new(df)
     data = connect(kino)
-    types = ["text", "number", "uri", "binary", "list"]
+    types = ["text", "number", "uri", "binary", "list", "number"]
 
     assert get_in(data.content.columns, [Access.all(), :type]) == types
   end
