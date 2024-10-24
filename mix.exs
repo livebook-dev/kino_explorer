@@ -27,8 +27,7 @@ defmodule KinoExplorer.MixProject do
 
   defp deps do
     [
-      {:kino, github: "livebook-dev/kino"},
-      # {:kino, "~> 0.13"}, - restore it when a kino is released
+      {:kino, "~> 0.13"},
       {:explorer, "~> 0.9"},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
