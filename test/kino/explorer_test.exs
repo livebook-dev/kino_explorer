@@ -57,6 +57,18 @@ defmodule Kino.ExplorerTest do
            } = data
   end
 
+  test "summaries as an option" do
+    kino = Kino.Explorer.new(people_df(), summaries: false)
+    data = connect(kino)
+    refute Enum.any?(data.content.columns, & &1.summary)
+  end
+
+  test "summaries as an option (default to true)" do
+    kino = Kino.Explorer.new(people_df())
+    data = connect(kino)
+    assert Enum.all?(data.content.columns, & &1.summary)
+  end
+
   test "column definitions include type" do
     kino = Kino.Explorer.new(people_df())
     data = connect(kino)
