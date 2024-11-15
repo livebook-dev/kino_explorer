@@ -28,6 +28,9 @@ defmodule Kino.Explorer do
       depending on the given data
 
     * `:num_rows` - the number of rows to show in the table. Defaults to `10`.
+
+    * `:summaries` - whether to show summaries for numeric and categorical columns.
+      Defaults to `true`.
   """
   @spec new(DataFrame.t() | Series.t(), keyword()) :: t()
   def new(data, opts \\ [])
@@ -65,16 +68,25 @@ defmodule Kino.Explorer do
 
   @impl true
   def init({df, name, opts}) do
-    {lazy, groups, df, total_rows, columns} = prepare_data(df, name)
-    num_rows = Keyword.get(opts, :num_rows)
-    info = info(columns, lazy, name, num_rows)
+    summaries = Keyword.get(opts, :summaries, true)
+    {lazy, groups, df, total_rows, columns} = prepare_data(df, name, summaries)
+    num_rows = Keyword.get(opts, :num_rows, 10)
+    info = info(columns, lazy, name, num_rows, summaries)
 
-    {:ok, info, %{df: df, total_rows: total_rows, columns: columns, groups: groups, name: name}}
+    {:ok, info,
+     %{
+       df: df,
+       total_rows: total_rows,
+       columns: columns,
+       groups: groups,
+       name: name,
+       summaries: summaries
+     }}
   end
 
   @impl true
   def on_update(df, state) do
-    {_lazy, groups, df, total_rows, columns} = prepare_data(df, state.name)
+    {_lazy, groups, df, total_rows, columns} = prepare_data(df, state.name, state.summaries)
 
     {:ok, %{state | df: df, total_rows: total_rows, columns: columns, groups: groups}}
   end
@@ -103,10 +115,10 @@ defmodule Kino.Explorer do
     {:ok, %{data: data, extension: ".parquet", type: "application/x-parquet"}}
   end
 
-  defp columns(df, lazy, groups) do
+  defp columns(df, lazy, groups, summaries) do
     dtypes = DataFrame.dtypes(df)
     sample_data = df |> DataFrame.head(1) |> DataFrame.collect() |> DataFrame.to_columns()
-    summaries = if !lazy, do: summaries(df, groups)
+    summaries = if !lazy && summaries, do: summaries(df, groups)
 
     for name <- df.names, dtype = Map.fetch!(dtypes, name) do
       %{
@@ -118,7 +130,7 @@ defmodule Kino.Explorer do
     end
   end
 
-  defp info(columns, lazy, name, num_rows) do
+  defp info(columns, lazy, name, num_rows, summaries) do
     name = if lazy, do: "Lazy - #{name}", else: name
     has_composite_type_column? = Enum.any?(columns, &(&1.type == "list" || &1.type == "struct"))
     features = [:export, :pagination, :sorting, :relocate]
@@ -126,16 +138,21 @@ defmodule Kino.Explorer do
     formats =
       if has_composite_type_column?, do: ["NDJSON", "Parquet"], else: ["CSV", "NDJSON", "Parquet"]
 
-    info = %{name: name, features: features, export: %{formats: formats}}
-    if(num_rows, do: Map.put(info, :num_rows, num_rows), else: info)
+    %{
+      name: name,
+      features: features,
+      export: %{formats: formats},
+      num_rows: num_rows,
+      summaries: summaries
+    }
   end
 
-  defp get_records(%{df: df, groups: groups}, rows_spec) do
+  defp get_records(%{df: df, groups: groups, summaries: summaries}, rows_spec) do
     lazy = lazy?(df)
     df = df |> relocate(rows_spec[:relocates]) |> order_by(rows_spec[:order])
-    columns = columns(df, lazy, groups)
+    columns = columns(df, lazy, groups, summaries)
     total_rows = if !lazy, do: DataFrame.n_rows(df)
-    summaries = if total_rows && total_rows > 0, do: summaries(df, groups)
+    summaries = if total_rows && total_rows > 0 && summaries, do: summaries(df, groups)
     df = DataFrame.slice(df, rows_spec.offset, rows_spec.limit)
     records = df |> DataFrame.collect() |> DataFrame.to_columns()
     {columns, records, total_rows, summaries}
@@ -262,20 +279,20 @@ defmodule Kino.Explorer do
     df |> relocate(rows_spec[:relocates]) |> order_by(rows_spec[:order]) |> DataFrame.collect()
   end
 
-  defp prepare_data(%DataFrame{} = df, _name), do: prepare_data(df)
+  defp prepare_data(%DataFrame{} = df, _name, summaries), do: prepare_data(df, summaries)
 
-  defp prepare_data(%Series{} = s, name) do
+  defp prepare_data(%Series{} = s, name, summaries) do
     column_name = name |> String.replace(" ", "_") |> String.downcase()
     df = DataFrame.new([{column_name, s}])
-    prepare_data(df)
+    prepare_data(df, summaries)
   end
 
-  defp prepare_data(df) do
+  defp prepare_data(df, summaries) do
     lazy = lazy?(df)
     groups = df.groups
     df = DataFrame.ungroup(df)
     total_rows = if !lazy, do: DataFrame.n_rows(df)
-    columns = columns(df, lazy, groups)
+    columns = columns(df, lazy, groups, summaries)
 
     {lazy, groups, df, total_rows, columns}
   end
