@@ -795,8 +795,8 @@ defmodule KinoExplorer.DataTransformCell do
           cast_typed_value("float", value)
         end
 
-      _ ->
-        nil
+      :error ->
+        {:ok, value}
     end
   end
 
