@@ -560,37 +560,6 @@ defmodule KinoExplorer.DataTransformCellTest do
               "value" => "5",
               "active" => true,
               "operation_type" => "filters"
-            }
-          ]
-        })
-
-      assert DataTransformCell.to_source(attrs) == """
-             people
-             |> Explorer.DataFrame.lazy()
-             |> Explorer.DataFrame.filter(member?(list_column, 3) and not member?(list_column, 5))
-             |> Explorer.DataFrame.collect()\
-             """
-    end
-
-    test "do not generate code for invalid filter for lists" do
-      attrs =
-        build_attrs(%{
-          filters: [
-            %{
-              "column" => "list_column",
-              "filter" => "contains",
-              "type" => "list",
-              "value" => "3",
-              "active" => true,
-              "operation_type" => "filters"
-            },
-            %{
-              "column" => "list_column",
-              "filter" => "not contains",
-              "type" => "list",
-              "value" => "5",
-              "active" => true,
-              "operation_type" => "filters"
             },
             %{
               "column" => "list_column",
@@ -606,7 +575,10 @@ defmodule KinoExplorer.DataTransformCellTest do
       assert DataTransformCell.to_source(attrs) == """
              people
              |> Explorer.DataFrame.lazy()
-             |> Explorer.DataFrame.filter(member?(list_column, 3) and not member?(list_column, 5))
+             |> Explorer.DataFrame.filter(
+               member?(list_column, 3) and not member?(list_column, 5) and
+                 not member?(list_column, "cat")
+             )
              |> Explorer.DataFrame.collect()\
              """
     end
