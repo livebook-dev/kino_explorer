@@ -289,7 +289,7 @@ defmodule Kino.Explorer do
 
   defp prepare_data(df, summaries) do
     lazy = lazy?(df)
-    groups = df.groups
+    groups = DataFrame.groups(df)
     df = DataFrame.ungroup(df)
     total_rows = if !lazy, do: DataFrame.n_rows(df)
     columns = columns(df, lazy, groups, summaries)
